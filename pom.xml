@@ -23,6 +23,7 @@
 
 	<modules>
 		<module>circumgraph-model</module>
+		<module>circumgraph-schema-graphql</module>
 	</modules>
 
 	<!-- License -->
