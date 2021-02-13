@@ -1,0 +1,190 @@
+package com.circumgraph.model.internal;
+
+import java.util.Optional;
+
+import com.circumgraph.model.DirectiveDef;
+import com.circumgraph.model.OutputTypeDef;
+import com.circumgraph.model.TypeDef;
+import com.circumgraph.model.UnionDef;
+import com.circumgraph.model.validation.SourceLocation;
+
+import org.eclipse.collections.api.factory.Lists;
+import org.eclipse.collections.api.list.ImmutableList;
+import org.eclipse.collections.api.list.ListIterable;
+
+public class UnionDefImpl
+	implements UnionDef, HasPreparation
+{
+	private final SourceLocation sourceLocation;
+	private final String name;
+	private final String description;
+	private final ImmutableList<OutputTypeDef> types;
+	private final ImmutableList<DirectiveDef> directives;
+
+	private ModelDefs defs;
+
+	public UnionDefImpl(
+		SourceLocation sourceLocation,
+		String name,
+		String description,
+		ImmutableList<OutputTypeDef> types,
+		ImmutableList<DirectiveDef> directives
+	)
+	{
+		this.sourceLocation = sourceLocation;
+		this.name = name;
+		this.description = description;
+		this.types = types;
+		this.directives = directives;
+	}
+
+	@Override
+	public SourceLocation getSourceLocation()
+	{
+		return sourceLocation;
+	}
+
+	@Override
+	public String getName()
+	{
+		return name;
+	}
+
+	@Override
+	public Optional<String> getDescription()
+	{
+		return Optional.ofNullable(description);
+	}
+
+	@Override
+	public ListIterable<OutputTypeDef> getTypes()
+	{
+		return types.collect(s -> defs.getType(s, OutputTypeDef.class));
+	}
+
+	@Override
+	public ListIterable<String> getTypeNames()
+	{
+		return types.collect(TypeDef::getName);
+	}
+
+	@Override
+	public ListIterable<DirectiveDef> getDirectives()
+	{
+		return directives;
+	}
+
+	@Override
+	public void prepare(ModelDefs defs)
+	{
+		this.defs = defs;
+	}
+
+	public static Builder create(String name)
+	{
+		return new BuilderImpl(
+			null,
+			name,
+			null,
+			Lists.immutable.empty(),
+			Lists.immutable.empty()
+		);
+	}
+
+	public static class BuilderImpl
+		implements Builder
+	{
+		private final SourceLocation sourceLocation;
+		private final String name;
+		private final String description;
+		private final ImmutableList<OutputTypeDef> types;
+		private final ImmutableList<DirectiveDef> directives;
+
+		public BuilderImpl(
+			SourceLocation sourceLocation,
+			String name,
+			String description,
+			ImmutableList<OutputTypeDef> types,
+			ImmutableList<DirectiveDef> directives
+		)
+		{
+			this.sourceLocation = sourceLocation;
+			this.name = name;
+			this.description = description;
+			this.types = types;
+			this.directives = directives;
+		}
+
+		@Override
+		public Builder withSourceLocation(SourceLocation sourceLocation)
+		{
+			return new BuilderImpl(
+				sourceLocation,
+				name,
+				description,
+				types,
+				directives
+			);
+		}
+
+		@Override
+		public Builder withDescription(String description)
+		{
+			return new BuilderImpl(
+				sourceLocation,
+				name,
+				description,
+				types,
+				directives
+			);
+		}
+
+		@Override
+		public Builder addDirective(DirectiveDef directive)
+		{
+			return new BuilderImpl(
+				sourceLocation,
+				name,
+				description,
+				types,
+				directives.newWith(directive)
+			);
+		}
+
+		@Override
+		public Builder addType(OutputTypeDef value)
+		{
+			return new BuilderImpl(
+				sourceLocation,
+				name,
+				description,
+				types.newWith(value),
+				directives
+			);
+		}
+
+		@Override
+		public Builder addTypes(Iterable<? extends OutputTypeDef> types)
+		{
+			return new BuilderImpl(
+				sourceLocation,
+				name,
+				description,
+				this.types.newWithAll(types),
+				directives
+			);
+		}
+
+		@Override
+		public UnionDef build()
+		{
+			return new UnionDefImpl(
+				sourceLocation,
+				name,
+				description,
+				types,
+				directives
+			);
+		}
+	}
+}
