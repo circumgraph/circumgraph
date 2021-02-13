@@ -8,7 +8,7 @@ import org.eclipse.collections.api.list.ListIterable;
  * Definition of a enum.
  */
 public interface EnumDef
-	extends InputTypeDef, OutputTypeDef, HasDirectives, HasSourceLocation
+	extends SimpleValueDef, HasDirectives, HasSourceLocation
 {
 	/**
 	 * Get the values of this enum.

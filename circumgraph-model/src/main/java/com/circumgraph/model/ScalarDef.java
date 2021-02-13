@@ -6,7 +6,7 @@ import com.circumgraph.model.internal.ScalarDefImpl;
  * Scalar representation.
  */
 public interface ScalarDef
-	extends OutputTypeDef, InputTypeDef
+	extends SimpleValueDef
 {
 	/**
 	 * String scalar.
