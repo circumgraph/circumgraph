@@ -24,6 +24,8 @@
 	<modules>
 		<module>circumgraph-model</module>
 		<module>circumgraph-schema-graphql</module>
+
+		<module>circumgraph-values</module>
 	</modules>
 
 	<!-- License -->
