@@ -178,7 +178,7 @@
 								<packages>
 									<regex>true</regex>
 									<include>
-										<item>se\.l4\..*</item>
+										<item>com\.circumgraph\..*</item>
 									</include>
 									<exclude>
 										<item>.*\.impl(\..+)?</item>
