@@ -98,7 +98,7 @@
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>3.8.1</version>
 				<configuration>
-					<release>9</release>
+					<release>15</release>
 				</configuration>
 			</plugin>
 
@@ -262,7 +262,7 @@
 						<version>3.2.0</version>
 						<configuration>
 							<doclint>none</doclint>
-							<source>9</source>
+							<source>15</source>
 
 							<excludePackageNames>*.internal.*</excludePackageNames>
 						</configuration>
