@@ -44,7 +44,7 @@ public interface SimpleValue
 		return create(ScalarDef.FLOAT, value);
 	}
 
-	static SimpleValue createInt(long value)
+	static SimpleValue createInt(int value)
 	{
 		return create(ScalarDef.INT, value);
 	}
