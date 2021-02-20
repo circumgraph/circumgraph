@@ -13,7 +13,7 @@ public interface HasDirectives
 	 *
 	 * @return
 	 */
-	ListIterable<DirectiveDef> getDirectives();
+	ListIterable<DirectiveUse> getDirectives();
 
 	interface Builder<B extends Builder<B>>
 	{
@@ -23,6 +23,6 @@ public interface HasDirectives
 		 * @param directive
 		 * @return
 		 */
-		B addDirective(DirectiveDef directive);
+		B addDirective(DirectiveUse directive);
 	}
 }

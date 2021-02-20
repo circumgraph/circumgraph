@@ -3,7 +3,7 @@ package com.circumgraph.model.internal;
 import java.util.Objects;
 import java.util.Optional;
 
-import com.circumgraph.model.DirectiveDef;
+import com.circumgraph.model.DirectiveUse;
 import com.circumgraph.model.FieldDef;
 import com.circumgraph.model.InterfaceDef;
 import com.circumgraph.model.StructuredDef;
@@ -26,7 +26,7 @@ public abstract class StructuredDefImpl
 	protected final String name;
 	protected final String description;
 	protected final ImmutableList<TypeDef> implementsTypes;
-	protected final ImmutableList<DirectiveDef> directives;
+	protected final ImmutableList<DirectiveUse> directives;
 
 	protected final ImmutableList<FieldDef> directFields;
 	protected ImmutableMap<String, FieldDef> fields;
@@ -38,7 +38,7 @@ public abstract class StructuredDefImpl
 		String name,
 		String description,
 		ImmutableList<TypeDef> implementsTypes,
-		ImmutableList<DirectiveDef> directives,
+		ImmutableList<DirectiveUse> directives,
 		ImmutableList<FieldDef> fields
 	)
 	{
@@ -99,7 +99,7 @@ public abstract class StructuredDefImpl
 	}
 
 	@Override
-	public ListIterable<DirectiveDef> getDirectives()
+	public ListIterable<DirectiveUse> getDirectives()
 	{
 		return directives;
 	}
@@ -171,7 +171,7 @@ public abstract class StructuredDefImpl
 		protected final ImmutableList<FieldDef> fields;
 		protected final ImmutableList<TypeDef> implementsTypes;
 
-		protected final ImmutableList<DirectiveDef> directives;
+		protected final ImmutableList<DirectiveUse> directives;
 
 		public AbstractBuilder(
 			SourceLocation sourceLocation,
@@ -179,7 +179,7 @@ public abstract class StructuredDefImpl
 			String description,
 			ImmutableList<FieldDef> fields,
 			ImmutableList<TypeDef> implementsTypes,
-			ImmutableList<DirectiveDef> directives
+			ImmutableList<DirectiveUse> directives
 		)
 		{
 			this.sourceLocation = sourceLocation;
@@ -196,7 +196,7 @@ public abstract class StructuredDefImpl
 			String description,
 			ImmutableList<FieldDef> fields,
 			ImmutableList<TypeDef> implementsTypes,
-			ImmutableList<DirectiveDef> directives
+			ImmutableList<DirectiveUse> directives
 		);
 
 		@Override
@@ -273,7 +273,7 @@ public abstract class StructuredDefImpl
 		}
 
 		@Override
-		public B addDirective(DirectiveDef directive)
+		public B addDirective(DirectiveUse directive)
 		{
 			return create(
 				sourceLocation,

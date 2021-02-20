@@ -1,6 +1,6 @@
 package com.circumgraph.model.internal;
 
-import com.circumgraph.model.DirectiveDef;
+import com.circumgraph.model.DirectiveUse;
 import com.circumgraph.model.FieldDef;
 import com.circumgraph.model.ObjectDef;
 import com.circumgraph.model.TypeDef;
@@ -18,7 +18,7 @@ public class ObjectDefImpl
 		String id,
 		String description,
 		ImmutableList<TypeDef> implementsTypes,
-		ImmutableList<DirectiveDef> directives,
+		ImmutableList<DirectiveUse> directives,
 		ImmutableList<FieldDef> fields
 	)
 	{
@@ -60,7 +60,7 @@ public class ObjectDefImpl
 			String description,
 			ImmutableList<FieldDef> fields,
 			ImmutableList<TypeDef> implementsTypes,
-			ImmutableList<DirectiveDef> directives
+			ImmutableList<DirectiveUse> directives
 		)
 		{
 			super(
@@ -80,7 +80,7 @@ public class ObjectDefImpl
 			String description,
 			ImmutableList<FieldDef> fields,
 			ImmutableList<TypeDef> implementsTypes,
-			ImmutableList<DirectiveDef> directives
+			ImmutableList<DirectiveUse> directives
 		)
 		{
 			return new BuilderImpl(

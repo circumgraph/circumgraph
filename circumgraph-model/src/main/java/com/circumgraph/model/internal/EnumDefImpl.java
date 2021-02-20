@@ -2,7 +2,7 @@ package com.circumgraph.model.internal;
 
 import java.util.Optional;
 
-import com.circumgraph.model.DirectiveDef;
+import com.circumgraph.model.DirectiveUse;
 import com.circumgraph.model.EnumDef;
 import com.circumgraph.model.EnumValueDef;
 import com.circumgraph.model.validation.SourceLocation;
@@ -18,14 +18,14 @@ public class EnumDefImpl
 	private final String name;
 	private final String description;
 	private final ImmutableList<EnumValueDef> values;
-	private final ImmutableList<DirectiveDef> directives;
+	private final ImmutableList<DirectiveUse> directives;
 
 	public EnumDefImpl(
 		SourceLocation sourceLocation,
 		String name,
 		String description,
 		ImmutableList<EnumValueDef> values,
-		ImmutableList<DirectiveDef> directives
+		ImmutableList<DirectiveUse> directives
 	)
 	{
 		this.sourceLocation = sourceLocation;
@@ -60,7 +60,7 @@ public class EnumDefImpl
 	}
 
 	@Override
-	public ListIterable<DirectiveDef> getDirectives()
+	public ListIterable<DirectiveUse> getDirectives()
 	{
 		return directives;
 	}
@@ -83,14 +83,14 @@ public class EnumDefImpl
 		private final String name;
 		private final String description;
 		private final ImmutableList<EnumValueDef> values;
-		private final ImmutableList<DirectiveDef> directives;
+		private final ImmutableList<DirectiveUse> directives;
 
 		public BuilderImpl(
 			SourceLocation sourceLocation,
 			String name,
 			String description,
 			ImmutableList<EnumValueDef> values,
-			ImmutableList<DirectiveDef> directives
+			ImmutableList<DirectiveUse> directives
 		)
 		{
 			this.sourceLocation = sourceLocation;
@@ -125,7 +125,7 @@ public class EnumDefImpl
 		}
 
 		@Override
-		public Builder addDirective(DirectiveDef directive)
+		public Builder addDirective(DirectiveUse directive)
 		{
 			return new BuilderImpl(
 				sourceLocation,

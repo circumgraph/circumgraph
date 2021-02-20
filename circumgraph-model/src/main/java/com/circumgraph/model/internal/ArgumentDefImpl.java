@@ -3,7 +3,7 @@ package com.circumgraph.model.internal;
 import java.util.Optional;
 
 import com.circumgraph.model.ArgumentDef;
-import com.circumgraph.model.DirectiveDef;
+import com.circumgraph.model.DirectiveUse;
 import com.circumgraph.model.InputTypeDef;
 import com.circumgraph.model.validation.SourceLocation;
 
@@ -24,7 +24,7 @@ public class ArgumentDefImpl
 	private final InputTypeDef type;
 	private final boolean nullable;
 
-	private final ImmutableList<DirectiveDef> directives;
+	private final ImmutableList<DirectiveUse> directives;
 
 	private ModelDefs defs;
 
@@ -34,7 +34,7 @@ public class ArgumentDefImpl
 		String description,
 		InputTypeDef type,
 		boolean nullable,
-		ImmutableList<DirectiveDef> directives
+		ImmutableList<DirectiveUse> directives
 	)
 	{
 		this.sourceLocation = sourceLocation;
@@ -76,7 +76,7 @@ public class ArgumentDefImpl
 	}
 
 	@Override
-	public ListIterable<DirectiveDef> getDirectives()
+	public ListIterable<DirectiveUse> getDirectives()
 	{
 		return directives;
 	}
@@ -95,7 +95,7 @@ public class ArgumentDefImpl
 		private final String description;
 		private final InputTypeDef type;
 		private final boolean nullable;
-		private final ImmutableList<DirectiveDef> directives;
+		private final ImmutableList<DirectiveUse> directives;
 
 		public BuilderImpl(
 			SourceLocation sourceLocation,
@@ -103,7 +103,7 @@ public class ArgumentDefImpl
 			String description,
 			InputTypeDef type,
 			boolean nullable,
-			ImmutableList<DirectiveDef> directives
+			ImmutableList<DirectiveUse> directives
 		)
 		{
 			this.sourceLocation = sourceLocation;
@@ -173,7 +173,7 @@ public class ArgumentDefImpl
 		}
 
 		@Override
-		public Builder addDirective(DirectiveDef directive)
+		public Builder addDirective(DirectiveUse directive)
 		{
 			return new BuilderImpl(
 				sourceLocation,

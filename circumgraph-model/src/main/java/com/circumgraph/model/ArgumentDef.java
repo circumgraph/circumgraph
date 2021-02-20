@@ -76,7 +76,7 @@ public interface ArgumentDef
 		 * @param directive
 		 * @return
 		 */
-		Builder addDirective(DirectiveDef directive);
+		Builder addDirective(DirectiveUse directive);
 
 		/**
 		 * Build the instance.

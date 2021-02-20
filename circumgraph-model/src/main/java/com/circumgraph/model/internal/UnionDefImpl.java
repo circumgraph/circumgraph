@@ -2,7 +2,7 @@ package com.circumgraph.model.internal;
 
 import java.util.Optional;
 
-import com.circumgraph.model.DirectiveDef;
+import com.circumgraph.model.DirectiveUse;
 import com.circumgraph.model.OutputTypeDef;
 import com.circumgraph.model.TypeDef;
 import com.circumgraph.model.UnionDef;
@@ -19,7 +19,7 @@ public class UnionDefImpl
 	private final String name;
 	private final String description;
 	private final ImmutableList<OutputTypeDef> types;
-	private final ImmutableList<DirectiveDef> directives;
+	private final ImmutableList<DirectiveUse> directives;
 
 	private ModelDefs defs;
 
@@ -28,7 +28,7 @@ public class UnionDefImpl
 		String name,
 		String description,
 		ImmutableList<OutputTypeDef> types,
-		ImmutableList<DirectiveDef> directives
+		ImmutableList<DirectiveUse> directives
 	)
 	{
 		this.sourceLocation = sourceLocation;
@@ -69,7 +69,7 @@ public class UnionDefImpl
 	}
 
 	@Override
-	public ListIterable<DirectiveDef> getDirectives()
+	public ListIterable<DirectiveUse> getDirectives()
 	{
 		return directives;
 	}
@@ -98,14 +98,14 @@ public class UnionDefImpl
 		private final String name;
 		private final String description;
 		private final ImmutableList<OutputTypeDef> types;
-		private final ImmutableList<DirectiveDef> directives;
+		private final ImmutableList<DirectiveUse> directives;
 
 		public BuilderImpl(
 			SourceLocation sourceLocation,
 			String name,
 			String description,
 			ImmutableList<OutputTypeDef> types,
-			ImmutableList<DirectiveDef> directives
+			ImmutableList<DirectiveUse> directives
 		)
 		{
 			this.sourceLocation = sourceLocation;
@@ -140,7 +140,7 @@ public class UnionDefImpl
 		}
 
 		@Override
-		public Builder addDirective(DirectiveDef directive)
+		public Builder addDirective(DirectiveUse directive)
 		{
 			return new BuilderImpl(
 				sourceLocation,

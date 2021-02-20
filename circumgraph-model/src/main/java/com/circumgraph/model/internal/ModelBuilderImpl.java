@@ -1,6 +1,6 @@
 package com.circumgraph.model.internal;
 
-import com.circumgraph.model.DirectiveDef;
+import com.circumgraph.model.DirectiveUse;
 import com.circumgraph.model.FieldDef;
 import com.circumgraph.model.HasSourceLocation;
 import com.circumgraph.model.InterfaceDef;
@@ -191,20 +191,20 @@ public class ModelBuilderImpl
 			.toImmutable();
 	}
 
-	private ImmutableList<DirectiveDef> mergeDirectives(
-		RichIterable<DirectiveDef> d1,
-		RichIterable<DirectiveDef> d2
+	private ImmutableList<DirectiveUse> mergeDirectives(
+		RichIterable<DirectiveUse> d1,
+		RichIterable<DirectiveUse> d2
 	)
 	{
-		MutableMap<String, DirectiveDef> directives = Maps.mutable.empty();
-		for(DirectiveDef d : d1)
+		MutableMap<String, DirectiveUse> directives = Maps.mutable.empty();
+		for(DirectiveUse d : d1)
 		{
 			directives.put(d.getName(), d);
 		}
 
-		for(DirectiveDef d : d2)
+		for(DirectiveUse d : d2)
 		{
-			DirectiveDef current = directives.get(d.getName());
+			DirectiveUse current = directives.get(d.getName());
 			if(current == null)
 			{
 				directives.put(d.getName(), d);
@@ -218,7 +218,7 @@ public class ModelBuilderImpl
 		return directives.toList().toImmutable();
 	}
 
-	private DirectiveDef mergeDirective(DirectiveDef d1, DirectiveDef d2)
+	private DirectiveUse mergeDirective(DirectiveUse d1, DirectiveUse d2)
 	{
 		// TODO: Logic for merging the directives
 		return d1;

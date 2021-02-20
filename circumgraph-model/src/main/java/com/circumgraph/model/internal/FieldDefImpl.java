@@ -4,7 +4,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 import com.circumgraph.model.ArgumentDef;
-import com.circumgraph.model.DirectiveDef;
+import com.circumgraph.model.DirectiveUse;
 import com.circumgraph.model.FieldDef;
 import com.circumgraph.model.OutputTypeDef;
 import com.circumgraph.model.TypeRef;
@@ -29,7 +29,7 @@ public class FieldDefImpl
 
 	private final OutputTypeDef type;
 	private final ImmutableList<ArgumentDef> arguments;
-	private final ImmutableList<DirectiveDef> directives;
+	private final ImmutableList<DirectiveUse> directives;
 
 	private ModelDefs defs;
 
@@ -40,7 +40,7 @@ public class FieldDefImpl
 		OutputTypeDef type,
 		boolean nullable,
 		ImmutableList<ArgumentDef> arguments,
-		ImmutableList<DirectiveDef> directives
+		ImmutableList<DirectiveUse> directives
 	)
 	{
 		this.sourceLocation = sourceLocation;
@@ -95,7 +95,7 @@ public class FieldDefImpl
 	}
 
 	@Override
-	public ListIterable<DirectiveDef> getDirectives()
+	public ListIterable<DirectiveUse> getDirectives()
 	{
 		return directives;
 	}
@@ -124,7 +124,7 @@ public class FieldDefImpl
 		private final OutputTypeDef type;
 		private final boolean nullable;
 		private final ImmutableList<ArgumentDef> arguments;
-		private final ImmutableList<DirectiveDef> directives;
+		private final ImmutableList<DirectiveUse> directives;
 
 		public BuilderImpl(
 			SourceLocation sourceLocation,
@@ -133,7 +133,7 @@ public class FieldDefImpl
 			OutputTypeDef type,
 			boolean nullable,
 			ImmutableList<ArgumentDef> arguments,
-			ImmutableList<DirectiveDef> directives
+			ImmutableList<DirectiveUse> directives
 		)
 		{
 			this.sourceLocation = sourceLocation;
@@ -228,7 +228,7 @@ public class FieldDefImpl
 		}
 
 		@Override
-		public Builder addDirective(DirectiveDef directive)
+		public Builder addDirective(DirectiveUse directive)
 		{
 			return new BuilderImpl(
 				sourceLocation,
