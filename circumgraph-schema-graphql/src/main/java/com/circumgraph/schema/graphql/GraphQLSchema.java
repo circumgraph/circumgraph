@@ -2,10 +2,14 @@ package com.circumgraph.schema.graphql;
 
 import java.io.Reader;
 import java.io.StringReader;
+import java.util.List;
 
+import com.circumgraph.model.ArgumentDef;
+import com.circumgraph.model.DirectiveUse;
 import com.circumgraph.model.EnumDef;
 import com.circumgraph.model.EnumValueDef;
 import com.circumgraph.model.FieldDef;
+import com.circumgraph.model.InputTypeDef;
 import com.circumgraph.model.InterfaceDef;
 import com.circumgraph.model.ListDef;
 import com.circumgraph.model.ModelException;
@@ -14,22 +18,38 @@ import com.circumgraph.model.OutputTypeDef;
 import com.circumgraph.model.Schema;
 import com.circumgraph.model.TypeDef;
 import com.circumgraph.model.TypeRef;
+import com.circumgraph.model.UnionDef;
 import com.circumgraph.model.validation.SourceLocation;
 
 import org.eclipse.collections.api.factory.Lists;
+import org.eclipse.collections.api.factory.Maps;
 import org.eclipse.collections.api.list.MutableList;
+import org.eclipse.collections.api.map.MutableMap;
 
+import graphql.language.ArrayValue;
+import graphql.language.BooleanValue;
 import graphql.language.DescribedNode;
+import graphql.language.DirectivesContainer;
 import graphql.language.EnumTypeDefinition;
+import graphql.language.EnumValue;
 import graphql.language.FieldDefinition;
+import graphql.language.FloatValue;
+import graphql.language.IntValue;
 import graphql.language.InterfaceTypeDefinition;
 import graphql.language.ListType;
+import graphql.language.Node;
 import graphql.language.NonNullType;
+import graphql.language.NullValue;
+import graphql.language.ObjectField;
 import graphql.language.ObjectTypeDefinition;
-import graphql.language.SDLDefinition;
+import graphql.language.ObjectValue;
+import graphql.language.StringValue;
 import graphql.language.Type;
 import graphql.language.TypeDefinition;
 import graphql.language.TypeName;
+import graphql.language.UnionTypeDefinition;
+import graphql.language.Value;
+import graphql.schema.CoercingParseLiteralException;
 import graphql.schema.idl.SchemaParser;
 import graphql.schema.idl.TypeDefinitionRegistry;
 import graphql.schema.idl.errors.SchemaProblem;
@@ -101,6 +121,14 @@ public class GraphQLSchema
 			{
 				types.add(defineEnum((EnumTypeDefinition) type));
 			}
+			else if(type instanceof UnionTypeDefinition)
+			{
+				types.add(defineUnion((UnionTypeDefinition) type));
+			}
+			else
+			{
+				throw new ModelException("Encountered unknown type " + type.getName());
+			}
 		}
 
 		return new GraphQLSchema(types);
@@ -111,6 +139,7 @@ public class GraphQLSchema
 		return ObjectDef.create(def.getName())
 			.withSourceLocation(toSourceLocation(def))
 			.withDescription(toDescription(def))
+			.addDirectives(createDirectives(def))
 			.addImplementsAll(createImplements(def.getImplements()))
 			.addFields(createFields(def.getFieldDefinitions()))
 			.build();
@@ -121,6 +150,7 @@ public class GraphQLSchema
 		return InterfaceDef.create(def.getName())
 			.withSourceLocation(toSourceLocation(def))
 			.withDescription(toDescription(def))
+			.addDirectives(createDirectives(def))
 			.addImplementsAll(createImplements(def.getImplements()))
 			.addFields(createFields(def.getFieldDefinitions()))
 			.build();
@@ -131,11 +161,24 @@ public class GraphQLSchema
 		return EnumDef.create(def.getName())
 			.withSourceLocation(toSourceLocation(def))
 			.withDescription(toDescription(def))
+			.addDirectives(createDirectives(def))
 			.addValues(Lists.immutable.ofAll(def.getEnumValueDefinitions())
 				.collect(v -> EnumValueDef.create(v.getName())
 					.withDescription(toDescription(v))
 					.build()
 				)
+			)
+			.build();
+	}
+
+	private static UnionDef defineUnion(UnionTypeDefinition def)
+	{
+		return UnionDef.create(def.getName())
+			.withSourceLocation(toSourceLocation(def))
+			.withDescription(toDescription(def))
+			.addDirectives(createDirectives(def))
+			.addTypes(Lists.immutable.ofAll(def.getMemberTypes())
+				.collect(type -> toOutputType(type))
 			)
 			.build();
 	}
@@ -174,10 +217,59 @@ public class GraphQLSchema
 		OutputTypeDef dataType = toOutputType(gqlType);
 
 		return FieldDef.create(def.getName())
-			.withDescription(def.getDescription() == null ? null : def.getDescription().content)
+			.withSourceLocation(toSourceLocation(def))
+			.withDescription(toDescription(def))
 			.withNullable(nullable)
 			.withType(dataType)
+			.addArguments(createArguments(def))
+			.addDirectives(createDirectives(def))
 			.build();
+	}
+
+	private static Iterable<ArgumentDef> createArguments(FieldDefinition def)
+	{
+		return Lists.immutable.ofAll(def.getInputValueDefinitions())
+			.collect(arg -> {
+				graphql.language.Type<?> gqlType = def.getType();
+				boolean nullable;
+
+				if(gqlType instanceof NonNullType)
+				{
+					nullable = false;
+					gqlType = ((NonNullType) gqlType).getType();
+				}
+				else
+				{
+					nullable = true;
+				}
+
+				InputTypeDef dataType = toInputType(gqlType);
+
+				return ArgumentDef.create(arg.getName())
+					.withSourceLocation(toSourceLocation(def))
+					.withDescription(toDescription(def))
+					.withType(dataType)
+					.withNullable(nullable)
+					.addDirectives(createDirectives(arg))
+					.build();
+			});
+	}
+
+	private static Iterable<DirectiveUse> createDirectives(
+		DirectivesContainer<?> def
+	)
+	{
+		return Lists.immutable.ofAll(def.getDirectives())
+			.collect(d -> {
+				var builder = DirectiveUse.create(d.getName());
+
+				for(var arg : d.getArguments())
+				{
+					builder = builder.addArgument(arg.getName(), toJavaValue(arg.getValue()));
+				}
+
+				return builder.build();
+			});
 	}
 
 	private static OutputTypeDef toOutputType(graphql.language.Type<?> type)
@@ -191,6 +283,17 @@ public class GraphQLSchema
 		return TypeRef.create(tn.getName());
 	}
 
+	private static InputTypeDef toInputType(graphql.language.Type<?> type)
+	{
+		if(type instanceof ListType)
+		{
+			return ListDef.input(toInputType(type));
+		}
+
+		TypeName tn = (TypeName) type;
+		return TypeRef.create(tn.getName());
+	}
+
 	private static String toDescription(DescribedNode<?> node)
 	{
 		return node.getDescription() == null
@@ -198,7 +301,7 @@ public class GraphQLSchema
 			: node.getDescription().getContent();
 	}
 
-	private static SourceLocation toSourceLocation(SDLDefinition<?> def)
+	private static SourceLocation toSourceLocation(Node<?> def)
 	{
 		graphql.language.SourceLocation loc = def.getSourceLocation();
 		if(loc == null) return SourceLocation.unknown();
@@ -207,5 +310,50 @@ public class GraphQLSchema
 			loc.getSourceName() == null ? "<source>" : loc.getSourceName()
 			+ ":" + loc.getLine() + ":" + loc.getColumn()
 		);
+	}
+
+	private static Object toJavaValue(Value<?> input)
+	{
+		if(input instanceof NullValue)
+		{
+			return null;
+		}
+		else if(input instanceof FloatValue)
+		{
+			return ((FloatValue) input).getValue();
+		}
+		else if(input instanceof StringValue)
+		{
+			return ((StringValue) input).getValue();
+		}
+		else if (input instanceof IntValue)
+		{
+			return ((IntValue) input).getValue().intValue();
+		}
+		else if (input instanceof BooleanValue)
+		{
+			return ((BooleanValue) input).isValue();
+		}
+		else if (input instanceof EnumValue)
+		{
+			return ((EnumValue) input).getName();
+		}
+		else if(input instanceof ArrayValue)
+		{
+			return Lists.immutable.ofAll(((ArrayValue) input).getValues())
+				.collect(GraphQLSchema::toJavaValue);
+		}
+		else if(input instanceof ObjectValue)
+		{
+			List<ObjectField> values = ((ObjectValue) input).getObjectFields();
+			MutableMap<String, Object> parsedValues = Maps.mutable.empty();
+			values.forEach(field -> {
+				Object parsedValue = toJavaValue(field.getValue());
+				parsedValues.put(field.getName(), parsedValue);
+			});
+			return parsedValues.toImmutable();
+		}
+
+		throw new CoercingParseLiteralException();
 	}
 }
