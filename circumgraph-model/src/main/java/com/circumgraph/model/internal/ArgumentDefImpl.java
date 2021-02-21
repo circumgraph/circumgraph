@@ -7,6 +7,7 @@ import com.circumgraph.model.DirectiveUse;
 import com.circumgraph.model.InputTypeDef;
 import com.circumgraph.model.validation.SourceLocation;
 
+import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.ListIterable;
 
@@ -66,7 +67,13 @@ public class ArgumentDefImpl
 	@Override
 	public InputTypeDef getType()
 	{
-		return defs.getType(type, InputTypeDef.class);
+		return defs == null ? type : defs.getType(type, InputTypeDef.class);
+	}
+
+	@Override
+	public String getTypeName()
+	{
+		return type.getName();
 	}
 
 	@Override
@@ -85,6 +92,18 @@ public class ArgumentDefImpl
 	public void prepare(ModelDefs defs)
 	{
 		this.defs = defs;
+	}
+
+	public static Builder create(String name)
+	{
+		return new BuilderImpl(
+			null,
+			name,
+			null,
+			null,
+			false,
+			Lists.immutable.empty()
+		);
 	}
 
 	public static class BuilderImpl
@@ -182,6 +201,21 @@ public class ArgumentDefImpl
 				type,
 				nullable,
 				directives.newWith(directive)
+			);
+		}
+
+		@Override
+		public Builder addDirectives(
+			Iterable<? extends DirectiveUse> directives
+		)
+		{
+			return new BuilderImpl(
+				sourceLocation,
+				name,
+				description,
+				type,
+				nullable,
+				this.directives.newWithAll(directives)
 			);
 		}
 

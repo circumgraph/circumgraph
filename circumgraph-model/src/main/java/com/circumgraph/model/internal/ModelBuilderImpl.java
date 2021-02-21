@@ -1,7 +1,12 @@
 package com.circumgraph.model.internal;
 
+import java.util.Objects;
+import java.util.Optional;
+
+import com.circumgraph.model.ArgumentDef;
 import com.circumgraph.model.DirectiveUse;
 import com.circumgraph.model.FieldDef;
+import com.circumgraph.model.HasDirectives;
 import com.circumgraph.model.HasSourceLocation;
 import com.circumgraph.model.InterfaceDef;
 import com.circumgraph.model.Model;
@@ -10,13 +15,19 @@ import com.circumgraph.model.ModelException;
 import com.circumgraph.model.ObjectDef;
 import com.circumgraph.model.ScalarDef;
 import com.circumgraph.model.Schema;
+import com.circumgraph.model.StructuredDef;
 import com.circumgraph.model.TypeDef;
-import com.circumgraph.model.TypeRef;
+import com.circumgraph.model.validation.ValidationMessage;
+import com.circumgraph.model.validation.ValidationMessageCollector;
+import com.circumgraph.model.validation.ValidationMessageLevel;
 
 import org.eclipse.collections.api.RichIterable;
+import org.eclipse.collections.api.block.predicate.Predicate;
+import org.eclipse.collections.api.block.procedure.Procedure;
+import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.factory.Maps;
 import org.eclipse.collections.api.factory.Sets;
-import org.eclipse.collections.api.list.ImmutableList;
+import org.eclipse.collections.api.list.ListIterable;
 import org.eclipse.collections.api.map.ImmutableMap;
 import org.eclipse.collections.api.map.MutableMap;
 import org.eclipse.collections.api.set.ImmutableSet;
@@ -59,6 +70,9 @@ public class ModelBuilderImpl
 		// Go through and merge all types
 		MutableMap<String, TypeDef> typeMap = Maps.mutable.empty();
 
+		var validationMessages = Lists.mutable.<ValidationMessage>empty();
+		var validation = ValidationMessageCollector.create(validationMessages::add);
+
 		for(TypeDef def : types)
 		{
 			TypeDef current = typeMap.get(def.getName());
@@ -68,12 +82,23 @@ public class ModelBuilderImpl
 			}
 			else
 			{
-				typeMap.put(def.getName(), merge(current, def));
+				typeMap.put(def.getName(), merge(validation, current, def));
 			}
 		}
 
 		// TODO: Validate all the types
 
+		// Raise an error if any validation error has been found
+		Predicate<ValidationMessage> isError = m -> m.getLevel() == ValidationMessageLevel.ERROR;
+		if(validationMessages.anySatisfy(isError))
+		{
+			throw new ModelException(
+				"Invalid model, errors reported:\n"
+				+ validationMessages.select(isError)
+					.collect(msg -> msg.getLocation() + ": " + msg.getMessage())
+					.makeString("\n")
+			);
+		}
 
 		// Prepare and create model
 		ImmutableMap<String, TypeDef> types = typeMap.toImmutable();
@@ -101,51 +126,41 @@ public class ModelBuilderImpl
 		));
 	}
 
-	private TypeDef merge(TypeDef current, TypeDef extension)
+	private TypeDef merge(
+		ValidationMessageCollector collector,
+		TypeDef current,
+		TypeDef extension
+	)
 	{
 		if(current instanceof ObjectDef)
 		{
 			if(extension instanceof ObjectDef)
 			{
-				return mergeObject((ObjectDef) current, (ObjectDef) extension);
-			}
-			else
-			{
-				throw incompatibleException(current, extension);
+				return mergeObject(collector, (ObjectDef) current, (ObjectDef) extension);
 			}
 		}
 		else if(current instanceof InterfaceDef)
 		{
 			if(extension instanceof InterfaceDef)
 			{
-				return mergeInterface((InterfaceDef) current, (InterfaceDef) extension);
-			}
-			else
-			{
-				throw incompatibleException(current, extension);
+				return mergeInterface(collector, (InterfaceDef) current, (InterfaceDef) extension);
 			}
 		}
 
-		throw incompatibleException(current, extension);
-	}
-
-	/**
-	 * Create an exception that indicates incompatible types.
-	 *
-	 * @param current
-	 * @param extension
-	 * @return
-	 */
-	private ModelException incompatibleException(TypeDef current, TypeDef extension)
-	{
-		return new ModelException(
-			String.format(
+		// Report not being able to merge
+		collector.error()
+			.withLocation(current instanceof HasSourceLocation ? ((HasSourceLocation) current).getSourceLocation() : null)
+			.withMessage(
 				"Could not merge: %s (at %s) has a different type than previously defined at %s",
 				extension.getName(),
 				toLocation(extension),
 				toLocation(current)
 			)
-		);
+			.withCode("model:incompatible-types")
+			.withArgument("name", current.getName())
+			.done();
+
+		return current;
 	}
 
 	/**
@@ -155,105 +170,217 @@ public class ModelBuilderImpl
 	 * @param d2
 	 * @return
 	 */
-	private ObjectDef mergeObject(ObjectDef d1, ObjectDef d2)
-	{
-		return new ObjectDefImpl(
-			d1.getSourceLocation(),
-			d1.getName(),
-			d1.getDescription().orElse(d2.getDescription().orElse(null)),
-			mergeImplements(d1.getImplementsNames(), d2.getImplementsNames()),
-			mergeDirectives(d1.getDirectives(), d2.getDirectives()),
-			mergeFields(d1.getDirectFields(), d2.getDirectFields())
-		);
-	}
-
-	private InterfaceDef mergeInterface(InterfaceDef d1, InterfaceDef d2)
-	{
-		return new InterfaceDefImpl(
-			d1.getSourceLocation(),
-			d1.getName(),
-			d1.getDescription().orElse(d2.getDescription().orElse(null)),
-			mergeImplements(d1.getImplementsNames(), d2.getImplementsNames()),
-			mergeDirectives(d1.getDirectives(), d2.getDirectives()),
-			mergeFields(d1.getDirectFields(), d2.getDirectFields())
-		);
-	}
-
-	private ImmutableList<TypeDef> mergeImplements(
-		RichIterable<String> i1,
-		RichIterable<String> i2
+	private ObjectDef mergeObject(
+		ValidationMessageCollector collector,
+		ObjectDef d1,
+		ObjectDef d2
 	)
 	{
-		MutableSet<String> result = Sets.mutable.ofAll(i1);
-		result.addAllIterable(i2);
-		return result.toList()
-			.<TypeDef>collect(TypeRef::create)
-			.toImmutable();
+		return ObjectDef.create(d1.getName())
+			.withSourceLocation(d1.getSourceLocation())
+			.withDescription(pickFirstNonBlank(d1.getDescription(), d2.getDescription()))
+			.addImplementsAll(mergeImplements(collector, d1, d2))
+			.addDirectives(mergeDirectives(collector, d1, d2))
+			.addFields(mergeFields(collector, d1, d1.getDirectFields(), d2.getDirectFields()))
+			.build();
 	}
 
-	private ImmutableList<DirectiveUse> mergeDirectives(
-		RichIterable<DirectiveUse> d1,
-		RichIterable<DirectiveUse> d2
+	private InterfaceDef mergeInterface(
+		ValidationMessageCollector collector,
+		InterfaceDef d1,
+		InterfaceDef d2
 	)
 	{
-		MutableMap<String, DirectiveUse> directives = Maps.mutable.empty();
-		for(DirectiveUse d : d1)
-		{
-			directives.put(d.getName(), d);
-		}
-
-		for(DirectiveUse d : d2)
-		{
-			DirectiveUse current = directives.get(d.getName());
-			if(current == null)
-			{
-				directives.put(d.getName(), d);
-			}
-			else
-			{
-				directives.put(d.getName(), mergeDirective(current, d));
-			}
-		}
-
-		return directives.toList().toImmutable();
+		return InterfaceDef.create(d1.getName())
+			.withSourceLocation(d1.getSourceLocation())
+			.withDescription(pickFirstNonBlank(d1.getDescription(), d2.getDescription()))
+			.addImplementsAll(mergeImplements(collector, d1, d2))
+			.addDirectives(mergeDirectives(collector, d1, d2))
+			.addFields(mergeFields(collector, d1, d1.getDirectFields(), d2.getDirectFields()))
+			.build();
 	}
 
-	private DirectiveUse mergeDirective(DirectiveUse d1, DirectiveUse d2)
+	private ListIterable<String> mergeImplements(
+		ValidationMessageCollector collector,
+		StructuredDef t1,
+		StructuredDef t2
+	)
 	{
-		// TODO: Logic for merging the directives
-		return d1;
+		MutableSet<String> result = Sets.mutable.ofAll(t1.getImplementsNames());
+		result.addAllIterable(t2.getImplementsNames());
+		return result.toList();
 	}
 
-	private ImmutableList<FieldDef> mergeFields(
+	private ListIterable<FieldDef> mergeFields(
+		ValidationMessageCollector collector,
+		TypeDef type,
 		RichIterable<FieldDef> f1,
 		RichIterable<FieldDef> f2
 	)
 	{
 		MutableMap<String, FieldDef> fields = Maps.mutable.empty();
-		for(FieldDef field : f1)
-		{
-			fields.put(field.getName(), field);
-		}
-
-		for(FieldDef field : f2)
-		{
-			FieldDef current = fields.get(field.getName());
-			if(current == null)
+		Procedure<FieldDef> p = field -> {
+			if(fields.containsKey(field.getName()))
 			{
-				fields.put(field.getName(), field);
+				fields.put(field.getName(), mergeField(
+					collector,
+					type,
+					fields.get(field.getName()),
+					field
+				));
 			}
 			else
 			{
-				fields.put(field.getName(), mergeField(current, field));
+				fields.put(field.getName(), field);
 			}
-		}
+		};
 
-		return fields.toList().toImmutable();
+		f1.forEach(p);
+		f2.forEach(p);
+
+		return fields.toList();
 	}
 
-	private FieldDef mergeField(FieldDef d1, FieldDef d2)
+	private FieldDef mergeField(
+		ValidationMessageCollector collector,
+		TypeDef type,
+		FieldDef f1,
+		FieldDef f2
+	)
 	{
-		// TODO: Logic for merging the fields
+		if(! Objects.equals(f1.getTypeName(), f2.getTypeName()))
+		{
+			collector.error()
+				.withLocation(f2.getSourceLocation())
+				.withMessage(
+					"Could not merge: %s in %s (at %s) has a different type than previously defined at %s",
+					f2.getName(),
+					type.getName(),
+					toLocation(f2),
+					toLocation(f1)
+				)
+				.withCode("model:incompatible-field-type")
+				.withArgument("type", type.getName())
+				.withArgument("field", f2.getName())
+				.done();
+
+			return f1;
+		}
+
+		return FieldDef.create(f1.getName())
+			.withSourceLocation(f1.getSourceLocation())
+			.withDescription(pickFirstNonBlank(f1.getDescription(), f2.getDescription()))
+			.withNullable(f1.isNullable())
+			.withType(f1.getType())
+			.addArguments(mergeArguments(collector, type, f1, f1.getArguments(), f2.getArguments()))
+			.addDirectives(mergeDirectives(collector, f1, f2))
+			.build();
+	}
+
+	private ListIterable<ArgumentDef> mergeArguments(
+		ValidationMessageCollector collector,
+		TypeDef type,
+		FieldDef field,
+		RichIterable<ArgumentDef> a1,
+		RichIterable<ArgumentDef> a2
+	)
+	{
+		MutableMap<String, ArgumentDef> arguments = Maps.mutable.empty();
+		Procedure<ArgumentDef> p = arg -> {
+			if(arguments.containsKey(arg.getName()))
+			{
+				arguments.put(arg.getName(), mergeArgument(
+					collector,
+					type,
+					field,
+					arguments.get(arg.getName()),
+					arg
+				));
+			}
+			else
+			{
+				arguments.put(arg.getName(), arg);
+			}
+		};
+
+		a1.forEach(p);
+		a2.forEach(p);
+
+		return arguments.toList();
+	}
+
+	private ArgumentDef mergeArgument(
+		ValidationMessageCollector collector,
+		TypeDef type,
+		FieldDef field,
+		ArgumentDef a1,
+		ArgumentDef a2
+	)
+	{
+		if(! Objects.equals(a1.getTypeName(), a2.getTypeName()))
+		{
+			collector.error()
+				.withLocation(a1.getSourceLocation())
+				.withMessage(
+					"Could not merge: %s in %s (at %s) has a different type than previously defined at %s",
+					a1.getName(),
+					type.getName(),
+					toLocation(a2),
+					toLocation(a1)
+				)
+				.withCode("model:incompatible-field-type")
+				.withArgument("type", type.getName())
+				.withArgument("field", field.getName())
+				.withArgument("argument", a1.getName())
+				.done();
+
+			return a1;
+		}
+
+		return ArgumentDef.create(a1.getName())
+			.withSourceLocation(a1.getSourceLocation())
+			.withType(a1.getType())
+			.withDescription(pickFirstNonBlank(a1.getDescription(), a2.getDescription()))
+			.withNullable(a1.isNullable())
+			.addDirectives(mergeDirectives(collector, a1, a2))
+			.build();
+	}
+
+	private ListIterable<DirectiveUse> mergeDirectives(
+		ValidationMessageCollector collector,
+		HasDirectives d1,
+		HasDirectives d2
+	)
+	{
+		MutableMap<String, DirectiveUse> directives = Maps.mutable.empty();
+		Procedure<DirectiveUse> p = d -> {
+			if(directives.containsKey(d.getName()))
+			{
+				directives.put(d.getName(), mergeDirective(
+					collector,
+					directives.get(d.getName()),
+					d
+				));
+			}
+			else
+			{
+				directives.put(d.getName(), d);
+			}
+		};
+
+		d1.getDirectives().forEach(p);
+		d2.getDirectives().forEach(p);
+
+		return directives.toList();
+	}
+
+	private DirectiveUse mergeDirective(
+		ValidationMessageCollector collector,
+		DirectiveUse d1,
+		DirectiveUse d2
+	)
+	{
+		// TODO: Logic for merging the directives
 		return d1;
 	}
 
@@ -263,7 +390,7 @@ public class ModelBuilderImpl
 	 * @param current
 	 * @return
 	 */
-	private String toLocation(TypeDef current)
+	private String toLocation(Object current)
 	{
 		if(current instanceof HasSourceLocation)
 		{
@@ -273,5 +400,10 @@ public class ModelBuilderImpl
 		{
 			return "Unknown Location";
 		}
+	}
+
+	private static String pickFirstNonBlank(Optional<String> a, Optional<String> b)
+	{
+		return a.isEmpty() || a.get().isBlank() ? b.orElse(null) : a.get();
 	}
 }

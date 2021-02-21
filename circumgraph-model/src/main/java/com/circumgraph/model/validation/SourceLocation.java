@@ -26,8 +26,9 @@ public interface SourceLocation
 		StackTraceElement[] trace = Thread.currentThread().getStackTrace();
 		for(int i=0; i<trace.length; i++)
 		{
+			String module = trace[i].getModuleName();
 			String className = trace[i].getClassName();
-			if(! className.contains("com.circumgraph.model"))
+			if(! "java.base".equals(module) && ! className.contains("com.circumgraph.model"))
 			{
 				return new BasicSourceLocation(trace[i].toString());
 			}

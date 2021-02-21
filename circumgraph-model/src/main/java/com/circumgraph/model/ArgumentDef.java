@@ -2,6 +2,8 @@ package com.circumgraph.model;
 
 import java.util.Optional;
 
+import com.circumgraph.model.internal.ArgumentDefImpl;
+
 /**
  * Argument of a {@link FieldDef}.
  */
@@ -30,11 +32,23 @@ public interface ArgumentDef
 	InputTypeDef getType();
 
 	/**
+	 * Get the type name.
+	 *
+	 * @return
+	 */
+	String getTypeName();
+
+	/**
 	 * Get if the field is nullable.
 	 *
 	 * @return
 	 */
 	boolean isNullable();
+
+	public static Builder create(String name)
+	{
+		return ArgumentDefImpl.create(name);
+	}
 
 	interface Builder
 		extends HasDirectives.Builder<Builder>, HasSourceLocation.Builder<Builder>

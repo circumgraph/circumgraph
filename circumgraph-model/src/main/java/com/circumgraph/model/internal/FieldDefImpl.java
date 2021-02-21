@@ -73,7 +73,13 @@ public class FieldDefImpl
 	@Override
 	public OutputTypeDef getType()
 	{
-		return defs.getType(type, OutputTypeDef.class);
+		return defs == null ? type : defs.getType(type, OutputTypeDef.class);
+	}
+
+	@Override
+	public String getTypeName()
+	{
+		return type.getName();
 	}
 
 	@Override
@@ -98,6 +104,39 @@ public class FieldDefImpl
 	public ListIterable<DirectiveUse> getDirectives()
 	{
 		return directives;
+	}
+
+	@Override
+	public String toString()
+	{
+		return "FieldDef{name=" + name
+			+ ", type=" + type
+			+ ", nullable=" + nullable
+			+ ", description=" + description
+			+ ", directives=" + directives
+			+ ", sourceLocation=" + sourceLocation
+			+ "}";
+	}
+
+	@Override
+	public int hashCode()
+	{
+		return Objects.hash(arguments, description, directives, name, nullable, type);
+	}
+
+	@Override
+	public boolean equals(Object obj)
+	{
+		if(this == obj) return true;
+		if(obj == null) return false;
+		if(getClass() != obj.getClass()) return false;
+		FieldDefImpl other = (FieldDefImpl) obj;
+		return Objects.equals(arguments, other.arguments)
+			&& Objects.equals(description, other.description)
+			&& Objects.equals(directives, other.directives)
+			&& Objects.equals(name, other.name)
+			&& nullable == other.nullable
+			&& Objects.equals(type.getName(), other.type.getName());
 	}
 
 	public static Builder create(String name)
@@ -228,6 +267,20 @@ public class FieldDefImpl
 		}
 
 		@Override
+		public Builder addArguments(Iterable<? extends ArgumentDef> args)
+		{
+			return new BuilderImpl(
+				sourceLocation,
+				name,
+				description,
+				type,
+				nullable,
+				arguments.newWithAll(args),
+				directives
+			);
+		}
+
+		@Override
 		public Builder addDirective(DirectiveUse directive)
 		{
 			return new BuilderImpl(
@@ -238,6 +291,22 @@ public class FieldDefImpl
 				nullable,
 				arguments,
 				directives.newWith(directive)
+			);
+		}
+
+		@Override
+		public Builder addDirectives(
+			Iterable<? extends DirectiveUse> directives
+		)
+		{
+			return new BuilderImpl(
+				sourceLocation,
+				name,
+				description,
+				type,
+				nullable,
+				arguments,
+				this.directives.newWithAll(directives)
 			);
 		}
 

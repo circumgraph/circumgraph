@@ -137,6 +137,20 @@ public class EnumDefImpl
 		}
 
 		@Override
+		public Builder addDirectives(
+			Iterable<? extends DirectiveUse> directives
+		)
+		{
+			return new BuilderImpl(
+				sourceLocation,
+				name,
+				description,
+				values,
+				this.directives.newWithAll(directives)
+			);
+		}
+
+		@Override
 		public Builder addValue(EnumValueDef value)
 		{
 			return new BuilderImpl(

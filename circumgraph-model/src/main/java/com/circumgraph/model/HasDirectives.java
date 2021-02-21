@@ -24,5 +24,13 @@ public interface HasDirectives
 		 * @return
 		 */
 		B addDirective(DirectiveUse directive);
+
+		/**
+		 * Add several directives.
+		 *
+		 * @param directives
+		 * @return
+		 */
+		B addDirectives(Iterable<? extends DirectiveUse> directives);
 	}
 }

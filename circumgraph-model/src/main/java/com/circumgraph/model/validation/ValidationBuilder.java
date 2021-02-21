@@ -1,7 +1,18 @@
 package com.circumgraph.model.validation;
 
+/**
+ * Builder for validation messages.
+ */
 public interface ValidationBuilder
 {
+	/**
+	 * Set the location where this validation message is created.
+	 *
+	 * @param location
+	 * @return
+	 */
+	ValidationBuilder withLocation(SourceLocation location);
+
 	/**
 	 * Set a the human-readable message.
 	 *
@@ -9,7 +20,7 @@ public interface ValidationBuilder
 	 * @param args
 	 * @return
 	 */
-	ValidationBuilder withMessage(String message, String... args);
+	ValidationBuilder withMessage(String message, Object... args);
 
 	/**
 	 * Set the code of the message.

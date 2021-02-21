@@ -1,5 +1,9 @@
 package com.circumgraph.model.validation;
 
+import java.util.function.Consumer;
+
+import com.circumgraph.model.internal.validation.ValidationMessageCollectorImpl;
+
 /**
  * Collector used for validation messages.
  */
@@ -26,5 +30,16 @@ public interface ValidationMessageCollector
 	default ValidationBuilder error()
 	{
 		return add(ValidationMessageLevel.ERROR);
+	}
+
+	/**
+	 * Create a collector that will receive instances of {@link ValidationMessage}.
+	 *
+	 * @param consumer
+	 * @return
+	 */
+	static ValidationMessageCollector create(Consumer<ValidationMessage> consumer)
+	{
+		return new ValidationMessageCollectorImpl(consumer);
 	}
 }

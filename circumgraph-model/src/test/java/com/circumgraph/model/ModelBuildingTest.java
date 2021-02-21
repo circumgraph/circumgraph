@@ -4,6 +4,7 @@ import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.junit.jupiter.api.Test;
 
@@ -96,5 +97,101 @@ public class ModelBuildingTest
 
 		assertThat(f1.getName(), is("t1"));
 		assertThat(f1.getType(), is(ScalarDef.INT));
+	}
+
+	@Test
+	public void testMergeSimple()
+	{
+		Model model = Model.create()
+			.addType(ObjectDef.create("Test")
+				.addField(FieldDef.create("f1")
+					.withType(ScalarDef.STRING)
+					.build()
+				)
+				.build()
+			)
+			.addType(ObjectDef.create("Test")
+				.addField(FieldDef.create("f2")
+					.withType(ScalarDef.STRING)
+					.build()
+				)
+				.build()
+			)
+			.build();
+
+		TypeDef t = model.get("Test").get();
+		assertThat(t, instanceOf(StructuredDef.class));
+		assertThat(t, instanceOf(ObjectDef.class));
+		assertThat(t.getName(), is("Test"));
+
+		StructuredDef def = StructuredDef.class.cast(t);
+		assertThat(def.getFields(), contains(
+			FieldDef.create("f1")
+				.withType(ScalarDef.STRING)
+				.build(),
+			FieldDef.create("f2")
+				.withType(ScalarDef.STRING)
+				.build()
+		));
+	}
+
+	@Test
+	public void testMergeField()
+	{
+		Model model = Model.create()
+			.addType(ObjectDef.create("Test")
+				.addField(FieldDef.create("f1")
+					.withType(ScalarDef.STRING)
+					.build()
+				)
+				.build()
+			)
+			.addType(ObjectDef.create("Test")
+				.addField(FieldDef.create("f1")
+					.withType(ScalarDef.STRING)
+					.addDirective(DirectiveUse.create("d")
+						.build())
+					.build()
+				)
+				.build()
+			)
+			.build();
+
+		TypeDef t = model.get("Test").get();
+		assertThat(t, instanceOf(StructuredDef.class));
+		assertThat(t, instanceOf(ObjectDef.class));
+		assertThat(t.getName(), is("Test"));
+
+		StructuredDef def = StructuredDef.class.cast(t);
+		assertThat(def.getFields(), contains(
+			FieldDef.create("f1")
+				.withType(ScalarDef.STRING)
+				.addDirective(DirectiveUse.create("d")
+					.build())
+				.build()
+		));
+	}
+
+	@Test
+	public void testMergeFieldDifferentTypes()
+	{
+		assertThrows(ModelException.class, () -> {
+			Model.create()
+				.addType(ObjectDef.create("Test")
+					.addField(FieldDef.create("f1")
+						.withType(ScalarDef.STRING)
+						.build()
+					)
+					.build()
+				)
+				.addType(ObjectDef.create("Test")
+					.addField(FieldDef.create("f1")
+						.withType(ScalarDef.INT)
+						.build()
+					)
+					.build()
+				)
+				.build();
+		});
 	}
 }

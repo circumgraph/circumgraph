@@ -34,6 +34,13 @@ public interface FieldDef
 	OutputTypeDef getType();
 
 	/**
+	 * Get the type name used by the field.
+	 *
+	 * @return
+	 */
+	String getTypeName();
+
+	/**
 	 * Get if the field is nullable.
 	 *
 	 * @return
@@ -107,6 +114,14 @@ public interface FieldDef
 		 * @return
 		 */
 		Builder addArgument(ArgumentDef arg);
+
+		/**
+		 * Add several arguments to the field.
+		 *
+		 * @param args
+		 * @return
+		 */
+		Builder addArguments(Iterable<? extends ArgumentDef> args);
 
 		/**
 		 * Build the field.

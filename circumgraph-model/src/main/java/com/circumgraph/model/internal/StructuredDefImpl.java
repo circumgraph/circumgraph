@@ -286,6 +286,19 @@ public abstract class StructuredDefImpl
 		}
 
 		@Override
+		public B addDirectives(Iterable<? extends DirectiveUse> directives)
+		{
+			return create(
+				sourceLocation,
+				id,
+				description,
+				fields,
+				implementsTypes,
+				this.directives.newWithAll(directives)
+			);
+		}
+
+		@Override
 		public B withSourceLocation(SourceLocation sourceLocation)
 		{
 			return create(

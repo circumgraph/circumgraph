@@ -152,6 +152,20 @@ public class UnionDefImpl
 		}
 
 		@Override
+		public Builder addDirectives(
+			Iterable<? extends DirectiveUse> directives
+		)
+		{
+			return new BuilderImpl(
+				sourceLocation,
+				name,
+				description,
+				types,
+				this.directives.newWithAll(directives)
+			);
+		}
+
+		@Override
 		public Builder addType(OutputTypeDef value)
 		{
 			return new BuilderImpl(
