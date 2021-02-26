@@ -3,6 +3,7 @@ package com.circumgraph.model;
 import java.util.Optional;
 
 import com.circumgraph.model.internal.ModelBuilderImpl;
+import com.circumgraph.model.validation.DirectiveValidator;
 
 import org.eclipse.collections.api.list.ListIterable;
 
@@ -55,6 +56,14 @@ public interface Model
 	 */
 	interface Builder
 	{
+		/**
+		 * Add a validator for a certain type of directive.
+		 *
+		 * @param validator
+		 * @return
+		 */
+		Builder addDirectiveValidator(DirectiveValidator<?> validator);
+
 		/**
 		 * Add a type to this builder.
 		 *

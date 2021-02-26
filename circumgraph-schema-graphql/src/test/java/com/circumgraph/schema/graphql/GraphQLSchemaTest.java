@@ -10,6 +10,7 @@ import com.circumgraph.model.DirectiveUse;
 import com.circumgraph.model.EnumDef;
 import com.circumgraph.model.EnumValueDef;
 import com.circumgraph.model.FieldDef;
+import com.circumgraph.model.HasDirectives;
 import com.circumgraph.model.InterfaceDef;
 import com.circumgraph.model.Model;
 import com.circumgraph.model.ModelException;
@@ -18,6 +19,8 @@ import com.circumgraph.model.ScalarDef;
 import com.circumgraph.model.StructuredDef;
 import com.circumgraph.model.TypeDef;
 import com.circumgraph.model.UnionDef;
+import com.circumgraph.model.validation.DirectiveValidator;
+import com.circumgraph.model.validation.ValidationMessageCollector;
 
 import org.junit.jupiter.api.Test;
 
@@ -26,6 +29,7 @@ public class GraphQLSchemaTest
 	private static Model parse(String in)
 	{
 		return Model.create()
+			.addDirectiveValidator(new TestDirectiveValidator())
 			.addSchema(GraphQLSchema.create(in))
 			.build();
 	}
@@ -219,5 +223,31 @@ public class GraphQLSchemaTest
 				.addArgument("v", 100)
 				.build()
 		));
+	}
+
+	static class TestDirectiveValidator
+		implements DirectiveValidator<HasDirectives>
+	{
+		@Override
+		public String getName()
+		{
+			return "test";
+		}
+
+		@Override
+		public Class<HasDirectives> getContextType()
+		{
+			return HasDirectives.class;
+		}
+
+		@Override
+		public void validate(
+			HasDirectives location,
+			DirectiveUse directive,
+			ValidationMessageCollector collector
+		)
+		{
+			// Always valid
+		}
 	}
 }

@@ -6,6 +6,9 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import com.circumgraph.model.validation.DirectiveValidator;
+import com.circumgraph.model.validation.ValidationMessageCollector;
+
 import org.junit.jupiter.api.Test;
 
 public class ModelBuildingTest
@@ -139,6 +142,7 @@ public class ModelBuildingTest
 	public void testMergeField()
 	{
 		Model model = Model.create()
+			.addDirectiveValidator(new TestDirectiveOnFieldValidator())
 			.addType(ObjectDef.create("Test")
 				.addField(FieldDef.create("f1")
 					.withType(ScalarDef.STRING)
@@ -149,7 +153,7 @@ public class ModelBuildingTest
 			.addType(ObjectDef.create("Test")
 				.addField(FieldDef.create("f1")
 					.withType(ScalarDef.STRING)
-					.addDirective(DirectiveUse.create("d")
+					.addDirective(DirectiveUse.create("test")
 						.build())
 					.build()
 				)
@@ -166,7 +170,7 @@ public class ModelBuildingTest
 		assertThat(def.getFields(), contains(
 			FieldDef.create("f1")
 				.withType(ScalarDef.STRING)
-				.addDirective(DirectiveUse.create("d")
+				.addDirective(DirectiveUse.create("test")
 					.build())
 				.build()
 		));
@@ -193,5 +197,31 @@ public class ModelBuildingTest
 				)
 				.build();
 		});
+	}
+
+	static class TestDirectiveOnFieldValidator
+		implements DirectiveValidator<FieldDef>
+	{
+		@Override
+		public String getName()
+		{
+			return "test";
+		}
+
+		@Override
+		public Class<FieldDef> getContextType()
+		{
+			return FieldDef.class;
+		}
+
+		@Override
+		public void validate(
+			FieldDef location,
+			DirectiveUse directive,
+			ValidationMessageCollector collector
+		)
+		{
+			// Always valid
+		}
 	}
 }

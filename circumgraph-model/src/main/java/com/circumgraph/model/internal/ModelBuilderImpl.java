@@ -2,6 +2,7 @@ package com.circumgraph.model.internal;
 
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 import com.circumgraph.model.ArgumentDef;
 import com.circumgraph.model.DirectiveUse;
@@ -17,6 +18,7 @@ import com.circumgraph.model.ScalarDef;
 import com.circumgraph.model.Schema;
 import com.circumgraph.model.StructuredDef;
 import com.circumgraph.model.TypeDef;
+import com.circumgraph.model.validation.DirectiveValidator;
 import com.circumgraph.model.validation.ValidationMessage;
 import com.circumgraph.model.validation.ValidationMessageCollector;
 import com.circumgraph.model.validation.ValidationMessageLevel;
@@ -30,8 +32,10 @@ import org.eclipse.collections.api.factory.Sets;
 import org.eclipse.collections.api.list.ListIterable;
 import org.eclipse.collections.api.map.ImmutableMap;
 import org.eclipse.collections.api.map.MutableMap;
+import org.eclipse.collections.api.multimap.MutableMultimap;
 import org.eclipse.collections.api.set.ImmutableSet;
 import org.eclipse.collections.api.set.MutableSet;
+import org.eclipse.collections.impl.factory.Multimaps;
 
 /**
  * Implementation of {@link Model.Builder}.
@@ -40,19 +44,32 @@ public class ModelBuilderImpl
 	implements Model.Builder
 {
 	private final ImmutableSet<TypeDef> types;
+	private final ImmutableSet<DirectiveValidator<?>> directiveValidators;
 
 	public ModelBuilderImpl(
-		ImmutableSet<TypeDef> types
+		ImmutableSet<TypeDef> types,
+		ImmutableSet<DirectiveValidator<?>> directiveValidators
 	)
 	{
 		this.types = types;
+		this.directiveValidators = directiveValidators;
+	}
+
+	@Override
+	public Builder addDirectiveValidator(DirectiveValidator<?> validator)
+	{
+		return new ModelBuilderImpl(
+			types,
+			directiveValidators.newWith(validator)
+		);
 	}
 
 	@Override
 	public Model.Builder addType(TypeDef type)
 	{
 		return new ModelBuilderImpl(
-			types.newWith(type)
+			types.newWith(type),
+			directiveValidators
 		);
 	}
 
@@ -60,18 +77,58 @@ public class ModelBuilderImpl
 	public Builder addSchema(Schema schema)
 	{
 		return new ModelBuilderImpl(
-			types.newWithAll(schema.getTypes())
+			types.newWithAll(schema.getTypes()),
+			directiveValidators.newWithAll(schema.getDirectiveValidators())
 		);
 	}
 
 	@Override
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public Model build()
 	{
-		// Go through and merge all types
-		MutableMap<String, TypeDef> typeMap = Maps.mutable.empty();
-
 		var validationMessages = Lists.mutable.<ValidationMessage>empty();
 		var validation = ValidationMessageCollector.create(validationMessages::add);
+
+		// Create the directive validator map
+		MutableMultimap<String, DirectiveValidator<?>> directives = Multimaps.mutable.set.empty();
+		for(DirectiveValidator<?> v : directiveValidators)
+		{
+			directives.put(v.getName(), v);
+		}
+
+		Consumer<HasDirectives> directiveValidator = def -> {
+			for(DirectiveUse d : def.getDirectives())
+			{
+				boolean didValidate = false;
+
+				for(DirectiveValidator validator : directives.get(d.getName()))
+				{
+					if(validator.getContextType().isAssignableFrom(def.getClass()))
+					{
+						validator.validate(
+							(HasDirectives) def,
+							d,
+							validation
+						);
+
+						didValidate = true;
+					}
+				}
+
+				if(! didValidate)
+				{
+					validation.error()
+						.withLocation(d.getSourceLocation())
+						.withMessage("Directive %s can not be used at this location", d.getName())
+						.withCode("model:invalid-directive")
+						.withArgument("directive", d.getName())
+						.done();
+				}
+			}
+		};
+
+		// Go through and merge all types
+		MutableMap<String, TypeDef> typeMap = Maps.mutable.empty();
 
 		for(TypeDef def : types)
 		{
@@ -86,7 +143,28 @@ public class ModelBuilderImpl
 			}
 		}
 
-		// TODO: Validate all the types
+		// Validate all the directives
+		for(TypeDef type : typeMap)
+		{
+			if(type instanceof HasDirectives)
+			{
+				directiveValidator.accept((HasDirectives) type);
+			}
+
+			if(type instanceof StructuredDef)
+			{
+				StructuredDef structured = (StructuredDef) type;
+				for(FieldDef field : structured.getDirectFields())
+				{
+					directiveValidator.accept(field);
+
+					for(ArgumentDef arg : field.getArguments())
+					{
+						directiveValidator.accept(arg);
+					}
+				}
+			}
+		}
 
 		// Raise an error if any validation error has been found
 		Predicate<ValidationMessage> isError = m -> m.getLevel() == ValidationMessageLevel.ERROR;
@@ -123,7 +201,7 @@ public class ModelBuilderImpl
 			ScalarDef.INT,
 			ScalarDef.STRING,
 			ScalarDef.ID
-		));
+		), Sets.immutable.empty());
 	}
 
 	private TypeDef merge(
