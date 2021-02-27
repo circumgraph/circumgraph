@@ -1,6 +1,7 @@
 package com.circumgraph.model.internal;
 
 import java.util.Objects;
+import java.util.Optional;
 
 import com.circumgraph.model.DirectiveUse;
 import com.circumgraph.model.validation.SourceLocation;
@@ -43,6 +44,12 @@ public class DirectiveUseImpl
 	public ListIterable<Argument> getArguments()
 	{
 		return arguments;
+	}
+
+	@Override
+	public Optional<Argument> getArgument(String name)
+	{
+		return arguments.detectOptional(p -> p.getName().equals(name));
 	}
 
 	@Override

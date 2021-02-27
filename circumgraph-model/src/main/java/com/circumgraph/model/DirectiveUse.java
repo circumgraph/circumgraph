@@ -1,5 +1,7 @@
 package com.circumgraph.model;
 
+import java.util.Optional;
+
 import com.circumgraph.model.internal.DirectiveUseImpl;
 
 import org.eclipse.collections.api.list.ListIterable;
@@ -24,6 +26,14 @@ public interface DirectiveUse
 	 * @return
 	 */
 	ListIterable<Argument> getArguments();
+
+	/**
+	 * Get an argument via name.
+	 *
+	 * @param name
+	 * @return
+	 */
+	Optional<Argument> getArgument(String name);
 
 	/**
 	 * Start building a new instance.

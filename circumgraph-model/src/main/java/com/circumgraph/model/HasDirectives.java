@@ -1,5 +1,7 @@
 package com.circumgraph.model;
 
+import java.util.Optional;
+
 import org.eclipse.collections.api.list.ListIterable;
 
 /**
@@ -14,6 +16,17 @@ public interface HasDirectives
 	 * @return
 	 */
 	ListIterable<DirectiveUse> getDirectives();
+
+	/**
+	 * Get a directive with the given name.
+	 *
+	 * @param name
+	 * @return
+	 */
+	default Optional<DirectiveUse> getDirective(String name)
+	{
+		return getDirectives().detectOptional(d -> d.getName().equals(name));
+	}
 
 	interface Builder<B extends Builder<B>>
 	{
