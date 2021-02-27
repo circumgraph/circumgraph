@@ -27,6 +27,21 @@ public interface StructuredDef
 	ListIterable<InterfaceDef> getImplements();
 
 	/**
+	 * Get if this type directly implements the given type.
+	 *
+	 * @return
+	 */
+	boolean hasImplements(String name);
+
+	/**
+	 * Find if this type somehow implements the given type.
+	 *
+	 * @param name
+	 * @return
+	 */
+	boolean findImplements(String name);
+
+	/**
 	 * Get the all the fields in this object.
 	 *
 	 * @return

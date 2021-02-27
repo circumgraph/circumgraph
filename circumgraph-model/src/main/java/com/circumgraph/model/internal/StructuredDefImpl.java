@@ -13,6 +13,7 @@ import com.circumgraph.model.validation.SourceLocation;
 
 import org.eclipse.collections.api.RichIterable;
 import org.eclipse.collections.api.factory.Lists;
+import org.eclipse.collections.api.factory.Sets;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.ListIterable;
 import org.eclipse.collections.api.map.ImmutableMap;
@@ -66,6 +67,37 @@ public abstract class StructuredDefImpl
 	public ListIterable<InterfaceDef> getImplements()
 	{
 		return implementsTypes.collect(s -> defs.getType(s, InterfaceDef.class));
+	}
+
+	@Override
+	public boolean hasImplements(String name)
+	{
+		return implementsTypes.containsBy(TypeDef::getName, name);
+	}
+
+	@Override
+	public boolean findImplements(String name)
+	{
+		var checked = Sets.mutable.<String>empty();
+		var stack = getImplements().toStack();
+		while(! stack.isEmpty())
+		{
+			var def = stack.pop();
+			if(def.getName().equals(name))
+			{
+				return true;
+			}
+
+			for(var subDef : def.getImplements())
+			{
+				if(checked.add(subDef.getName()))
+				{
+					stack.push(subDef);
+				}
+			}
+		}
+
+		return false;
 	}
 
 	@Override
