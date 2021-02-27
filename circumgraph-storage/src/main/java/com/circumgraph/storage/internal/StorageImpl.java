@@ -73,6 +73,7 @@ public class StorageImpl
 		Model model
 	)
 	{
+		EntityIndexing indexing = new EntityIndexing();
 		EntitySerializers serializers = new EntitySerializers(model);
 		return model.getImplements("Entity")
 			.collect(def -> {
@@ -83,6 +84,7 @@ public class StorageImpl
 				return EntityDefinition.create(StructuredValue.class, "entity:" + def.getName())
 					.withId(Long.class, StorageImpl::getID)
 					.withCodec(codec)
+					.addIndex(indexing.generateDefinition(def))
 					.build();
 			});
 	}

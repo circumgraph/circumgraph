@@ -5,6 +5,10 @@ import com.circumgraph.model.InterfaceDef;
 import com.circumgraph.model.ScalarDef;
 import com.circumgraph.model.Schema;
 import com.circumgraph.model.TypeDef;
+import com.circumgraph.model.validation.DirectiveValidator;
+import com.circumgraph.storage.internal.EntityIndexing;
+import com.circumgraph.storage.internal.model.IndexDirectiveValidator;
+import com.circumgraph.storage.internal.model.SortableDirectiveValidator;
 
 import org.eclipse.collections.api.factory.Lists;
 
@@ -18,6 +22,15 @@ public class StorageSchema
 
 	private StorageSchema()
 	{
+	}
+
+	@Override
+	public Iterable<? extends DirectiveValidator<?>> getDirectiveValidators()
+	{
+		return Lists.immutable.of(
+			new IndexDirectiveValidator(new EntityIndexing()),
+			new SortableDirectiveValidator()
+		);
 	}
 
 	@Override

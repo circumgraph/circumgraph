@@ -1,16 +1,32 @@
 package com.circumgraph.storage.types;
 
-import com.circumgraph.model.ScalarDef;
+import com.circumgraph.model.SimpleValueDef;
+
+import se.l4.silo.engine.index.search.types.SearchFieldType;
 
 /**
- * Interface used to provide indexing support for scalars.
+ * Interface used to provide indexing support for simple values. Indexers are
+ * named and tied to a specific {@link SimpleValueDef}.
  */
 public interface ValueIndexer<V>
 {
+	/**
+	 * Get the name of this indexer.
+	 *
+	 * @return
+	 */
+	String getName();
+
 	/**
 	 * Get the type this indexes.
 	 *
 	 * @return
 	 */
-	ScalarDef getScalarType();
+	SimpleValueDef getType();
+
+	/**
+	 *
+	 * @return
+	 */
+	SearchFieldType<V> getSearchFieldType();
 }
