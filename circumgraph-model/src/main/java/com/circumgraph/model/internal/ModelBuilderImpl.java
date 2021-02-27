@@ -119,7 +119,7 @@ public class ModelBuilderImpl
 				{
 					validation.error()
 						.withLocation(d.getSourceLocation())
-						.withMessage("Directive %s can not be used at this location", d.getName())
+						.withMessage("Directive @%s can not be used at this location", d.getName())
 						.withCode("model:invalid-directive")
 						.withArgument("directive", d.getName())
 						.done();
@@ -173,7 +173,7 @@ public class ModelBuilderImpl
 			throw new ModelException(
 				"Invalid model, errors reported:\n"
 				+ validationMessages.select(isError)
-					.collect(msg -> msg.getLocation() + ": " + msg.getMessage())
+					.collect(msg -> "  * " + msg.getLocation() + ": " + msg.getMessage())
 					.makeString("\n")
 			);
 		}
