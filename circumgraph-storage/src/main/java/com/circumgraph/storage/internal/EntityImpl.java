@@ -5,8 +5,12 @@ import com.circumgraph.model.StructuredDef;
 import com.circumgraph.storage.Entity;
 import com.circumgraph.storage.StorageException;
 import com.circumgraph.storage.internal.mappers.ValueMapper;
+import com.circumgraph.storage.internal.search.QueryImpl;
+import com.circumgraph.storage.internal.search.SearchResultImpl;
 import com.circumgraph.storage.mutation.StructuredMutation;
 import com.circumgraph.storage.mutation.StructuredMutation.Builder;
+import com.circumgraph.storage.search.Query;
+import com.circumgraph.storage.search.SearchResult;
 import com.circumgraph.values.SimpleValue;
 import com.circumgraph.values.StructuredValue;
 
@@ -102,5 +106,12 @@ public class EntityImpl
 	public Mono<Void> delete(long id)
 	{
 		return backing.delete(id).then();
+	}
+
+	@Override
+	public Mono<SearchResult> search(Query query)
+	{
+		return backing.fetch(((QueryImpl) query).buildQuery())
+			.map(sr -> new SearchResultImpl(sr));
 	}
 }

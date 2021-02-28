@@ -2,6 +2,8 @@ package com.circumgraph.storage;
 
 import com.circumgraph.model.StructuredDef;
 import com.circumgraph.storage.mutation.StructuredMutation;
+import com.circumgraph.storage.search.Query;
+import com.circumgraph.storage.search.SearchResult;
 import com.circumgraph.values.StructuredValue;
 
 import reactor.core.publisher.Mono;
@@ -63,4 +65,11 @@ public interface Entity
 	 * @return
 	 */
 	Mono<Void> delete(long id);
+
+	/**
+	 * Execute a specific query.
+	 *
+	 * @return
+	 */
+	Mono<SearchResult> search(Query query);
 }
