@@ -76,7 +76,7 @@ public class QueryImpl
 		var cursor = page == null ? null : page.getCursor().orElse(null);
 		return query
 			.limited()
-			.offset(((OffsetBasedCursor) cursor).getOffset())
+			.offset(cursor == null ? 0 : ((OffsetBasedCursor) cursor).getOffset())
 			.limit(limit)
 			.build();
 	}
