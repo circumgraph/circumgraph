@@ -9,9 +9,13 @@ import com.circumgraph.model.Model;
 import com.circumgraph.model.ObjectDef;
 import com.circumgraph.model.ScalarDef;
 import com.circumgraph.storage.mutation.SimpleValueMutation;
+import com.circumgraph.storage.search.Query;
 import com.circumgraph.values.SimpleValue;
 
 import org.junit.jupiter.api.Test;
+
+import se.l4.silo.index.EqualsMatcher;
+import se.l4.silo.index.search.query.FieldQuery;
 
 public class EntityIndexTest
 	extends StorageTest
@@ -34,6 +38,14 @@ public class EntityIndexTest
 					)
 					.build()
 				)
+				.addField(FieldDef.create("isbn")
+					.withType(ScalarDef.STRING)
+					.addDirective(DirectiveUse.create("index")
+						.addArgument("type", "TOKEN")
+						.build()
+					)
+					.build()
+				)
 				.build()
 			)
 			.build();
@@ -45,7 +57,8 @@ public class EntityIndexTest
 		var entity = storage.get("Book");
 
 		var mutation = entity.newMutation()
-			.updateField("title", SimpleValueMutation.create("Hello World!"))
+			.updateField("title", SimpleValueMutation.create("A Short History of Nearly Everything"))
+			.updateField("isbn", SimpleValueMutation.create("076790818X"))
 			.build();
 
 		var stored = entity.store(mutation).block();
@@ -57,6 +70,62 @@ public class EntityIndexTest
 		assertThat(fetched, is(stored));
 
 		var titleValue = (SimpleValue) fetched.getFields().get("title");
-		assertThat(titleValue.get(), is("Hello World!"));
+		assertThat(titleValue.get(), is("A Short History of Nearly Everything"));
+	}
+
+	@Test
+	public void testQueryNoClauses()
+	{
+		var entity = storage.get("Book");
+
+		var mutation = entity.newMutation()
+			.updateField("title", SimpleValueMutation.create("A Short History of Nearly Everything"))
+			.updateField("isbn", SimpleValueMutation.create("076790818X"))
+			.build();
+
+		entity.store(mutation).block();
+
+		var results = entity.search(Query.create()).block();
+		assertThat(results.getTotalCount(), is(1));
+	}
+
+	@Test
+	public void testQueryNoMatches()
+	{
+		var entity = storage.get("Book");
+
+		var mutation = entity.newMutation()
+			.updateField("title", SimpleValueMutation.create("A Short History of Nearly Everything"))
+			.updateField("isbn", SimpleValueMutation.create("076790818X"))
+			.build();
+
+		entity.store(mutation).block();
+
+		var results = entity.search(
+			Query.create()
+				.addClause(FieldQuery.create("isbn", EqualsMatcher.create("a")))
+		).block();
+
+		assertThat(results.getTotalCount(), is(0));
+	}
+
+	@Test
+	public void testQueryToken()
+	{
+		var entity = storage.get("Book");
+
+		var mutation = entity.newMutation()
+			.updateField("title", SimpleValueMutation.create("A Short History of Nearly Everything"))
+			.updateField("isbn", SimpleValueMutation.create("076790818X"))
+			.build();
+
+		entity.store(mutation).block();
+
+		var results = entity.search(
+			Query.create()
+				.addClause(FieldQuery.create("isbn", EqualsMatcher.create("076790818X")))
+		).block();
+
+		assertThat(results.getTotalCount(), is(1));
 	}
 }

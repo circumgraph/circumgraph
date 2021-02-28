@@ -1,10 +1,22 @@
 package com.circumgraph.storage.search;
 
+import com.circumgraph.storage.internal.search.QueryImpl;
+
 import se.l4.silo.index.FieldSort;
 import se.l4.silo.index.search.QueryClause;
 
 public interface Query
 {
+	/**
+	 * Create an empty query.
+	 *
+	 * @return
+	 */
+	static Query create()
+	{
+		return new QueryImpl();
+	}
+
 	/**
 	 * Set the page to return.
 	 *
