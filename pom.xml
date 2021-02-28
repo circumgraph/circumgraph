@@ -322,9 +322,9 @@
 	</profiles>
 
 	<scm>
-		<connection>scm:git:git@github.com:LevelFourAB/jobs.git</connection>
-		<url>git@github.com:LevelFourAB/jobs.git</url>
-		<developerConnection>scm:git:git@github.com:LevelFourAB/jobs.git</developerConnection>
+		<connection>scm:git:git@github.com:circumgraph/circumgraph.git</connection>
+		<url>git@github.com:circumgraph/circumgraph.git</url>
+		<developerConnection>scm:git:git@github.com:circumgraph/circumgraph.git</developerConnection>
 	</scm>
 
 	<developers>
