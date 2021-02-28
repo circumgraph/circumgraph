@@ -256,7 +256,9 @@ public class EntityIndexing
 					var name = fieldDef.getName();
 					ValueGenerator fieldGenerator = (root, consumer) -> generator.generate(
 						root,
-						v -> ((StructuredValue) v).getFields().get(name)
+						v -> {
+							consumer.accept(((StructuredValue) v).getFields().get(name));
+						}
 					);
 
 					collectFields(
@@ -276,7 +278,9 @@ public class EntityIndexing
 					var name = fieldDef.getName();
 					ValueGenerator fieldGenerator = (root, consumer) -> generator.generate(
 						root,
-						v -> ((StructuredValue) v).getFields().get(name)
+						v -> {
+							consumer.accept(((StructuredValue) v).getFields().get(name));
+						}
 					);
 
 					collectFields(
