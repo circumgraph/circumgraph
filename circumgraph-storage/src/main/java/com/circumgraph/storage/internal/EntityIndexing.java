@@ -3,6 +3,7 @@ package com.circumgraph.storage.internal;
 import java.util.Optional;
 import java.util.function.Consumer;
 
+import com.circumgraph.model.DirectiveUse;
 import com.circumgraph.model.FieldDef;
 import com.circumgraph.model.InterfaceDef;
 import com.circumgraph.model.ListDef;
@@ -171,7 +172,12 @@ public class EntityIndexing
 			// Only handle this field if it is indexed
 			if(index.isEmpty()) return;
 
-			var indexer = getIndexer(index.get().getName(), (SimpleValueDef) def);
+			var indexer = getIndexer(
+				(String) index.get().getArgument("type")
+					.map(DirectiveUse.Argument::getValue)
+					.orElse(null),
+				(SimpleValueDef) def
+			);
 
 			if(multiple)
 			{
