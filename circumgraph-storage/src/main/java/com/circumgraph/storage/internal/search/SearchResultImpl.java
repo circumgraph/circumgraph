@@ -1,6 +1,7 @@
 package com.circumgraph.storage.internal.search;
 
 import com.circumgraph.storage.search.Edge;
+import com.circumgraph.storage.search.PageCursors;
 import com.circumgraph.storage.search.PageInfo;
 import com.circumgraph.storage.search.SearchResult;
 import com.circumgraph.values.StructuredValue;
@@ -47,6 +48,17 @@ public class SearchResultImpl
 	public PageInfo getPageInfo()
 	{
 		return pageInfo;
+	}
+
+	@Override
+	public PageCursors getPageCursors(int max)
+	{
+		return new PageCursorsImpl(
+			(int) result.getOffset(),
+			(int) result.getTotal(),
+			(int) result.getLimit(),
+			max
+		);
 	}
 
 	@Override

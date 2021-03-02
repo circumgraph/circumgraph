@@ -1,5 +1,7 @@
 package com.circumgraph.storage.internal.search;
 
+import java.util.Objects;
+
 import com.circumgraph.storage.search.Cursor;
 
 /**
@@ -35,9 +37,25 @@ public class OffsetBasedCursor
 	}
 
 	@Override
+	public int hashCode()
+	{
+		return Objects.hash(offset);
+	}
+
+	@Override
+	public boolean equals(Object obj)
+	{
+		if(this == obj) return true;
+		if(obj == null) return false;
+		if(getClass() != obj.getClass()) return false;
+		OffsetBasedCursor other = (OffsetBasedCursor) obj;
+		return offset == other.offset;
+	}
+
+	@Override
 	public String toString()
 	{
-		return "PaginatedCursor{offset=" + offset + "}";
+		return "OffsetBasedCursor{offset=" + offset + "}";
 	}
 
 	public static Cursor from(byte[] data)

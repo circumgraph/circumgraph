@@ -31,6 +31,15 @@ public interface SearchResult
 	PageInfo getPageInfo();
 
 	/**
+	 * Generate cursors for pagination of this result.
+	 *
+	 * @param max
+	 *   the maximum number of pages, including separators
+	 * @return
+	 */
+	PageCursors getPageCursors(int max);
+
+	/**
 	 * Get the edges the result returned.
 	 *
 	 * @return
