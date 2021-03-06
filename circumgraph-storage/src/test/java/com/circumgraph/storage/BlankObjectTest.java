@@ -10,7 +10,7 @@ import com.circumgraph.values.SimpleValue;
 import org.junit.jupiter.api.Test;
 
 public class BlankObjectTest
-	extends StorageTest
+	extends SingleModelTest
 {
 	@Override
 	protected Model createModel()
