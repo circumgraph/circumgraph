@@ -48,6 +48,17 @@ public interface StructuredMutation
 		Builder updateField(String field, Mutation mutation);
 
 		/**
+		 * Add a {@link SimpleValueMutation} for the given field.
+		 *
+		 * @param field
+		 *   the name of the field
+		 * @param mutation
+		 *   the mutation to apply
+		 * @return
+		 */
+		Builder updateField(String field, Object simpleValue);
+
+		/**
 		 * Build the mutation.
 		 *
 		 * @return

@@ -2,6 +2,7 @@ package com.circumgraph.storage.internal.mutation;
 
 import com.circumgraph.model.StructuredDef;
 import com.circumgraph.storage.mutation.Mutation;
+import com.circumgraph.storage.mutation.SimpleValueMutation;
 import com.circumgraph.storage.mutation.StructuredMutation;
 
 import org.eclipse.collections.api.factory.Maps;
@@ -58,6 +59,12 @@ public class StructuredMutationImpl
 		{
 			mutations.put(field, mutation);
 			return this;
+		}
+
+		@Override
+		public Builder updateField(String field, Object simpleValue)
+		{
+			return updateField(field, SimpleValueMutation.create(simpleValue));
 		}
 
 		@Override
