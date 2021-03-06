@@ -4,7 +4,6 @@ import com.circumgraph.model.ScalarDef;
 import com.circumgraph.model.SimpleValueDef;
 import com.circumgraph.storage.types.ValueIndexer;
 
-import se.l4.silo.engine.index.search.SearchFields;
 import se.l4.silo.engine.index.search.types.SearchFieldType;
 
 /**
@@ -28,7 +27,7 @@ public class TokenStringValueIndexer
 	@Override
 	public SearchFieldType<String> getSearchFieldType()
 	{
-		return SearchFields.string()
+		return SearchFieldType.forString()
 			.token()
 			.build();
 	}

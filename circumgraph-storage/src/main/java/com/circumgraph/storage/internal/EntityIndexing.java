@@ -4,6 +4,7 @@ import java.util.Optional;
 import java.util.function.Consumer;
 
 import com.circumgraph.model.DirectiveUse;
+import com.circumgraph.model.EnumDef;
 import com.circumgraph.model.FieldDef;
 import com.circumgraph.model.InterfaceDef;
 import com.circumgraph.model.ListDef;
@@ -11,7 +12,11 @@ import com.circumgraph.model.ScalarDef;
 import com.circumgraph.model.SimpleValueDef;
 import com.circumgraph.model.StructuredDef;
 import com.circumgraph.model.TypeDef;
+import com.circumgraph.storage.internal.indexing.EnumValueIndexer;
+import com.circumgraph.storage.internal.indexing.FloatValueIndexer;
 import com.circumgraph.storage.internal.indexing.FullTextStringValueIndexer;
+import com.circumgraph.storage.internal.indexing.IdValueIndexer;
+import com.circumgraph.storage.internal.indexing.IntValueIndexer;
 import com.circumgraph.storage.internal.indexing.TokenStringValueIndexer;
 import com.circumgraph.storage.internal.indexing.TypeAheadStringValueIndexer;
 import com.circumgraph.storage.types.ValueIndexer;
@@ -30,7 +35,6 @@ import org.eclipse.collections.api.multimap.MutableMultimap;
 import org.eclipse.collections.impl.factory.Multimaps;
 
 import se.l4.silo.engine.index.search.SearchFieldDefinition;
-import se.l4.silo.engine.index.search.SearchFields;
 import se.l4.silo.engine.index.search.SearchIndexDefinition;
 import se.l4.silo.engine.index.search.types.SearchFieldType;
 
@@ -47,7 +51,10 @@ public class EntityIndexing
 		var indexers = Sets.mutable.<ValueIndexer<?>>of(
 			new TokenStringValueIndexer(),
 			new FullTextStringValueIndexer(),
-			new TypeAheadStringValueIndexer()
+			new TypeAheadStringValueIndexer(),
+			new FloatValueIndexer(),
+			new IntValueIndexer(),
+			new IdValueIndexer()
 		);
 
 		MutableMap<String, ValueIndexer<?>> indexersByName = Maps.mutable.empty();
@@ -93,7 +100,16 @@ public class EntityIndexing
 		var indexers = indexersByType.get(value);
 		if(indexers.size() == 1)
 		{
-			return Optional.ofNullable(indexers.getAny());
+			return Optional.of(indexers.getAny());
+		}
+
+		if(value instanceof EnumDef)
+		{
+			// Enums are automatically resolved
+
+			// TODO: Caching of instances?
+			var indexer = new EnumValueIndexer((EnumDef) value);
+			return Optional.of(indexer);
 		}
 
 		return Optional.empty();
@@ -240,7 +256,7 @@ public class EntityIndexing
 
 				// For interfaces we first make sure that __typename is available
 				var typenameField = SearchFieldDefinition.create(StructuredValue.class, join(path, "__typename"))
-					.withType(SearchFields.string().token().build())
+					.withType(SearchFieldType.forString().token().build())
 					.withSupplier(value -> {
 						var list = Lists.mutable.<String>empty();
 						generator.generate(value, v -> list.add(v.getDefinition().getName()));

@@ -6,30 +6,24 @@ import com.circumgraph.storage.types.ValueIndexer;
 
 import se.l4.silo.engine.index.search.types.SearchFieldType;
 
-/**
- * Indexer for full text with type ahead search.
- */
-public class TypeAheadStringValueIndexer
-	implements ValueIndexer<String>
+public class FloatValueIndexer
+	implements ValueIndexer<Double>
 {
 	@Override
 	public String getName()
 	{
-		return "TYPE_AHEAD";
+		return "FLOAT";
 	}
 
 	@Override
 	public SimpleValueDef getType()
 	{
-		return ScalarDef.STRING;
+		return ScalarDef.FLOAT;
 	}
 
 	@Override
-	public SearchFieldType<String> getSearchFieldType()
+	public SearchFieldType<Double> getSearchFieldType()
 	{
-		return SearchFieldType.forString()
-			.fullText()
-			.withTypeAhead()
-			.build();
+		return SearchFieldType.forDouble().build();
 	}
 }
