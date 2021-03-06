@@ -4,6 +4,7 @@ import com.circumgraph.model.ScalarDef;
 import com.circumgraph.model.StructuredDef;
 import com.circumgraph.storage.Entity;
 import com.circumgraph.storage.StorageException;
+import com.circumgraph.storage.StoredEntityValue;
 import com.circumgraph.storage.internal.mappers.ValueMapper;
 import com.circumgraph.storage.internal.search.QueryImpl;
 import com.circumgraph.storage.internal.search.SearchResultImpl;
@@ -23,16 +24,16 @@ public class EntityImpl
 {
 	private final StructuredDef definition;
 
-	private final se.l4.silo.Entity<Long, StructuredValue> backing;
+	private final se.l4.silo.Entity<Long, StoredEntityValue> backing;
 	private final LongIdGenerator ids;
 
-	private final ValueMapper<StructuredValue, StructuredMutation> mapper;
+	private final ValueMapper<StoredEntityValue, StructuredMutation> mapper;
 
 	public EntityImpl(
 		LongIdGenerator ids,
 		StructuredDef definition,
-		se.l4.silo.Entity<Long, StructuredValue> backing,
-		ValueMapper<StructuredValue, StructuredMutation> mapper
+		se.l4.silo.Entity<Long, StoredEntityValue> backing,
+		ValueMapper<StoredEntityValue, StructuredMutation> mapper
 	)
 	{
 		this.ids = ids;
@@ -48,7 +49,7 @@ public class EntityImpl
 	}
 
 	@Override
-	public Mono<StructuredValue> get(long id)
+	public Mono<StoredEntityValue> get(long id)
 	{
 		return backing.get(id)
 			.map(m -> {
@@ -72,25 +73,25 @@ public class EntityImpl
 	}
 
 	@Override
-	public Mono<StructuredValue> store(StructuredMutation mutation)
+	public Mono<StoredEntityValue> store(StructuredMutation mutation)
 	{
-		return Mono.fromSupplier(() ->  StructuredValue.create(mutation.getType())
+		return Mono.fromSupplier(() -> new StoredEntityValueImpl(StructuredValue.create(mutation.getType())
 			.add("id", SimpleValue.create(ScalarDef.ID, ids.next()))
 			.build()
-		)
+		))
 			.flatMap(v -> store(v, mutation));
 	}
 
 	@Override
-	public Mono<StructuredValue> store(long id, StructuredMutation mutation)
+	public Mono<StoredEntityValue> store(long id, StructuredMutation mutation)
 	{
 		// TODO: If the type changes this should keep the id
 		return backing.get(id)
 			.flatMap(v -> store(v, mutation));
 	}
 
-	private Mono<StructuredValue> store(
-		StructuredValue current,
+	private Mono<StoredEntityValue> store(
+		StoredEntityValue current,
 		StructuredMutation mutation
 	)
 	{

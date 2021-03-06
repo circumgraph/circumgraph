@@ -1,8 +1,8 @@
 package com.circumgraph.storage.internal.search;
 
+import com.circumgraph.storage.StoredEntityValue;
 import com.circumgraph.storage.search.Page;
 import com.circumgraph.storage.search.Query;
-import com.circumgraph.values.StructuredValue;
 
 import se.l4.silo.index.FieldSort;
 import se.l4.silo.index.search.QueryClause;
@@ -11,12 +11,12 @@ import se.l4.silo.index.search.SearchIndexQuery;
 public class QueryImpl
 	implements Query
 {
-	private SearchIndexQuery.Builder<StructuredValue> query;
+	private SearchIndexQuery.Builder<StoredEntityValue> query;
 	private Page page;
 
 	public QueryImpl()
 	{
-		query = SearchIndexQuery.create("main", StructuredValue.class);
+		query = SearchIndexQuery.create("main", StoredEntityValue.class);
 	}
 
 	@Override
@@ -70,7 +70,7 @@ public class QueryImpl
 		return addSort(FieldSort.create(field, ascending));
 	}
 
-	public SearchIndexQuery.Limited<StructuredValue> buildQuery()
+	public SearchIndexQuery.Limited<StoredEntityValue> buildQuery()
 	{
 		var limit = page == null ? 10 : page.getLimit();
 		var cursor = page == null ? null : page.getCursor().orElse(null);

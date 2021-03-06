@@ -9,10 +9,13 @@ import com.circumgraph.model.ScalarDef;
 import com.circumgraph.model.StructuredDef;
 import com.circumgraph.model.TypeDef;
 import com.circumgraph.model.UnionDef;
+import com.circumgraph.storage.StoredEntityValue;
+import com.circumgraph.storage.internal.mappers.EntityMapper;
 import com.circumgraph.storage.internal.mappers.PolymorphicValueMapper;
 import com.circumgraph.storage.internal.mappers.ScalarValueMapper;
 import com.circumgraph.storage.internal.mappers.StructuredValueMapper;
 import com.circumgraph.storage.internal.mappers.ValueMapper;
+import com.circumgraph.storage.mutation.StructuredMutation;
 
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
@@ -30,7 +33,15 @@ public class EntityMappers
 		this.model = model;
 	}
 
-	public PolymorphicValueMapper createPolymorphic(StructuredDef def)
+	public ValueMapper<StoredEntityValue, StructuredMutation> createRoot(
+		StructuredDef def
+	)
+	{
+		var polymorphic = createPolymorphic(def);
+		return new EntityMapper(polymorphic);
+	}
+
+	private PolymorphicValueMapper createPolymorphic(StructuredDef def)
 	{
 		ImmutableList<ObjectDef> defs;
 		if(def instanceof ObjectDef)

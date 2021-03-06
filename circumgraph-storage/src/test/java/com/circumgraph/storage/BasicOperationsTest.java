@@ -1,7 +1,8 @@
 package com.circumgraph.storage;
 
-import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.circumgraph.model.FieldDef;
 import com.circumgraph.model.Model;
@@ -12,7 +13,7 @@ import com.circumgraph.values.SimpleValue;
 
 import org.junit.jupiter.api.Test;
 
-public class SingleFieldTest
+public class BasicOperationsTest
 	extends SingleModelTest
 {
 	@Override
@@ -41,9 +42,7 @@ public class SingleFieldTest
 			.build();
 
 		var stored = entity.store(mutation).block();
-
-		var idValue = (SimpleValue) stored.getFields().get("id");
-		long id = (long) idValue.get();
+		var id = stored.getId();
 
 		var fetched = entity.get(id).block();
 		assertThat(fetched, is(stored));
@@ -55,16 +54,14 @@ public class SingleFieldTest
 	@Test
 	public void testUpdate()
 	{
-		Entity entity = storage.get("Test");
+		var entity = storage.get("Test");
 
 		var m1 = entity.newMutation()
 			.updateField("title", SimpleValueMutation.create("Hello"))
 			.build();
 
 		var stored = entity.store(m1).block();
-
-		var idValue = (SimpleValue) stored.getFields().get("id");
-		long id = (long) idValue.get();
+		var id = stored.getId();
 
 		var m2 = entity.newMutation()
 			.updateField("title", SimpleValueMutation.create("Hello World!"))
@@ -77,4 +74,5 @@ public class SingleFieldTest
 		var titleValue = (SimpleValue) fetched.getFields().get("title");
 		assertThat(titleValue.get(), is("Hello World!"));
 	}
+
 }

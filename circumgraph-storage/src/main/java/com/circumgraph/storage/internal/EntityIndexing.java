@@ -12,6 +12,7 @@ import com.circumgraph.model.ScalarDef;
 import com.circumgraph.model.SimpleValueDef;
 import com.circumgraph.model.StructuredDef;
 import com.circumgraph.model.TypeDef;
+import com.circumgraph.storage.StoredEntityValue;
 import com.circumgraph.storage.internal.indexing.EnumValueIndexer;
 import com.circumgraph.storage.internal.indexing.FloatValueIndexer;
 import com.circumgraph.storage.internal.indexing.FullTextStringValueIndexer;
@@ -131,11 +132,11 @@ public class EntityIndexing
 		return guessBestIndexer(def).get();
 	}
 
-	public SearchIndexDefinition<StructuredValue> generateDefinition(
+	public SearchIndexDefinition<StoredEntityValue> generateDefinition(
 		StructuredDef def
 	)
 	{
-		var fields = Lists.mutable.<SearchFieldDefinition<StructuredValue>>empty();
+		var fields = Lists.mutable.<SearchFieldDefinition<StoredEntityValue>>empty();
 
 		ValueGenerator gen = (root, consumer) -> consumer.accept(root);
 		collectFields(
@@ -147,7 +148,7 @@ public class EntityIndexing
 			fields::add
 		);
 
-		return SearchIndexDefinition.create(StructuredValue.class, "main")
+		return SearchIndexDefinition.create(StoredEntityValue.class, "main")
 			.addFields(fields)
 			.build();
 	}
@@ -159,7 +160,7 @@ public class EntityIndexing
 		boolean multiple,
 		ValueGenerator generator,
 
-		Consumer<SearchFieldDefinition<StructuredValue>> fieldReceiver
+		Consumer<SearchFieldDefinition<StoredEntityValue>> fieldReceiver
 	)
 	{
 		if(def instanceof ListDef)
@@ -197,7 +198,7 @@ public class EntityIndexing
 
 			if(multiple)
 			{
-				var searchField = SearchFieldDefinition.create(StructuredValue.class, path)
+				var searchField = SearchFieldDefinition.create(StoredEntityValue.class, path)
 					.withType(indexer.getSearchFieldType())
 					.collection()
 					.withSupplier(value -> {
@@ -212,7 +213,7 @@ public class EntityIndexing
 			}
 			else
 			{
-				var searchField = SearchFieldDefinition.create(StructuredValue.class, path)
+				var searchField = SearchFieldDefinition.create(StoredEntityValue.class, path)
 					.withType((SearchFieldType<Object>) indexer.getSearchFieldType())
 					.withHighlighting(highlightable)
 					.withSupplier(value -> {
@@ -255,7 +256,7 @@ public class EntityIndexing
 				// TODO: Indexing of fields in interface implementations
 
 				// For interfaces we first make sure that __typename is available
-				var typenameField = SearchFieldDefinition.create(StructuredValue.class, join(path, "__typename"))
+				var typenameField = SearchFieldDefinition.create(StoredEntityValue.class, join(path, "__typename"))
 					.withType(SearchFieldType.forString().token().build())
 					.withSupplier(value -> {
 						var list = Lists.mutable.<String>empty();

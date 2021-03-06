@@ -1,6 +1,6 @@
 package com.circumgraph.storage.search;
 
-import com.circumgraph.values.StructuredValue;
+import com.circumgraph.storage.StoredEntityValue;
 
 import org.eclipse.collections.api.list.ListIterable;
 
@@ -51,5 +51,5 @@ public interface SearchResult
 	 *
 	 * @return
 	 */
-	ListIterable<StructuredValue> getNodes();
+	ListIterable<StoredEntityValue> getNodes();
 }

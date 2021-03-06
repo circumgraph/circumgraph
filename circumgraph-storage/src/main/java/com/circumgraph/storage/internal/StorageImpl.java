@@ -6,6 +6,7 @@ import com.circumgraph.model.Model;
 import com.circumgraph.model.StructuredDef;
 import com.circumgraph.storage.Entity;
 import com.circumgraph.storage.Storage;
+import com.circumgraph.storage.StoredEntityValue;
 import com.circumgraph.values.SimpleValue;
 import com.circumgraph.values.StructuredValue;
 
@@ -39,8 +40,8 @@ public class StorageImpl
 			.toMap(StructuredDef::getName, def -> new EntityImpl(
 				ids,
 				def,
-				silo.entity(EntityRef.create("entity:" + def.getName(), Long.class, StructuredValue.class)),
-				mappers.createPolymorphic(def)
+				silo.entity(EntityRef.create("entity:" + def.getName(), Long.class, StoredEntityValue.class)),
+				mappers.createRoot(def)
 			))
 			.toImmutable();
 	}
@@ -69,7 +70,7 @@ public class StorageImpl
 		silo.close();
 	}
 
-	public static RichIterable<EntityDefinition<Long, StructuredValue>> generateEntityDefinitions(
+	public static RichIterable<EntityDefinition<Long, StoredEntityValue>> generateEntityDefinitions(
 		Model model
 	)
 	{
@@ -81,7 +82,7 @@ public class StorageImpl
 					serializers.resolvePolymorphic(def)
 				);
 
-				return EntityDefinition.create(StructuredValue.class, "entity:" + def.getName())
+				return EntityDefinition.create(StoredEntityValue.class, "entity:" + def.getName())
 					.withId(Long.class, StorageImpl::getID)
 					.withCodec(codec)
 					.addIndex(indexing.generateDefinition(def))
