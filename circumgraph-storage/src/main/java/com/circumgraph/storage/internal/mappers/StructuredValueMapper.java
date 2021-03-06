@@ -2,6 +2,7 @@ package com.circumgraph.storage.internal.mappers;
 
 import com.circumgraph.model.StructuredDef;
 import com.circumgraph.model.validation.ValidationMessageCollector;
+import com.circumgraph.storage.StorageException;
 import com.circumgraph.storage.mutation.StructuredMutation;
 import com.circumgraph.storage.types.ValueValidator;
 import com.circumgraph.values.StructuredValue;
@@ -66,6 +67,12 @@ public class StructuredValueMapper
 
 		mutation.getFields().forEachKeyValue((key, fieldMutation) -> {
 			Value value;
+			var mapper = (ValueMapper) fields.get(key);
+			if(mapper == null)
+			{
+				throw new StorageException("Unable to store, unknown field in input");
+			}
+
 			if(fieldMutation == null)
 			{
 				// No mutation, assume null
@@ -75,13 +82,11 @@ public class StructuredValueMapper
 				}
 				else
 				{
-					var mapper = (ValueMapper) fields.get(key);
 					value = mapper.getInitialValue();
 				}
 			}
 			else
 			{
-				var mapper = (ValueMapper) fields.get(key);
 				value = mapper.applyMutation(
 					values.get(key),
 					fieldMutation

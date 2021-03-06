@@ -97,17 +97,23 @@ public class EntityMappers
 
 	private StructuredValueMapper createDirect(StructuredDef def)
 	{
+		var isEntity = def.findImplements("Entity");
 		return new StructuredValueMapper(
 			def,
 			def.getFields()
-				.select(this::isStoredField)
+				.select(f -> isStoredField(isEntity, f))
 				.toMap(FieldDef::getName, f -> create(f.getType())),
 			Lists.immutable.empty()
 		);
 	}
 
-	private boolean isStoredField(FieldDef field)
+	private boolean isStoredField(boolean isEntity, FieldDef field)
 	{
+		if(isEntity && field.getName().equals("id"))
+		{
+			return false;
+		}
+
 		return field.getArguments().isEmpty();
 	}
 }

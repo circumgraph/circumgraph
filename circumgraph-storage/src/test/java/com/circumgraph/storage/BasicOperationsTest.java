@@ -75,4 +75,24 @@ public class BasicOperationsTest
 		assertThat(titleValue.get(), is("Hello World!"));
 	}
 
+	@Test
+	public void testUpdateIdFails()
+	{
+		var entity = storage.get("Test");
+
+		var m1 = entity.newMutation()
+			.updateField("title", SimpleValueMutation.create("Hello"))
+			.build();
+
+		var stored = entity.store(m1).block();
+		var id = stored.getId();
+
+		assertThrows(StorageException.class, () -> {
+			var m2 = entity.newMutation()
+				.updateField("id", SimpleValueMutation.create(100l))
+				.build();
+
+			entity.store(id, m2).block();
+		});
+	}
 }
