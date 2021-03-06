@@ -1,5 +1,7 @@
 package com.circumgraph.values;
 
+import java.util.Optional;
+
 import com.circumgraph.model.InterfaceDef;
 import com.circumgraph.model.ObjectDef;
 import com.circumgraph.model.StructuredDef;
@@ -28,6 +30,24 @@ public interface StructuredValue
 	 * @return
 	 */
 	MapIterable<String, ? extends Value> getFields();
+
+	/**
+	 * Get a field with the given name.
+	 *
+	 * @param name
+	 * @return
+	 */
+	Optional<? extends Value> getField(String name);
+
+	/**
+	 * Get a field with the given name and type.
+	 *
+	 * @param <V>
+	 * @param name
+	 * @param type
+	 * @return
+	 */
+	<V extends Value> Optional<? extends V> getField(String name, Class<V> type);
 
 	/**
 	 * Start building a new instance of {@link StructuredValue}.

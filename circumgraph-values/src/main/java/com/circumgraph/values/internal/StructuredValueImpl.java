@@ -1,6 +1,7 @@
 package com.circumgraph.values.internal;
 
 import java.util.Objects;
+import java.util.Optional;
 
 import com.circumgraph.model.StructuredDef;
 import com.circumgraph.values.StructuredValue;
@@ -35,6 +36,23 @@ public class StructuredValueImpl
 	public MapIterable<String, ? extends Value> getFields()
 	{
 		return fields;
+	}
+
+	@Override
+	public Optional<? extends Value> getField(String name)
+	{
+		return Optional.ofNullable(fields.get(name));
+	}
+
+	@Override
+	@SuppressWarnings("unchecked")
+	public <V extends Value> Optional<? extends V> getField(
+		String name,
+		Class<V> type
+	)
+	{
+		var value = fields.get(name);
+		return type.isInstance(value) ? Optional.of((V) value) : Optional.empty();
 	}
 
 	@Override
