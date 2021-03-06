@@ -14,6 +14,41 @@ public interface SimpleValue
 	 */
 	Object get();
 
+	/**
+	 * Get this value as a {@link String}.
+	 *
+	 * @return
+	 */
+	String asString();
+
+	/**
+	 * Get this value as an int.
+	 *
+	 * @return
+	 */
+	int asInt();
+
+	/**
+	 * Get this value as a float.
+	 *
+	 * @return
+	 */
+	double asFloat();
+
+	/**
+	 * Get this value as a boolean.
+	 *
+	 * @return
+	 */
+	boolean asBoolean();
+
+	/**
+	 * Get this value as an ID.
+	 *
+	 * @return
+	 */
+	long asID();
+
 	@Override
 	SimpleValueDef getDefinition();
 

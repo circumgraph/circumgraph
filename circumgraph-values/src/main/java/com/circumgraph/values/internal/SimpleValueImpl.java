@@ -36,6 +36,36 @@ public class SimpleValueImpl
 	}
 
 	@Override
+	public String asString()
+	{
+		return (String) object;
+	}
+
+	@Override
+	public int asInt()
+	{
+		return (int) object;
+	}
+
+	@Override
+	public double asFloat()
+	{
+		return (double) object;
+	}
+
+	@Override
+	public boolean asBoolean()
+	{
+		return (boolean) object;
+	}
+
+	@Override
+	public long asID()
+	{
+		return (long) object;
+	}
+
+	@Override
 	public int hashCode()
 	{
 		return Objects.hash(object);
