@@ -5,7 +5,7 @@ import java.util.Optional;
 import com.circumgraph.model.internal.ModelBuilderImpl;
 import com.circumgraph.model.validation.DirectiveValidator;
 
-import org.eclipse.collections.api.list.ListIterable;
+import org.eclipse.collections.api.set.SetIterable;
 
 /**
  * Model that Circumgraph uses to generate a storage, index and APIs.
@@ -31,7 +31,7 @@ public interface Model
 	 *
 	 * @return
 	 */
-	ListIterable<? extends TypeDef> getTypes();
+	SetIterable<? extends TypeDef> getTypes();
 
 	/**
 	 * Get types that directly implement a type with the given identifier.
@@ -39,7 +39,15 @@ public interface Model
 	 * @param id
 	 * @return
 	 */
-	ListIterable<? extends StructuredDef> getImplements(String id);
+	SetIterable<? extends StructuredDef> getImplements(String id);
+
+	/**
+	 * Find all types that implement a specific type.
+	 *
+	 * @param id
+	 * @return
+	 */
+	SetIterable<? extends StructuredDef> findImplements(String id);
 
 	/**
 	 * Start building a new model.

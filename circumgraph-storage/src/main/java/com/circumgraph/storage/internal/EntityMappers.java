@@ -2,6 +2,7 @@ package com.circumgraph.storage.internal;
 
 import com.circumgraph.model.EnumDef;
 import com.circumgraph.model.FieldDef;
+import com.circumgraph.model.InterfaceDef;
 import com.circumgraph.model.ListDef;
 import com.circumgraph.model.Model;
 import com.circumgraph.model.ObjectDef;
@@ -18,7 +19,8 @@ import com.circumgraph.storage.internal.mappers.ValueMapper;
 import com.circumgraph.storage.mutation.StructuredMutation;
 
 import org.eclipse.collections.api.factory.Lists;
-import org.eclipse.collections.api.list.ImmutableList;
+import org.eclipse.collections.api.factory.Sets;
+import org.eclipse.collections.api.set.SetIterable;
 
 import se.l4.silo.StorageException;
 
@@ -41,21 +43,26 @@ public class EntityMappers
 		return new EntityMapper(polymorphic);
 	}
 
+	/**
+	 * Create a polymorphic mapper. This type of mapper either receives a
+	 * single {@link ObjectDef} which is used directly or a {@link InterfaceDef}
+	 * where all implementations will be used.
+	 *
+	 * @param def
+	 * @return
+	 */
 	private PolymorphicValueMapper createPolymorphic(StructuredDef def)
 	{
-		ImmutableList<ObjectDef> defs;
+		SetIterable<ObjectDef> defs;
 		if(def instanceof ObjectDef)
 		{
-			defs = Lists.immutable.of((ObjectDef) def);
+			defs = Sets.immutable.of((ObjectDef) def);
 		}
 		else
 		{
-			// TODO: Implements all
-
 			defs = model
-				.getImplements(def.getName())
-				.selectInstancesOf(ObjectDef.class)
-				.toImmutable();
+				.findImplements(def.getName())
+				.selectInstancesOf(ObjectDef.class);
 		}
 
 		return new PolymorphicValueMapper(

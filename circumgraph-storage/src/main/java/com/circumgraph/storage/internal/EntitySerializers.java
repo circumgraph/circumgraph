@@ -2,6 +2,7 @@ package com.circumgraph.storage.internal;
 
 import com.circumgraph.model.EnumDef;
 import com.circumgraph.model.FieldDef;
+import com.circumgraph.model.InterfaceDef;
 import com.circumgraph.model.ListDef;
 import com.circumgraph.model.Model;
 import com.circumgraph.model.ObjectDef;
@@ -21,10 +22,10 @@ import com.circumgraph.storage.types.ValueSerializer;
 import com.circumgraph.values.SimpleValue;
 import com.circumgraph.values.StructuredValue;
 
-import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.factory.Maps;
-import org.eclipse.collections.api.list.ImmutableList;
+import org.eclipse.collections.api.factory.Sets;
 import org.eclipse.collections.api.map.MapIterable;
+import org.eclipse.collections.api.set.SetIterable;
 
 import se.l4.silo.StorageException;
 
@@ -90,21 +91,26 @@ public class EntitySerializers
 		throw new StorageException("Unable to create a serializer for " + def);
 	}
 
+	/**
+	 * Create a polymorphic serializer. This type of serializer either receives a
+	 * single {@link ObjectDef} which is used directly or a {@link InterfaceDef}
+	 * where all implementations will be used.
+	 *
+	 * @param def
+	 * @return
+	 */
 	public PolymorphicValueSerializer resolvePolymorphic(StructuredDef def)
 	{
-		ImmutableList<ObjectDef> defs;
+		SetIterable<ObjectDef> defs;
 		if(def instanceof ObjectDef)
 		{
-			defs = Lists.immutable.of((ObjectDef) def);
+			defs = Sets.immutable.of((ObjectDef) def);
 		}
 		else
 		{
-			// TODO: Implements all
-
 			defs = model
-				.getImplements(def.getName())
-				.selectInstancesOf(ObjectDef.class)
-				.toImmutable();
+				.findImplements(def.getName())
+				.selectInstancesOf(ObjectDef.class);
 		}
 
 		return new PolymorphicValueSerializer(

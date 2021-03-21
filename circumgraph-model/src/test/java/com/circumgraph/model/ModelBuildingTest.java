@@ -4,6 +4,7 @@ import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.circumgraph.model.validation.DirectiveValidator;
@@ -75,6 +76,8 @@ public class ModelBuildingTest
 
 		StructuredDef structured = (StructuredDef) t;
 		assertThat(structured.getImplementsNames(), contains("I"));
+
+		assertThat(model.getImplements("I"), contains(t));
 	}
 
 	@Test
@@ -106,6 +109,8 @@ public class ModelBuildingTest
 
 		assertThat(model.getImplements("I1"), contains(i2));
 		assertThat(model.getImplements("I2"), contains(t));
+
+		assertThat(model.findImplements("I1"), containsInAnyOrder(t, i2));
 	}
 
 	@Test

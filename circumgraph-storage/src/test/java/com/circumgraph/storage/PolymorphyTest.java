@@ -42,6 +42,14 @@ public class PolymorphyTest
 				)
 				.build()
 			)
+			.addType(InterfaceDef.create("I1")
+				.addImplements("Test")
+				.build()
+			)
+			.addType(ObjectDef.create("T3")
+				.addImplements("I1")
+				.build()
+			)
 			.build();
 	}
 
@@ -97,5 +105,30 @@ public class PolymorphyTest
 
 		SimpleValue ageValue = (SimpleValue) fetched.getFields().get("age");
 		assertThat(ageValue.get(), is(20));
+	}
+
+	@Test
+	public void testStoreT3()
+	{
+		var entity = storage.get("Test");
+
+		var def = (StructuredDef) model.get("T3").get();
+
+		var mutation = entity.newMutation(def)
+			.updateField("title", SimpleValueMutation.create("Hello World"))
+			.build();
+
+		var stored = entity.store(mutation).block();
+
+		var idValue = (SimpleValue) stored.getFields().get("id");
+		long id = (long) idValue.get();
+
+		var fetched = entity.get(id).block();
+		assertThat(fetched, is(stored));
+
+		assertThat(fetched.getDefinition(), is(def));
+
+		var titleValue = (SimpleValue) fetched.getFields().get("title");
+		assertThat(titleValue.get(), is("Hello World"));
 	}
 }
