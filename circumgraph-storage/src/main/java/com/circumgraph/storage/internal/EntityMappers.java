@@ -12,6 +12,7 @@ import com.circumgraph.model.TypeDef;
 import com.circumgraph.model.UnionDef;
 import com.circumgraph.storage.StoredEntityValue;
 import com.circumgraph.storage.internal.mappers.EntityMapper;
+import com.circumgraph.storage.internal.mappers.ListValueMapper;
 import com.circumgraph.storage.internal.mappers.PolymorphicValueMapper;
 import com.circumgraph.storage.internal.mappers.ScalarValueMapper;
 import com.circumgraph.storage.internal.mappers.StructuredValueMapper;
@@ -76,7 +77,11 @@ public class EntityMappers
 	{
 		if(def instanceof ListDef)
 		{
-
+			return new ListValueMapper<>(
+				(ListDef) def,
+				Lists.immutable.empty(),
+				create(((ListDef) def).getItemType())
+			);
 		}
 		else if(def instanceof StructuredDef)
 		{
