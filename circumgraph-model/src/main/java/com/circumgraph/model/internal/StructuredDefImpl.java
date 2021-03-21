@@ -143,16 +143,23 @@ public abstract class StructuredDefImpl
 
 		for(FieldDef field : directFields)
 		{
-			if(field instanceof HasPreparation)
-			{
-				((HasPreparation) field).prepare(defs);
-			}
+			HasPreparation.maybePrepare(field, defs);
 		}
 
 		MutableMap<String, FieldDef> fields = directFields.toMap(FieldDef::getName, v -> v);
-		getImplements().forEach(def -> collectFields(def, fields));
+		getImplements().forEach(def -> {
+			HasPreparation.maybePrepare(def, defs);
+
+			collectFields(def, fields);
+		});
 
 		this.fields = fields.toImmutable();
+	}
+
+	@Override
+	public boolean isReady()
+	{
+		return defs != null;
 	}
 
 	private void collectFields(StructuredDef def, MutableMap<String, FieldDef> fields)

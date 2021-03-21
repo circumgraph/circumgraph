@@ -17,4 +17,29 @@ public interface HasPreparation
 	 *   definitions
 	 */
 	void prepare(ModelDefs defs);
+
+	/**
+	 * Get if this object has already been prepared.
+	 *
+	 * @return
+	 */
+	boolean isReady();
+
+	/**
+	 * Prepare the given object for use.
+	 *
+	 * @param o
+	 * @param defs
+	 */
+	static void maybePrepare(Object o, ModelDefs defs)
+	{
+		if(o instanceof HasPreparation)
+		{
+			var casted = (HasPreparation) o;
+			if(! casted.isReady())
+			{
+				casted.prepare(defs);
+			}
+		}
+	}
 }

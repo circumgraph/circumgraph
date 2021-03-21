@@ -184,10 +184,7 @@ public class ModelBuilderImpl
 
 		for(TypeDef type : types)
 		{
-			if(type instanceof HasPreparation)
-			{
-				((HasPreparation) type).prepare(defs);
-			}
+			HasPreparation.maybePrepare(type, defs);
 		}
 
 		return new ModelImpl(types);

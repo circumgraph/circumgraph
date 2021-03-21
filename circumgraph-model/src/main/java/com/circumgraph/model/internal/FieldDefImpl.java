@@ -98,6 +98,14 @@ public class FieldDefImpl
 	public void prepare(ModelDefs defs)
 	{
 		this.defs = defs;
+
+		HasPreparation.maybePrepare(getType(), defs);
+	}
+
+	@Override
+	public boolean isReady()
+	{
+		return defs != null;
 	}
 
 	@Override

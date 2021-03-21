@@ -42,6 +42,12 @@ public abstract class ListDefImpl
 	}
 
 	@Override
+	public boolean isReady()
+	{
+		return defs != null;
+	}
+
+	@Override
 	public int hashCode()
 	{
 		return Objects.hash(itemType);

@@ -94,6 +94,12 @@ public class ArgumentDefImpl
 		this.defs = defs;
 	}
 
+	@Override
+	public boolean isReady()
+	{
+		return defs != null;
+	}
+
 	public static Builder create(String name)
 	{
 		return new BuilderImpl(

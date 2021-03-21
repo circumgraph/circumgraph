@@ -78,6 +78,37 @@ public class ModelBuildingTest
 	}
 
 	@Test
+	public void testObjectIndirectlyImplements()
+	{
+		Model model = Model.create()
+			.addType(InterfaceDef.create("I1")
+				.build()
+			)
+			.addType(InterfaceDef.create("I2")
+				.addImplements("I1")
+				.build()
+			)
+			.addType(ObjectDef.create("Test")
+				.addImplements("I2")
+				.build()
+			)
+			.build();
+
+		var t = model.get("Test").get();
+		assertThat(t, instanceOf(StructuredDef.class));
+		assertThat(t, instanceOf(ObjectDef.class));
+		assertThat(t.getName(), is("Test"));
+
+		var i2 = model.get("I2").get();
+
+		StructuredDef structured = (StructuredDef) t;
+		assertThat(structured.getImplementsNames(), contains("I2"));
+
+		assertThat(model.getImplements("I1"), contains(i2));
+		assertThat(model.getImplements("I2"), contains(t));
+	}
+
+	@Test
 	public void testObjectScalarField()
 	{
 		Model model = Model.create()
