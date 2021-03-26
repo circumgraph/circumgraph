@@ -10,17 +10,17 @@ import com.circumgraph.storage.internal.serializers.PolymorphicValueSerializer;
 import se.l4.exobytes.streaming.StreamingFormat;
 import se.l4.exobytes.streaming.StreamingInput;
 import se.l4.exobytes.streaming.StreamingOutput;
-import se.l4.silo.engine.EntityCodec;
+import se.l4.silo.engine.ObjectCodec;
 
 /**
- * Codec used for values.
+ * Codec built on top of {@link PolymorphicValueSerializer}.
  */
-public class EntityCodecImpl
-	implements EntityCodec<StoredEntityValue>
+public class ObjectCodecImpl
+	implements ObjectCodec<StoredEntityValue>
 {
 	private final PolymorphicValueSerializer serializer;
 
-	public EntityCodecImpl(
+	public ObjectCodecImpl(
 		PolymorphicValueSerializer serializer
 	)
 	{

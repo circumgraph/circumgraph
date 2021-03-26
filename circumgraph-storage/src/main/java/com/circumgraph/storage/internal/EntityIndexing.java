@@ -35,8 +35,8 @@ import org.eclipse.collections.api.multimap.ImmutableMultimap;
 import org.eclipse.collections.api.multimap.MutableMultimap;
 import org.eclipse.collections.impl.factory.Multimaps;
 
-import se.l4.silo.engine.index.search.SearchFieldDefinition;
-import se.l4.silo.engine.index.search.SearchIndexDefinition;
+import se.l4.silo.engine.index.search.SearchFieldDef;
+import se.l4.silo.engine.index.search.SearchIndexDef;
 import se.l4.silo.engine.index.search.types.SearchFieldType;
 
 /**
@@ -132,11 +132,11 @@ public class EntityIndexing
 		return guessBestIndexer(def).get();
 	}
 
-	public SearchIndexDefinition<StoredEntityValue> generateDefinition(
+	public SearchIndexDef<StoredEntityValue> generateDefinition(
 		StructuredDef def
 	)
 	{
-		var fields = Lists.mutable.<SearchFieldDefinition<StoredEntityValue>>empty();
+		var fields = Lists.mutable.<SearchFieldDef<StoredEntityValue>>empty();
 
 		ValueGenerator gen = (root, consumer) -> consumer.accept(root);
 		collectFields(
@@ -148,7 +148,7 @@ public class EntityIndexing
 			fields::add
 		);
 
-		return SearchIndexDefinition.create(StoredEntityValue.class, "main")
+		return SearchIndexDef.create(StoredEntityValue.class, "main")
 			.addFields(fields)
 			.build();
 	}
@@ -160,7 +160,7 @@ public class EntityIndexing
 		boolean multiple,
 		ValueGenerator generator,
 
-		Consumer<SearchFieldDefinition<StoredEntityValue>> fieldReceiver
+		Consumer<SearchFieldDef<StoredEntityValue>> fieldReceiver
 	)
 	{
 		if(def instanceof ListDef)
@@ -198,7 +198,7 @@ public class EntityIndexing
 
 			if(multiple)
 			{
-				var searchField = SearchFieldDefinition.create(StoredEntityValue.class, path)
+				var searchField = SearchFieldDef.create(StoredEntityValue.class, path)
 					.withType(indexer.getSearchFieldType())
 					.collection()
 					.withSupplier(value -> {
@@ -213,7 +213,7 @@ public class EntityIndexing
 			}
 			else
 			{
-				var searchField = SearchFieldDefinition.create(StoredEntityValue.class, path)
+				var searchField = SearchFieldDef.create(StoredEntityValue.class, path)
 					.withType((SearchFieldType<Object>) indexer.getSearchFieldType())
 					.withHighlighting(highlightable)
 					.withSupplier(value -> {
@@ -256,7 +256,7 @@ public class EntityIndexing
 				// TODO: Indexing of fields in interface implementations
 
 				// For interfaces we first make sure that __typename is available
-				var typenameField = SearchFieldDefinition.create(StoredEntityValue.class, join(path, "__typename"))
+				var typenameField = SearchFieldDef.create(StoredEntityValue.class, join(path, "__typename"))
 					.withType(SearchFieldType.forString().token().build())
 					.withSupplier(value -> {
 						var list = Lists.mutable.<String>empty();

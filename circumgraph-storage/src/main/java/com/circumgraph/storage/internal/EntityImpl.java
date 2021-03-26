@@ -24,7 +24,7 @@ public class EntityImpl
 {
 	private final StructuredDef definition;
 
-	private final se.l4.silo.Entity<Long, StoredEntityValue> backing;
+	private final se.l4.silo.Collection<Long, StoredEntityValue> backing;
 	private final LongIdGenerator ids;
 
 	private final ValueMapper<StoredEntityValue, StructuredMutation> mapper;
@@ -32,7 +32,7 @@ public class EntityImpl
 	public EntityImpl(
 		LongIdGenerator ids,
 		StructuredDef definition,
-		se.l4.silo.Entity<Long, StoredEntityValue> backing,
+		se.l4.silo.Collection<Long, StoredEntityValue> backing,
 		ValueMapper<StoredEntityValue, StructuredMutation> mapper
 	)
 	{

@@ -14,9 +14,9 @@ import org.eclipse.collections.api.RichIterable;
 import org.eclipse.collections.api.map.ImmutableMap;
 
 import reactor.core.publisher.Mono;
-import se.l4.silo.EntityRef;
+import se.l4.silo.CollectionRef;
 import se.l4.silo.StorageException;
-import se.l4.silo.engine.EntityDefinition;
+import se.l4.silo.engine.CollectionDef;
 import se.l4.silo.engine.LocalSilo;
 import se.l4.ylem.ids.LongIdGenerator;
 import se.l4.ylem.ids.SequenceLongIdGenerator;
@@ -40,7 +40,7 @@ public class StorageImpl
 			.toMap(StructuredDef::getName, def -> new EntityImpl(
 				ids,
 				def,
-				silo.entity(EntityRef.create("entity:" + def.getName(), Long.class, StoredEntityValue.class)),
+				silo.getCollection(CollectionRef.create("entity:" + def.getName(), Long.class, StoredEntityValue.class)),
 				mappers.createRoot(def)
 			))
 			.toImmutable();
@@ -70,7 +70,7 @@ public class StorageImpl
 		silo.close();
 	}
 
-	public static RichIterable<EntityDefinition<Long, StoredEntityValue>> generateEntityDefinitions(
+	public static RichIterable<CollectionDef<Long, StoredEntityValue>> generateEntityDefinitions(
 		Model model
 	)
 	{
@@ -78,11 +78,11 @@ public class StorageImpl
 		EntitySerializers serializers = new EntitySerializers(model);
 		return model.getImplements("Entity")
 			.collect(def -> {
-				var codec = new EntityCodecImpl(
+				var codec = new ObjectCodecImpl(
 					serializers.resolvePolymorphic(def)
 				);
 
-				return EntityDefinition.create(StoredEntityValue.class, "entity:" + def.getName())
+				return CollectionDef.create(StoredEntityValue.class, "entity:" + def.getName())
 					.withId(Long.class, StorageImpl::getID)
 					.withCodec(codec)
 					.addIndex(indexing.generateDefinition(def))
@@ -126,7 +126,7 @@ public class StorageImpl
 		{
 			return Mono.fromSupplier(() -> StorageImpl.generateEntityDefinitions(model))
 				.flatMap(defs -> LocalSilo.open(path)
-					.addEntities(defs)
+					.addCollections(defs)
 					.start()
 				)
 				.map(silo -> new StorageImpl(model, silo));
