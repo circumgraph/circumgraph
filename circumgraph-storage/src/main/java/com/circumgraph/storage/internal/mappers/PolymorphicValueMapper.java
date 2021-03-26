@@ -1,7 +1,9 @@
 package com.circumgraph.storage.internal.mappers;
 
+import java.util.function.Consumer;
+
 import com.circumgraph.model.StructuredDef;
-import com.circumgraph.model.validation.ValidationMessageCollector;
+import com.circumgraph.model.validation.ValidationMessage;
 import com.circumgraph.storage.mutation.StructuredMutation;
 import com.circumgraph.storage.types.ValueValidator;
 import com.circumgraph.values.StructuredValue;
@@ -61,26 +63,27 @@ public class PolymorphicValueMapper
 
 	@Override
 	public void validate(
-		ValidationMessageCollector collector,
+		Consumer<ValidationMessage> validationCollector,
 		StructuredValue value
 	)
 	{
 		StructuredValueMapper mapper = subTypes.get(value.getDefinition().getName());
 		if(mapper == null)
 		{
-			collector.error()
+			validationCollector.accept(ValidationMessage.error()
 				.withMessage("Type %s not supported", value.getDefinition().getName())
-				.done();
+				.build()
+			);
 		}
 		else
 		{
 			// Ask the subtype to validate
-			mapper.validate(collector, value);
+			mapper.validate(validationCollector, value);
 
 			// Run through all of the other validators
 			for(ValueValidator<StructuredValue> v : validators)
 			{
-				v.validate(value, collector);
+				v.validate(value, validationCollector);
 			}
 		}
 	}

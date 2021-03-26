@@ -7,8 +7,10 @@ import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import java.util.function.Consumer;
+
 import com.circumgraph.model.validation.DirectiveValidator;
-import com.circumgraph.model.validation.ValidationMessageCollector;
+import com.circumgraph.model.validation.ValidationMessage;
 
 import org.junit.jupiter.api.Test;
 
@@ -254,7 +256,7 @@ public class ModelBuildingTest
 		public void validate(
 			FieldDef location,
 			DirectiveUse directive,
-			ValidationMessageCollector collector
+			Consumer<ValidationMessage> validationCollector
 		)
 		{
 			// Always valid

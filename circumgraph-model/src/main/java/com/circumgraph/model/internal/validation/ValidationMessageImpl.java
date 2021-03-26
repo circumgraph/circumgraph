@@ -6,6 +6,8 @@ import com.circumgraph.model.validation.SourceLocation;
 import com.circumgraph.model.validation.ValidationMessage;
 import com.circumgraph.model.validation.ValidationMessageLevel;
 
+import org.eclipse.collections.api.factory.Maps;
+import org.eclipse.collections.api.map.ImmutableMap;
 import org.eclipse.collections.api.map.MapIterable;
 
 /**
@@ -97,5 +99,116 @@ public class ValidationMessageImpl
 			+ "}";
 	}
 
+	/**
+	 * Create a builder for the given level.
+	 *
+	 * @param level
+	 * @return
+	 */
+	public static Builder create(ValidationMessageLevel level)
+	{
+		Objects.requireNonNull(level, "level is required");
 
+		return new BuilderImpl(
+			level,
+			null,
+			null,
+			null,
+			Maps.immutable.empty()
+		);
+	}
+
+	private static class BuilderImpl
+		implements Builder
+	{
+		private final ValidationMessageLevel level;
+		private final SourceLocation sourceLocation;
+		private final String message;
+		private final String code;
+		private final ImmutableMap<String, Object> arguments;
+
+		public BuilderImpl(
+			ValidationMessageLevel level,
+			SourceLocation sourceLocation,
+			String message,
+			String code,
+			ImmutableMap<String, Object> arguments
+		)
+		{
+			this.level = level;
+			this.sourceLocation = sourceLocation;
+			this.message = message;
+			this.code = code;
+			this.arguments = arguments;
+		}
+
+		@Override
+		public Builder withLocation(SourceLocation sourceLocation)
+		{
+			Objects.requireNonNull(sourceLocation);
+
+			return new BuilderImpl(
+				level,
+				sourceLocation,
+				message,
+				code,
+				arguments
+			);
+		}
+
+		@Override
+		public Builder withMessage(String message, Object... args)
+		{
+			return new BuilderImpl(
+				level,
+				sourceLocation,
+				String.format(message, args),
+				code,
+				arguments
+			);
+		}
+
+		@Override
+		public Builder withCode(String code)
+		{
+			Objects.requireNonNull(code);
+
+			return new BuilderImpl(
+				level,
+				sourceLocation,
+				message,
+				code,
+				arguments
+			);
+		}
+
+		@Override
+		public Builder withArgument(String key, Object value)
+		{
+			Objects.requireNonNull(key);
+
+			return new BuilderImpl(
+				level,
+				sourceLocation,
+				message,
+				code,
+				arguments.newWithKeyValue(key, value)
+			);
+		}
+
+		@Override
+		public ValidationMessage build()
+		{
+			Objects.requireNonNull(message, "human readable message required");
+			Objects.requireNonNull(code, "code for message required");
+
+			return new ValidationMessageImpl(
+				SourceLocation.automatic(sourceLocation),
+				level,
+				message,
+				code,
+				arguments.toImmutable()
+			);
+		}
+	}
 }

@@ -1,6 +1,8 @@
 package com.circumgraph.storage.internal.mappers;
 
-import com.circumgraph.model.validation.ValidationMessageCollector;
+import java.util.function.Consumer;
+
+import com.circumgraph.model.validation.ValidationMessage;
 import com.circumgraph.storage.mutation.Mutation;
 import com.circumgraph.values.Value;
 
@@ -17,7 +19,7 @@ public interface ValueMapper<V extends Value, M extends Mutation>
 	);
 
 	void validate(
-		ValidationMessageCollector collector,
+		Consumer<ValidationMessage> validationCollector,
 		V value
 	);
 }

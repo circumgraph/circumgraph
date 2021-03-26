@@ -1,6 +1,8 @@
 package com.circumgraph.storage.internal.mappers;
 
-import com.circumgraph.model.validation.ValidationMessageCollector;
+import java.util.function.Consumer;
+
+import com.circumgraph.model.validation.ValidationMessage;
 import com.circumgraph.storage.StoredEntityValue;
 import com.circumgraph.storage.internal.StoredEntityValueImpl;
 import com.circumgraph.storage.mutation.StructuredMutation;
@@ -40,10 +42,10 @@ public class EntityMapper
 
 	@Override
 	public void validate(
-		ValidationMessageCollector collector,
+		Consumer<ValidationMessage> validationCollector,
 		StoredEntityValue value
 	)
 	{
-		mapper.validate(collector, value);
+		mapper.validate(validationCollector, value);
 	}
 }

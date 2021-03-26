@@ -1,9 +1,11 @@
 package com.circumgraph.storage.internal.model;
 
+import java.util.function.Consumer;
+
 import com.circumgraph.model.DirectiveUse;
 import com.circumgraph.model.FieldDef;
 import com.circumgraph.model.validation.DirectiveValidator;
-import com.circumgraph.model.validation.ValidationMessageCollector;
+import com.circumgraph.model.validation.ValidationMessage;
 
 /**
  * Validator for the {@code sortable} directive.
@@ -27,15 +29,16 @@ public class SortableDirectiveValidator
 	public void validate(
 		FieldDef location,
 		DirectiveUse directive,
-		ValidationMessageCollector collector
+		Consumer<ValidationMessage> validationCollector
 	)
 	{
 		if(directive.getArguments().isEmpty()) return;
 
-		collector.error()
+		validationCollector.accept(ValidationMessage.error()
 			.withLocation(directive.getSourceLocation())
 			.withMessage("@sortable does not support arguments")
 			.withCode("storage:sortable-arguments-invalid")
-			.done();
+			.build()
+		);
 	}
 }

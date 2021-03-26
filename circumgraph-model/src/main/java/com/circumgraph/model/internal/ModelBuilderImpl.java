@@ -20,7 +20,6 @@ import com.circumgraph.model.StructuredDef;
 import com.circumgraph.model.TypeDef;
 import com.circumgraph.model.validation.DirectiveValidator;
 import com.circumgraph.model.validation.ValidationMessage;
-import com.circumgraph.model.validation.ValidationMessageCollector;
 import com.circumgraph.model.validation.ValidationMessageLevel;
 
 import org.eclipse.collections.api.RichIterable;
@@ -87,7 +86,7 @@ public class ModelBuilderImpl
 	public Model build()
 	{
 		var validationMessages = Lists.mutable.<ValidationMessage>empty();
-		var validation = ValidationMessageCollector.create(validationMessages::add);
+		Consumer<ValidationMessage> validation = validationMessages::add;
 
 		// Create the directive validator map
 		MutableMultimap<String, DirectiveValidator<?>> directives = Multimaps.mutable.set.empty();
@@ -117,12 +116,13 @@ public class ModelBuilderImpl
 
 				if(! didValidate)
 				{
-					validation.error()
+					validation.accept(ValidationMessage.error()
 						.withLocation(d.getSourceLocation())
 						.withMessage("Directive @%s can not be used at this location", d.getName())
 						.withCode("model:invalid-directive")
 						.withArgument("directive", d.getName())
-						.done();
+						.build()
+					);
 				}
 			}
 		};
@@ -202,7 +202,7 @@ public class ModelBuilderImpl
 	}
 
 	private TypeDef merge(
-		ValidationMessageCollector collector,
+		Consumer<ValidationMessage> validationCollector,
 		TypeDef current,
 		TypeDef extension
 	)
@@ -211,19 +211,19 @@ public class ModelBuilderImpl
 		{
 			if(extension instanceof ObjectDef)
 			{
-				return mergeObject(collector, (ObjectDef) current, (ObjectDef) extension);
+				return mergeObject(validationCollector, (ObjectDef) current, (ObjectDef) extension);
 			}
 		}
 		else if(current instanceof InterfaceDef)
 		{
 			if(extension instanceof InterfaceDef)
 			{
-				return mergeInterface(collector, (InterfaceDef) current, (InterfaceDef) extension);
+				return mergeInterface(validationCollector, (InterfaceDef) current, (InterfaceDef) extension);
 			}
 		}
 
 		// Report not being able to merge
-		collector.error()
+		validationCollector.accept(ValidationMessage.error()
 			.withLocation(current instanceof HasSourceLocation ? ((HasSourceLocation) current).getSourceLocation() : null)
 			.withMessage(
 				"Could not merge: %s (at %s) has a different type than previously defined at %s",
@@ -233,7 +233,8 @@ public class ModelBuilderImpl
 			)
 			.withCode("model:incompatible-types")
 			.withArgument("name", current.getName())
-			.done();
+			.build()
+		);
 
 		return current;
 	}
@@ -246,7 +247,7 @@ public class ModelBuilderImpl
 	 * @return
 	 */
 	private ObjectDef mergeObject(
-		ValidationMessageCollector collector,
+		Consumer<ValidationMessage> validationCollector,
 		ObjectDef d1,
 		ObjectDef d2
 	)
@@ -254,14 +255,14 @@ public class ModelBuilderImpl
 		return ObjectDef.create(d1.getName())
 			.withSourceLocation(d1.getSourceLocation())
 			.withDescription(pickFirstNonBlank(d1.getDescription(), d2.getDescription()))
-			.addImplementsAll(mergeImplements(collector, d1, d2))
-			.addDirectives(mergeDirectives(collector, d1, d2))
-			.addFields(mergeFields(collector, d1, d1.getDirectFields(), d2.getDirectFields()))
+			.addImplementsAll(mergeImplements(validationCollector, d1, d2))
+			.addDirectives(mergeDirectives(validationCollector, d1, d2))
+			.addFields(mergeFields(validationCollector, d1, d1.getDirectFields(), d2.getDirectFields()))
 			.build();
 	}
 
 	private InterfaceDef mergeInterface(
-		ValidationMessageCollector collector,
+		Consumer<ValidationMessage> validationCollector,
 		InterfaceDef d1,
 		InterfaceDef d2
 	)
@@ -269,14 +270,14 @@ public class ModelBuilderImpl
 		return InterfaceDef.create(d1.getName())
 			.withSourceLocation(d1.getSourceLocation())
 			.withDescription(pickFirstNonBlank(d1.getDescription(), d2.getDescription()))
-			.addImplementsAll(mergeImplements(collector, d1, d2))
-			.addDirectives(mergeDirectives(collector, d1, d2))
-			.addFields(mergeFields(collector, d1, d1.getDirectFields(), d2.getDirectFields()))
+			.addImplementsAll(mergeImplements(validationCollector, d1, d2))
+			.addDirectives(mergeDirectives(validationCollector, d1, d2))
+			.addFields(mergeFields(validationCollector, d1, d1.getDirectFields(), d2.getDirectFields()))
 			.build();
 	}
 
 	private ListIterable<String> mergeImplements(
-		ValidationMessageCollector collector,
+		Consumer<ValidationMessage> validationCollector,
 		StructuredDef t1,
 		StructuredDef t2
 	)
@@ -287,7 +288,7 @@ public class ModelBuilderImpl
 	}
 
 	private ListIterable<FieldDef> mergeFields(
-		ValidationMessageCollector collector,
+		Consumer<ValidationMessage> validationCollector,
 		TypeDef type,
 		RichIterable<FieldDef> f1,
 		RichIterable<FieldDef> f2
@@ -298,7 +299,7 @@ public class ModelBuilderImpl
 			if(fields.containsKey(field.getName()))
 			{
 				fields.put(field.getName(), mergeField(
-					collector,
+					validationCollector,
 					type,
 					fields.get(field.getName()),
 					field
@@ -317,7 +318,7 @@ public class ModelBuilderImpl
 	}
 
 	private FieldDef mergeField(
-		ValidationMessageCollector collector,
+		Consumer<ValidationMessage> validationCollector,
 		TypeDef type,
 		FieldDef f1,
 		FieldDef f2
@@ -325,7 +326,7 @@ public class ModelBuilderImpl
 	{
 		if(! Objects.equals(f1.getTypeName(), f2.getTypeName()))
 		{
-			collector.error()
+			validationCollector.accept(ValidationMessage.error()
 				.withLocation(f2.getSourceLocation())
 				.withMessage(
 					"Could not merge: %s in %s (at %s) has a different type than previously defined at %s",
@@ -337,7 +338,8 @@ public class ModelBuilderImpl
 				.withCode("model:incompatible-field-type")
 				.withArgument("type", type.getName())
 				.withArgument("field", f2.getName())
-				.done();
+				.build()
+			);
 
 			return f1;
 		}
@@ -347,13 +349,13 @@ public class ModelBuilderImpl
 			.withDescription(pickFirstNonBlank(f1.getDescription(), f2.getDescription()))
 			.withNullable(f1.isNullable())
 			.withType(f1.getType())
-			.addArguments(mergeArguments(collector, type, f1, f1.getArguments(), f2.getArguments()))
-			.addDirectives(mergeDirectives(collector, f1, f2))
+			.addArguments(mergeArguments(validationCollector, type, f1, f1.getArguments(), f2.getArguments()))
+			.addDirectives(mergeDirectives(validationCollector, f1, f2))
 			.build();
 	}
 
 	private ListIterable<ArgumentDef> mergeArguments(
-		ValidationMessageCollector collector,
+		Consumer<ValidationMessage> validationCollector,
 		TypeDef type,
 		FieldDef field,
 		RichIterable<ArgumentDef> a1,
@@ -365,7 +367,7 @@ public class ModelBuilderImpl
 			if(arguments.containsKey(arg.getName()))
 			{
 				arguments.put(arg.getName(), mergeArgument(
-					collector,
+					validationCollector,
 					type,
 					field,
 					arguments.get(arg.getName()),
@@ -385,7 +387,7 @@ public class ModelBuilderImpl
 	}
 
 	private ArgumentDef mergeArgument(
-		ValidationMessageCollector collector,
+		Consumer<ValidationMessage> validationCollector,
 		TypeDef type,
 		FieldDef field,
 		ArgumentDef a1,
@@ -394,7 +396,7 @@ public class ModelBuilderImpl
 	{
 		if(! Objects.equals(a1.getTypeName(), a2.getTypeName()))
 		{
-			collector.error()
+			validationCollector.accept(ValidationMessage.error()
 				.withLocation(a1.getSourceLocation())
 				.withMessage(
 					"Could not merge: %s in %s (at %s) has a different type than previously defined at %s",
@@ -407,7 +409,8 @@ public class ModelBuilderImpl
 				.withArgument("type", type.getName())
 				.withArgument("field", field.getName())
 				.withArgument("argument", a1.getName())
-				.done();
+				.build()
+			);
 
 			return a1;
 		}
@@ -417,12 +420,12 @@ public class ModelBuilderImpl
 			.withType(a1.getType())
 			.withDescription(pickFirstNonBlank(a1.getDescription(), a2.getDescription()))
 			.withNullable(a1.isNullable())
-			.addDirectives(mergeDirectives(collector, a1, a2))
+			.addDirectives(mergeDirectives(validationCollector, a1, a2))
 			.build();
 	}
 
 	private ListIterable<DirectiveUse> mergeDirectives(
-		ValidationMessageCollector collector,
+		Consumer<ValidationMessage> validationCollector,
 		HasDirectives d1,
 		HasDirectives d2
 	)
@@ -432,7 +435,7 @@ public class ModelBuilderImpl
 			if(directives.containsKey(d.getName()))
 			{
 				directives.put(d.getName(), mergeDirective(
-					collector,
+					validationCollector,
 					directives.get(d.getName()),
 					d
 				));
@@ -450,7 +453,7 @@ public class ModelBuilderImpl
 	}
 
 	private DirectiveUse mergeDirective(
-		ValidationMessageCollector collector,
+		Consumer<ValidationMessage> validationCollector,
 		DirectiveUse d1,
 		DirectiveUse d2
 	)

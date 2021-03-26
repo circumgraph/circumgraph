@@ -1,7 +1,9 @@
 package com.circumgraph.storage.internal.mappers;
 
+import java.util.function.Consumer;
+
 import com.circumgraph.model.ScalarDef;
-import com.circumgraph.model.validation.ValidationMessageCollector;
+import com.circumgraph.model.validation.ValidationMessage;
 import com.circumgraph.storage.mutation.SimpleValueMutation;
 import com.circumgraph.storage.types.ValueValidator;
 import com.circumgraph.values.SimpleValue;
@@ -47,13 +49,13 @@ public class ScalarValueMapper
 
 	@Override
 	public void validate(
-		ValidationMessageCollector collector,
+		Consumer<ValidationMessage> validationCollector,
 		SimpleValue value
 	)
 	{
 		for(ValueValidator<SimpleValue> v : validators)
 		{
-			v.validate(value, collector);
+			v.validate(value, validationCollector);
 		}
 	}
 }

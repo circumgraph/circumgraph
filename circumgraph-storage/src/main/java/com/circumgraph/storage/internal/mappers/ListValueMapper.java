@@ -1,7 +1,9 @@
 package com.circumgraph.storage.internal.mappers;
 
+import java.util.function.Consumer;
+
 import com.circumgraph.model.ListDef;
-import com.circumgraph.model.validation.ValidationMessageCollector;
+import com.circumgraph.model.validation.ValidationMessage;
 import com.circumgraph.storage.mutation.ListMutation;
 import com.circumgraph.storage.mutation.ListSetMutation;
 import com.circumgraph.storage.types.ValueValidator;
@@ -55,16 +57,16 @@ public class ListValueMapper<V extends Value>
 
 	@Override
 	public void validate(
-		ValidationMessageCollector collector,
+		Consumer<ValidationMessage> validationCollector,
 		ListValue<V> value
 	)
 	{
 		value.items()
-			.forEach(v -> itemMapper.validate(collector, v));
+			.forEach(v -> itemMapper.validate(validationCollector, v));
 
 		for(ValueValidator<ListValue<V>> v : validators)
 		{
-			v.validate(value, collector);
+			v.validate(value, validationCollector);
 		}
 	}
 }

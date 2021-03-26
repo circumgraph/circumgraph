@@ -1,5 +1,7 @@
 package com.circumgraph.model.validation;
 
+import java.util.function.Consumer;
+
 import com.circumgraph.model.DirectiveUse;
 import com.circumgraph.model.HasDirectives;
 
@@ -27,11 +29,11 @@ public interface DirectiveValidator<T extends HasDirectives>
 	 *
 	 * @param location
 	 * @param directive
-	 * @param collector
+	 * @param validationCollector
 	 */
 	void validate(
 		T location,
 		DirectiveUse directive,
-		ValidationMessageCollector collector
+		Consumer<ValidationMessage> validationCollector
 	);
 }

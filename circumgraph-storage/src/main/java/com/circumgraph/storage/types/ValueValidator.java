@@ -1,6 +1,8 @@
 package com.circumgraph.storage.types;
 
-import com.circumgraph.model.validation.ValidationMessageCollector;
+import java.util.function.Consumer;
+
+import com.circumgraph.model.validation.ValidationMessage;
 import com.circumgraph.values.Value;
 
 /**
@@ -12,6 +14,10 @@ public interface ValueValidator<V extends Value>
 	 * Validate this value.
 	 *
 	 * @param value
+	 * @param validationCollector
 	 */
-	void validate(V value, ValidationMessageCollector collector);
+	void validate(
+		V value,
+		Consumer<ValidationMessage> validationCollector
+	);
 }

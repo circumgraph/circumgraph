@@ -1,6 +1,8 @@
 package com.circumgraph.storage.internal.validators;
 
-import com.circumgraph.model.validation.ValidationMessageCollector;
+import java.util.function.Consumer;
+
+import com.circumgraph.model.validation.ValidationMessage;
 import com.circumgraph.storage.types.ValueValidator;
 import com.circumgraph.values.SimpleValue;
 
@@ -22,16 +24,17 @@ public class InstanceOfValueValidator
 	@Override
 	public void validate(
 		SimpleValue value,
-		ValidationMessageCollector collector
+		Consumer<ValidationMessage> validationCollector
 	)
 	{
 		if(value == null) return;
 
 		if(type.isAssignableFrom(value.get().getClass()))
 		{
-			collector.error()
+			validationCollector.accept(ValidationMessage.error()
 				.withMessage("Value has the wrong type")
-				.done();
+				.build()
+			);
 		}
 	}
 }

@@ -1,7 +1,9 @@
 package com.circumgraph.storage.internal.mappers;
 
+import java.util.function.Consumer;
+
 import com.circumgraph.model.StructuredDef;
-import com.circumgraph.model.validation.ValidationMessageCollector;
+import com.circumgraph.model.validation.ValidationMessage;
 import com.circumgraph.storage.StorageException;
 import com.circumgraph.storage.mutation.StructuredMutation;
 import com.circumgraph.storage.types.ValueValidator;
@@ -108,19 +110,19 @@ public class StructuredValueMapper
 
 	@Override
 	public void validate(
-		ValidationMessageCollector collector,
+		Consumer<ValidationMessage> validationCollector,
 		StructuredValue value
 	)
 	{
 		var fields = value.getFields();
 
 		this.fields.forEachKeyValue((key, mapper) -> {
-			((ValueMapper) mapper).validate(collector, fields.get(key));
+			((ValueMapper) mapper).validate(validationCollector, fields.get(key));
 		});
 
 		for(ValueValidator<StructuredValue> v : validators)
 		{
-			v.validate(value, collector);
+			v.validate(value, validationCollector);
 		}
 	}
 }

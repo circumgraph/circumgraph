@@ -6,6 +6,8 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import java.util.function.Consumer;
+
 import com.circumgraph.model.DirectiveUse;
 import com.circumgraph.model.EnumDef;
 import com.circumgraph.model.EnumValueDef;
@@ -20,7 +22,7 @@ import com.circumgraph.model.StructuredDef;
 import com.circumgraph.model.TypeDef;
 import com.circumgraph.model.UnionDef;
 import com.circumgraph.model.validation.DirectiveValidator;
-import com.circumgraph.model.validation.ValidationMessageCollector;
+import com.circumgraph.model.validation.ValidationMessage;
 
 import org.junit.jupiter.api.Test;
 
@@ -244,7 +246,7 @@ public class GraphQLSchemaTest
 		public void validate(
 			HasDirectives location,
 			DirectiveUse directive,
-			ValidationMessageCollector collector
+			Consumer<ValidationMessage> validationCollector
 		)
 		{
 			// Always valid
