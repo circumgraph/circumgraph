@@ -2,6 +2,7 @@ package com.circumgraph.model.internal.validation;
 
 import java.util.Objects;
 
+import com.circumgraph.model.HasSourceLocation;
 import com.circumgraph.model.validation.SourceLocation;
 import com.circumgraph.model.validation.ValidationMessage;
 import com.circumgraph.model.validation.ValidationMessageLevel;
@@ -154,6 +155,12 @@ public class ValidationMessageImpl
 				code,
 				arguments
 			);
+		}
+
+		@Override
+		public Builder withLocation(HasSourceLocation object)
+		{
+			return withLocation(object.getSourceLocation());
 		}
 
 		@Override

@@ -16,6 +16,13 @@ public interface ListDef
 	TypeDef getItemType();
 
 	/**
+	 * Get the name of the type of data this list contains.
+	 *
+	 * @return
+	 */
+	String getItemTypeName();
+
+	/**
 	 * List that is used for output.
 	 */
 	interface Output

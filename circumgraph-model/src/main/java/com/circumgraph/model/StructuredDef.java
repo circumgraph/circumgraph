@@ -1,9 +1,11 @@
 package com.circumgraph.model;
 
 import java.util.Optional;
+import java.util.function.Predicate;
 
 import org.eclipse.collections.api.RichIterable;
 import org.eclipse.collections.api.list.ListIterable;
+import org.eclipse.collections.api.set.SetIterable;
 
 /**
  * Data that is structured. Has two implementations {@link ObjectDef} and
@@ -34,12 +36,28 @@ public interface StructuredDef
 	boolean hasImplements(String name);
 
 	/**
+	 * Get all of the interfaces implemented by this def.
+	 *
+	 * @return
+	 */
+	SetIterable<InterfaceDef> getAllImplements();
+
+	/**
 	 * Find if this type somehow implements the given type.
 	 *
 	 * @param name
 	 * @return
 	 */
 	boolean findImplements(String name);
+
+	/**
+	 * Find a specific {@link InterfaceDef} this type implements directly or
+	 * indirectly based on the given predicate.
+	 *
+	 * @param predicate
+	 * @return
+	 */
+	Optional<InterfaceDef> findImplements(Predicate<InterfaceDef> predicate);
 
 	/**
 	 * Get the all the fields in this object.

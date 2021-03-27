@@ -9,11 +9,14 @@ import com.circumgraph.model.DirectiveUse;
 import com.circumgraph.model.FieldDef;
 import com.circumgraph.model.HasDirectives;
 import com.circumgraph.model.HasSourceLocation;
+import com.circumgraph.model.InputTypeDef;
 import com.circumgraph.model.InterfaceDef;
+import com.circumgraph.model.ListDef;
 import com.circumgraph.model.Model;
 import com.circumgraph.model.Model.Builder;
 import com.circumgraph.model.ModelException;
 import com.circumgraph.model.ObjectDef;
+import com.circumgraph.model.OutputTypeDef;
 import com.circumgraph.model.ScalarDef;
 import com.circumgraph.model.Schema;
 import com.circumgraph.model.StructuredDef;
@@ -88,6 +91,23 @@ public class ModelBuilderImpl
 		var validationMessages = Lists.mutable.<ValidationMessage>empty();
 		Consumer<ValidationMessage> validation = validationMessages::add;
 
+		// Go through and merge all types
+		MutableMap<String, TypeDef> typeMap = Maps.mutable.empty();
+
+		for(TypeDef def : types)
+		{
+			TypeDef current = typeMap.get(def.getName());
+			if(current == null)
+			{
+				typeMap.put(def.getName(), def);
+			}
+			else
+			{
+				typeMap.put(def.getName(), merge(validation, current, def));
+			}
+		}
+
+
 		// Create the directive validator map
 		MutableMultimap<String, DirectiveValidator<?>> directives = Multimaps.mutable.set.empty();
 		for(DirectiveValidator<?> v : directiveValidators)
@@ -127,43 +147,36 @@ public class ModelBuilderImpl
 			}
 		};
 
-		// Go through and merge all types
-		MutableMap<String, TypeDef> typeMap = Maps.mutable.empty();
-
-		for(TypeDef def : types)
-		{
-			TypeDef current = typeMap.get(def.getName());
-			if(current == null)
+		// Create an instance of type finder to deal with lists
+		TypeFinder typeFinder = name -> {
+			if(name.isEmpty())
 			{
-				typeMap.put(def.getName(), def);
+				return null;
+			}
+			else if(name.charAt(0) == '[')
+			{
+				var type = typeMap.get(name.substring(1, name.length() - 1));
+				if(type == null) return null;
+
+				return type instanceof OutputTypeDef
+					? ListDef.output((OutputTypeDef) type)
+					: ListDef.input((InputTypeDef) type);
 			}
 			else
 			{
-				typeMap.put(def.getName(), merge(validation, current, def));
+				return typeMap.get(name);
 			}
-		}
+		};
 
-		// Validate all the directives
+		// Validate all of the types
 		for(TypeDef type : typeMap)
 		{
-			if(type instanceof HasDirectives)
-			{
-				directiveValidator.accept((HasDirectives) type);
-			}
-
-			if(type instanceof StructuredDef)
-			{
-				StructuredDef structured = (StructuredDef) type;
-				for(FieldDef field : structured.getDirectFields())
-				{
-					directiveValidator.accept(field);
-
-					for(ArgumentDef arg : field.getArguments())
-					{
-						directiveValidator.accept(arg);
-					}
-				}
-			}
+			validate(
+				typeFinder,
+				type,
+				directiveValidator,
+				validation
+			);
 		}
 
 		// Raise an error if any validation error has been found
@@ -483,5 +496,236 @@ public class ModelBuilderImpl
 	private static String pickFirstNonBlank(Optional<String> a, Optional<String> b)
 	{
 		return a.isEmpty() || a.get().isBlank() ? b.orElse(null) : a.get();
+	}
+
+	private void validate(
+		TypeFinder types,
+		TypeDef type,
+		Consumer<HasDirectives> directiveValidator,
+		Consumer<ValidationMessage> validationCollector
+	)
+	{
+		// TODO: Schema specific validation
+
+		// Validate all the directives
+		if(type instanceof HasDirectives)
+		{
+			directiveValidator.accept((HasDirectives) type);
+		}
+
+		if(type instanceof StructuredDef)
+		{
+			StructuredDef structured = (StructuredDef) type;
+
+			validateImplements(types, structured, validationCollector);
+
+			for(FieldDef field : structured.getDirectFields())
+			{
+				directiveValidator.accept(field);
+
+				for(ArgumentDef arg : field.getArguments())
+				{
+					directiveValidator.accept(arg);
+				}
+			}
+		}
+	}
+
+	private void validateImplements(
+		TypeFinder types,
+		StructuredDef type,
+		Consumer<ValidationMessage> validationCollector
+	)
+	{
+		var fields = type.getDirectFields()
+			.toMap(FieldDef::getName, f -> f);
+
+		for(String name : type.getImplementsNames())
+		{
+			var asType = types.get(name);
+			if(! (asType instanceof InterfaceDef))
+			{
+				validationCollector.accept(ValidationMessage.error()
+					.withLocation(type)
+					.withMessage("%s can not implement %s, type is not an interface", type.getName(), name)
+					.withCode("model:invalid-implements")
+					.withArgument("type", type.getName())
+					.withArgument("implements", name)
+					.build()
+				);
+
+				continue;
+			}
+			else
+			{
+				// Check that the fields of this interface are compatible with ours
+				var interfaceDef = (InterfaceDef) asType;
+				for(var otherField : interfaceDef.getDirectFields())
+				{
+					var ownField = fields.get(otherField.getName());
+					if(ownField == null)
+					{
+						/*
+						 * In GraphQL schemas you have to redefine fields,
+						 * to make things a bit nicer we skip this requirement
+						 * so this case is valid.
+						 */
+						continue;
+					}
+
+					if(! checkIfCompatible(types, ownField.getTypeName(), otherField.getTypeName()))
+					{
+						// Type of fields are not compatible
+						validationCollector.accept(ValidationMessage.error()
+							.withLocation(ownField)
+							.withMessage(
+								"Field %s in implemented interface %s has type %s, but field was re-declared as %s",
+								ownField.getName(),
+								interfaceDef.getName(),
+								otherField.getTypeName(),
+								ownField.getTypeName()
+							)
+							.withCode("model:incompatible-field-type")
+							.withArgument("type", type.getName())
+							.withArgument("implements", name)
+							.withArgument("field", ownField.getName())
+							.build()
+						);
+					}
+				}
+			}
+		}
+
+		/*
+		 * Recurse down into types making sure that there are no loops such
+		 * as interface A implements B and B implements A.
+		 */
+		var stack = type.getImplementsNames().toStack();
+		var checked = Sets.mutable.<String>empty();
+		while(! stack.isEmpty())
+		{
+			var implementedName = stack.pop();
+			var implementedAsType = types.get(implementedName);
+			if(! (implementedAsType instanceof InterfaceDef))
+			{
+				// Correct type is validated earlier
+				continue;
+			}
+
+			for(String name : ((InterfaceDef) implementedAsType).getImplementsNames())
+			{
+				if(name.equals(type.getName()))
+				{
+					// This interface implements us, but we also implement it
+					validationCollector.accept(ValidationMessage.error()
+						.withLocation((InterfaceDef) implementedAsType)
+						.withMessage(
+							"%s can not implement %s, %s already directly or indirectly implements %s",
+							name,
+							type.getName(),
+							type.getName(),
+							name
+						)
+						.withCode("model:invalid-implements-loop")
+						.withArgument("type", name)
+						.withArgument("implements", type.getName())
+						.build()
+					);
+				}
+
+				if(checked.add(name))
+				{
+					// Descend into the type to validate
+					stack.push(name);
+				}
+			}
+		}
+	}
+
+	/**
+	 * Check if the two given types are compatible. Types are compatible if:
+	 *
+	 * 1. They are the same type
+	 * 2. A implements B either directly or indirectly
+	 * 3. A and B are lists with types that are compatible
+	 *
+	 * @param types
+	 * @param a
+	 * @param b
+	 * @return
+	 */
+	private boolean checkIfCompatible(
+		TypeFinder types,
+		String a,
+		String b
+	)
+	{
+		// Case 1: Same type
+		if(a.equals(b)) return true;
+
+		var typeA = types.get(a);
+		var typeB = types.get(b);
+
+		// Sanity check: Types must exist
+		if(typeA == null || typeB == null) return false;
+
+		// Case 2: A implements B
+		if(typeA instanceof StructuredDef && typeB instanceof StructuredDef)
+		{
+			var structuredA = (StructuredDef) typeA;
+
+			var checked = Sets.mutable.ofAll(structuredA.getImplementsNames());
+			var stack = structuredA.getImplementsNames().toStack();
+
+			while(! stack.isEmpty())
+			{
+				var name = stack.pop();
+				if(name.equals(b))
+				{
+					return true;
+				}
+
+				var interfaceDef = types.get(name);
+				if(interfaceDef instanceof InterfaceDef)
+				{
+					for(var interfaceName : ((InterfaceDef) interfaceDef).getImplementsNames())
+					{
+						if(checked.add(interfaceName))
+						{
+							stack.push(interfaceName);
+						}
+					}
+				}
+			}
+		}
+
+		// Case 3: A and B are lists
+		if(typeA instanceof ListDef && typeB instanceof ListDef)
+		{
+
+			return checkIfCompatible(
+				types,
+				((ListDef) typeA).getItemTypeName(),
+				((ListDef) typeB).getItemTypeName()
+			);
+		}
+
+		// Default to not being compatible
+		return false;
+	}
+
+	/**
+	 * Helper to used to find types based on their name while also dealing
+	 * with lists.
+	 */
+	interface TypeFinder
+	{
+		/**
+		 * Get the declared type if available.
+		 *
+		 * @param name
+		 * @return
+		 */
+		TypeDef get(String name);
 	}
 }

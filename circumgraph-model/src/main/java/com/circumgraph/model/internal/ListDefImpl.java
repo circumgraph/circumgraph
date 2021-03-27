@@ -26,13 +26,19 @@ public abstract class ListDefImpl
 	@Override
 	public String getName()
 	{
-		return "[" + getItemType().getName() + "]";
+		return "[" + itemType.getName() + "]";
 	}
 
 	@Override
 	public Optional<String> getDescription()
 	{
 		return Optional.empty();
+	}
+
+	@Override
+	public String getItemTypeName()
+	{
+		return itemType.getName();
 	}
 
 	@Override
@@ -66,7 +72,7 @@ public abstract class ListDefImpl
 	@Override
 	public String toString()
 	{
-		return "ListDef{" + getItemType() + "}";
+		return "ListDef{" + itemType + "}";
 	}
 
 	public static class OutputImpl

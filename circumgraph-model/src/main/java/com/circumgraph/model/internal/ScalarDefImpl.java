@@ -36,15 +36,9 @@ public class ScalarDefImpl
 	}
 
 	@Override
-	public String toString()
-	{
-		return "ScalarDef{name=" + name + ", description=" + description + "}";
-	}
-
-	@Override
 	public int hashCode()
 	{
-		return Objects.hash(description, name);
+		return Objects.hash(name);
 	}
 
 	@Override
@@ -54,9 +48,12 @@ public class ScalarDefImpl
 		if(obj == null) return false;
 		if(getClass() != obj.getClass()) return false;
 		ScalarDefImpl other = (ScalarDefImpl) obj;
-		return Objects.equals(description, other.description)
-			&& Objects.equals(name, other.name);
+		return Objects.equals(name, other.name);
 	}
 
-
+	@Override
+	public String toString()
+	{
+		return "ScalarDef{name=" + name + ", description=" + description + "}";
+	}
 }

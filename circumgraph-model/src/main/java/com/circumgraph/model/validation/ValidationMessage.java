@@ -1,5 +1,6 @@
 package com.circumgraph.model.validation;
 
+import com.circumgraph.model.HasSourceLocation;
 import com.circumgraph.model.internal.validation.ValidationMessageImpl;
 
 import org.eclipse.collections.api.map.MapIterable;
@@ -95,6 +96,14 @@ public interface ValidationMessage
 		 * @return
 		 */
 		Builder withLocation(SourceLocation location);
+
+		/**
+		 * Set the location where this validation message is created.
+		 *
+		 * @param object
+		 * @return
+		 */
+		Builder withLocation(HasSourceLocation object);
 
 		/**
 		 * Set a the human-readable message.

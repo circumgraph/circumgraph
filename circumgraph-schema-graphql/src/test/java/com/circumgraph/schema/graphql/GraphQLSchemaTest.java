@@ -1,9 +1,9 @@
 package com.circumgraph.schema.graphql;
 
-import static org.hamcrest.CoreMatchers.instanceOf;
-import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.instanceOf;
+import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.function.Consumer;
@@ -225,6 +225,19 @@ public class GraphQLSchemaTest
 				.addArgument("v", 100)
 				.build()
 		));
+	}
+
+	@Test
+	public void testInvalidInterfaceLoop()
+	{
+		assertThrows(ModelException.class, () -> {
+			parse(
+				"""
+					interface A implements B { id: String }
+					interface B implements A { title: Int }
+				"""
+			);
+		});
 	}
 
 	static class TestDirectiveValidator

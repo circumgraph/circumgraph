@@ -1,10 +1,10 @@
 package com.circumgraph.model;
 
-import static org.hamcrest.CoreMatchers.instanceOf;
-import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.instanceOf;
+import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.function.Consumer;
@@ -236,6 +236,173 @@ public class ModelBuildingTest
 				.build();
 		});
 	}
+
+	@Test
+	public void testInvalidInterfaceLoop()
+	{
+		assertThrows(ModelException.class, () -> {
+			Model.create()
+				.addType(InterfaceDef.create("A")
+					.addImplements("B")
+					.build()
+				)
+				.addType(InterfaceDef.create("B")
+					.addImplements("A")
+					.build()
+				)
+				.build();
+		});
+	}
+
+	@Test
+	public void testInvalidInterfaceLoopIndirect()
+	{
+		assertThrows(ModelException.class, () -> {
+			Model.create()
+				.addType(InterfaceDef.create("A")
+					.addImplements("B")
+					.build()
+				)
+				.addType(InterfaceDef.create("B")
+					.addImplements("C")
+					.build()
+				)
+				.addType(InterfaceDef.create("C")
+					.addImplements("A")
+					.build()
+				)
+				.build();
+		});
+	}
+
+	@Test
+	public void testInvalidImplements()
+	{
+		assertThrows(ModelException.class, () -> {
+			Model.create()
+				.addType(ObjectDef.create("A")
+					.build()
+				)
+				.addType(InterfaceDef.create("B")
+					.addImplements("A")
+					.build()
+				)
+				.build();
+		});
+	}
+
+	@Test
+	public void testImplementsFieldSameTypes()
+	{
+		Model.create()
+			.addType(ObjectDef.create("A")
+				.addImplements("B")
+				.addField(FieldDef.create("f1")
+					.withType(ScalarDef.STRING)
+					.build()
+				)
+				.build()
+			)
+			.addType(InterfaceDef.create("B")
+				.addField(FieldDef.create("f1")
+					.withType(ScalarDef.STRING)
+					.build()
+				)
+				.build()
+			)
+			.build();
+	}
+
+	@Test
+	public void testImplementsFieldCompatibleTypes()
+	{
+		Model.create()
+			.addType(ObjectDef.create("A")
+				.addImplements("B")
+				.addField(FieldDef.create("f1")
+					.withType("A")
+					.build()
+				)
+				.build()
+			)
+			.addType(InterfaceDef.create("B")
+				.addField(FieldDef.create("f1")
+					.withType("B")
+					.build()
+				)
+				.build()
+			)
+			.build();
+	}
+
+	@Test
+	public void testImplementsFieldSameTypesInList()
+	{
+		Model.create()
+			.addType(ObjectDef.create("A")
+				.addImplements("B")
+				.addField(FieldDef.create("f1")
+					.withType(ListDef.output(ScalarDef.STRING))
+					.build()
+				)
+				.build()
+			)
+			.addType(InterfaceDef.create("B")
+				.addField(FieldDef.create("f1")
+					.withType(ListDef.output(ScalarDef.STRING))
+					.build()
+				)
+				.build()
+			)
+			.build();
+	}
+
+	@Test
+	public void testImplementsFieldCompatibleTypesInList()
+	{
+		Model.create()
+			.addType(ObjectDef.create("A")
+				.addImplements("B")
+				.addField(FieldDef.create("f1")
+					.withType(ListDef.output("A"))
+					.build()
+				)
+				.build()
+			)
+			.addType(InterfaceDef.create("B")
+				.addField(FieldDef.create("f1")
+					.withType(ListDef.output("B"))
+					.build()
+				)
+				.build()
+			)
+			.build();
+	}
+
+	@Test
+	public void testImplementsFieldDifferentTypes()
+	{
+		assertThrows(ModelException.class, () -> {
+			Model.create()
+				.addType(ObjectDef.create("A")
+					.addImplements("B")
+					.addField(FieldDef.create("f1")
+						.withType(ScalarDef.STRING)
+						.build()
+					)
+					.build()
+				)
+				.addType(InterfaceDef.create("B")
+					.addField(FieldDef.create("f1")
+						.withType(ScalarDef.INT)
+						.build()
+					)
+					.build()
+				)
+				.build();
+		});
+	}
+
 
 	static class TestDirectiveOnFieldValidator
 		implements DirectiveValidator<FieldDef>
