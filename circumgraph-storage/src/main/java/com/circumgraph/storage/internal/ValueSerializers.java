@@ -10,13 +10,14 @@ import com.circumgraph.model.ScalarDef;
 import com.circumgraph.model.StructuredDef;
 import com.circumgraph.model.TypeDef;
 import com.circumgraph.model.UnionDef;
+import com.circumgraph.storage.StorageSchema;
 import com.circumgraph.storage.internal.serializers.BooleanValueSerializer;
-import com.circumgraph.storage.internal.serializers.EntityObjectRefSerializer;
 import com.circumgraph.storage.internal.serializers.FloatValueSerializer;
 import com.circumgraph.storage.internal.serializers.IdValueSerializer;
 import com.circumgraph.storage.internal.serializers.IntValueSerializer;
 import com.circumgraph.storage.internal.serializers.ListValueSerializer;
 import com.circumgraph.storage.internal.serializers.PolymorphicValueSerializer;
+import com.circumgraph.storage.internal.serializers.StoredObjectRefSerializer;
 import com.circumgraph.storage.internal.serializers.StringValueSerializer;
 import com.circumgraph.storage.internal.serializers.StructuredValueSerializer;
 import com.circumgraph.storage.types.ValueSerializer;
@@ -31,14 +32,14 @@ import org.eclipse.collections.api.set.SetIterable;
 import se.l4.silo.StorageException;
 
 /**
- * Helper that resolves instances of {@link ValueSerializer} for entities.
+ * Helper that resolves instances of {@link ValueSerializer}.
  */
-public class EntitySerializers
+public class ValueSerializers
 {
 	private final Model model;
 	private final MapIterable<ScalarDef, ValueSerializer<SimpleValue>> scalars;
 
-	public EntitySerializers(
+	public ValueSerializers(
 		Model model
 	)
 	{
@@ -65,7 +66,7 @@ public class EntitySerializers
 		else if(def instanceof StructuredDef)
 		{
 			var structuredDef = (StructuredDef) def;
- 			if(structuredDef.findImplements("Entity"))
+ 			if(structuredDef.findImplements(StorageSchema.ENTITY_NAME))
 			{
 				/*
 				 * Links to other entities may also be polymorphic in that they
@@ -74,13 +75,13 @@ public class EntitySerializers
 				 * implements `Entity` to get the correct definition when
 				 * deserialized.
 				 */
-				if(! structuredDef.hasImplements("Entity"))
+				if(! structuredDef.hasImplements(StorageSchema.ENTITY_NAME))
 				{
-					structuredDef = structuredDef.findImplements(interfaceDef -> interfaceDef.hasImplements("Entity"))
+					structuredDef = structuredDef.findImplements(interfaceDef -> interfaceDef.hasImplements(StorageSchema.ENTITY_NAME))
 						.get();
 				}
 
-				return new EntityObjectRefSerializer(structuredDef);
+				return new StoredObjectRefSerializer(structuredDef);
 			}
 
 			return resolvePolymorphic(structuredDef);

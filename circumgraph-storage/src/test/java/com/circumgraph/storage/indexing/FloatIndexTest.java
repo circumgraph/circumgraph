@@ -29,7 +29,7 @@ public class FloatIndexTest
 		return Model.create()
 			.addSchema(StorageSchema.INSTANCE)
 			.addType(ObjectDef.create("Test")
-				.addImplements("Entity")
+				.addImplements(StorageSchema.ENTITY_NAME)
 				.addField(FieldDef.create("value")
 					.withType(ScalarDef.FLOAT)
 					.addDirective(DirectiveUse.create("index")
@@ -48,18 +48,18 @@ public class FloatIndexTest
 	@Test
 	public void testStore()
 	{
-		var entity = storage.get("Test");
+		var collection = storage.get("Test");
 
-		var mutation = entity.newMutation()
+		var mutation = collection.newMutation()
 			.updateField("value", SimpleValueMutation.create(10.2))
 			.build();
 
-		var stored = entity.store(mutation).block();
+		var stored = collection.store(mutation).block();
 
 		var idValue = (SimpleValue) stored.getFields().get("id");
 		long id = (long) idValue.get();
 
-		var fetched = entity.get(id).block();
+		var fetched = collection.get(id).block();
 		assertThat(fetched, is(stored));
 
 		var value = fetched.getField("value", SimpleValue.class).get().asFloat();
@@ -69,15 +69,15 @@ public class FloatIndexTest
 	@Test
 	public void testQueryExact()
 	{
-		var entity = storage.get("Test");
+		var collection = storage.get("Test");
 
-		var mutation = entity.newMutation()
+		var mutation = collection.newMutation()
 			.updateField("value", SimpleValueMutation.create(10.2))
 			.build();
 
-		entity.store(mutation).block();
+		collection.store(mutation).block();
 
-		var results = entity.search(Query.create()
+		var results = collection.search(Query.create()
 			.addClause(FieldQuery.create("value", EqualsMatcher.create(10.2)))
 		).block();
 
@@ -87,15 +87,15 @@ public class FloatIndexTest
 	@Test
 	public void testQueryRangeIncluded()
 	{
-		var entity = storage.get("Test");
+		var collection = storage.get("Test");
 
-		var mutation = entity.newMutation()
+		var mutation = collection.newMutation()
 			.updateField("value", SimpleValueMutation.create(10.2))
 			.build();
 
-		entity.store(mutation).block();
+		collection.store(mutation).block();
 
-		var results = entity.search(Query.create()
+		var results = collection.search(Query.create()
 			.addClause(FieldQuery.create("value", RangeMatcher.isMoreThan(10.0)))
 		).block();
 
@@ -105,15 +105,15 @@ public class FloatIndexTest
 	@Test
 	public void testQueryRangeExcluded()
 	{
-		var entity = storage.get("Test");
+		var collection = storage.get("Test");
 
-		var mutation = entity.newMutation()
+		var mutation = collection.newMutation()
 			.updateField("value", SimpleValueMutation.create(10.2))
 			.build();
 
-		entity.store(mutation).block();
+		collection.store(mutation).block();
 
-		var results = entity.search(Query.create()
+		var results = collection.search(Query.create()
 			.addClause(FieldQuery.create("value", RangeMatcher.isMoreThan(11.0)))
 		).block();
 

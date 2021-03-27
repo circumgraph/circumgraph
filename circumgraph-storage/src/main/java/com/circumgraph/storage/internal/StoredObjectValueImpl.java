@@ -5,22 +5,22 @@ import java.util.Optional;
 import java.util.function.Supplier;
 
 import com.circumgraph.model.StructuredDef;
-import com.circumgraph.storage.StoredEntityValue;
+import com.circumgraph.storage.StoredObjectValue;
 import com.circumgraph.values.SimpleValue;
 import com.circumgraph.values.StructuredValue;
 import com.circumgraph.values.Value;
 
 import org.eclipse.collections.api.map.MapIterable;
 
-public class StoredEntityValueImpl
-	implements StoredEntityValue
+public class StoredObjectValueImpl
+	implements StoredObjectValue
 {
 	private final long id;
 
 	private StructuredValue value;
 	private Supplier<StructuredValue> supplier;
 
-	public StoredEntityValueImpl(
+	public StoredObjectValueImpl(
 		long id,
 		Supplier<StructuredValue> supplier
 	)
@@ -29,7 +29,7 @@ public class StoredEntityValueImpl
 		this.supplier = supplier;
 	}
 
-	public StoredEntityValueImpl(
+	public StoredObjectValueImpl(
 		StructuredValue value
 	)
 	{
@@ -89,7 +89,7 @@ public class StoredEntityValueImpl
 		if (this == obj) return true;
 		if (obj == null) return false;
 		if (getClass() != obj.getClass()) return false;
-		StoredEntityValueImpl other = (StoredEntityValueImpl) obj;
+		StoredObjectValueImpl other = (StoredObjectValueImpl) obj;
 		return id == other.id && Objects.equals(supplier, other.supplier) && Objects.equals(value, other.value);
 	}
 

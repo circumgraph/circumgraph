@@ -4,9 +4,10 @@ import java.nio.file.Path;
 
 import com.circumgraph.model.Model;
 import com.circumgraph.model.StructuredDef;
-import com.circumgraph.storage.Entity;
+import com.circumgraph.storage.Collection;
 import com.circumgraph.storage.Storage;
-import com.circumgraph.storage.StoredEntityValue;
+import com.circumgraph.storage.StorageSchema;
+import com.circumgraph.storage.StoredObjectValue;
 import com.circumgraph.values.SimpleValue;
 import com.circumgraph.values.StructuredValue;
 
@@ -26,7 +27,7 @@ public class StorageImpl
 {
 	private final Model model;
 	private final LocalSilo silo;
-	private final ImmutableMap<String, EntityImpl> entities;
+	private final ImmutableMap<String, CollectionImpl> collections;
 
 	public StorageImpl(Model model, LocalSilo silo)
 	{
@@ -35,12 +36,12 @@ public class StorageImpl
 
 		LongIdGenerator ids = new SequenceLongIdGenerator();
 
-		EntityMappers mappers = new EntityMappers(model, this);
-		this.entities = model.getImplements("Entity")
-			.toMap(StructuredDef::getName, def -> new EntityImpl(
+		ValueMappers mappers = new ValueMappers(model, this);
+		this.collections = model.getImplements(StorageSchema.ENTITY_NAME)
+			.toMap(StructuredDef::getName, def -> new CollectionImpl(
 				ids,
 				def,
-				silo.getCollection(CollectionRef.create("entity:" + def.getName(), Long.class, StoredEntityValue.class)),
+				silo.getCollection(CollectionRef.create("collection:" + def.getName(), Long.class, StoredObjectValue.class)),
 				mappers.createRoot(def)
 			))
 			.toImmutable();
@@ -53,15 +54,15 @@ public class StorageImpl
 	}
 
 	@Override
-	public RichIterable<? extends Entity> getEntities()
+	public RichIterable<? extends Collection> getCollections()
 	{
-		return entities.valuesView();
+		return collections.valuesView();
 	}
 
 	@Override
-	public Entity get(String id)
+	public Collection get(String id)
 	{
-		return entities.get(id);
+		return collections.get(id);
 	}
 
 	@Override
@@ -70,19 +71,19 @@ public class StorageImpl
 		silo.close();
 	}
 
-	public static RichIterable<CollectionDef<Long, StoredEntityValue>> generateEntityDefinitions(
+	public static RichIterable<CollectionDef<Long, StoredObjectValue>> generateCollectionDefinitions(
 		Model model
 	)
 	{
-		EntityIndexing indexing = new EntityIndexing();
-		EntitySerializers serializers = new EntitySerializers(model);
-		return model.getImplements("Entity")
+		ValueIndexers indexing = new ValueIndexers();
+		ValueSerializers serializers = new ValueSerializers(model);
+		return model.getImplements(StorageSchema.ENTITY_NAME)
 			.collect(def -> {
 				var codec = new ObjectCodecImpl(
 					serializers.resolvePolymorphic(def)
 				);
 
-				return CollectionDef.create(StoredEntityValue.class, "entity:" + def.getName())
+				return CollectionDef.create(StoredObjectValue.class, "collection:" + def.getName())
 					.withId(Long.class, StorageImpl::getID)
 					.withCodec(codec)
 					.addIndex(indexing.generateDefinition(def))
@@ -124,7 +125,7 @@ public class StorageImpl
 		@Override
 		public Mono<Storage> start()
 		{
-			return Mono.fromSupplier(() -> StorageImpl.generateEntityDefinitions(model))
+			return Mono.fromSupplier(() -> StorageImpl.generateCollectionDefinitions(model))
 				.flatMap(defs -> LocalSilo.open(path)
 					.addCollections(defs)
 					.start()

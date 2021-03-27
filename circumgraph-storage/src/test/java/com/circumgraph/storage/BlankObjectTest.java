@@ -18,7 +18,7 @@ public class BlankObjectTest
 		return Model.create()
 			.addSchema(StorageSchema.INSTANCE)
 			.addType(ObjectDef.create("Test")
-				.addImplements("Entity")
+				.addImplements(StorageSchema.ENTITY_NAME)
 				.build()
 			)
 			.build();
@@ -27,17 +27,17 @@ public class BlankObjectTest
 	@Test
 	public void testStore()
 	{
-		var entity = storage.get("Test");
+		var collection = storage.get("Test");
 
-		var mutation = entity.newMutation()
+		var mutation = collection.newMutation()
 			.build();
 
-		var stored = entity.store(mutation).block();
+		var stored = collection.store(mutation).block();
 
 		var idValue = (SimpleValue) stored.getFields().get("id");
 		long id = (long) idValue.get();
 
-		var fetched = entity.get(id).block();
+		var fetched = collection.get(id).block();
 		assertThat(fetched, is(stored));
 	}
 }

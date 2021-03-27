@@ -2,9 +2,9 @@ package com.circumgraph.storage.internal;
 
 import com.circumgraph.model.ScalarDef;
 import com.circumgraph.model.StructuredDef;
-import com.circumgraph.storage.Entity;
+import com.circumgraph.storage.Collection;
 import com.circumgraph.storage.StorageException;
-import com.circumgraph.storage.StoredEntityValue;
+import com.circumgraph.storage.StoredObjectValue;
 import com.circumgraph.storage.internal.mappers.ValueMapper;
 import com.circumgraph.storage.internal.search.QueryImpl;
 import com.circumgraph.storage.internal.search.SearchResultImpl;
@@ -19,21 +19,21 @@ import reactor.core.publisher.Mono;
 import se.l4.silo.StoreResult;
 import se.l4.ylem.ids.LongIdGenerator;
 
-public class EntityImpl
-	implements Entity
+public class CollectionImpl
+	implements Collection
 {
 	private final StructuredDef definition;
 
-	private final se.l4.silo.Collection<Long, StoredEntityValue> backing;
+	private final se.l4.silo.Collection<Long, StoredObjectValue> backing;
 	private final LongIdGenerator ids;
 
-	private final ValueMapper<StoredEntityValue, StructuredMutation> mapper;
+	private final ValueMapper<StoredObjectValue, StructuredMutation> mapper;
 
-	public EntityImpl(
+	public CollectionImpl(
 		LongIdGenerator ids,
 		StructuredDef definition,
-		se.l4.silo.Collection<Long, StoredEntityValue> backing,
-		ValueMapper<StoredEntityValue, StructuredMutation> mapper
+		se.l4.silo.Collection<Long, StoredObjectValue> backing,
+		ValueMapper<StoredObjectValue, StructuredMutation> mapper
 	)
 	{
 		this.ids = ids;
@@ -55,13 +55,9 @@ public class EntityImpl
 	}
 
 	@Override
-	public Mono<StoredEntityValue> get(long id)
+	public Mono<StoredObjectValue> get(long id)
 	{
 		return backing.get(id)
-			.map(m -> {
-				// TODO: Resolve references to external data and entities here?
-				return m;
-			})
 			.onErrorMap(se.l4.silo.StorageException.class, e -> new StorageException("Unable to read from storage; " + e.getMessage(), e));
 	}
 
@@ -79,9 +75,9 @@ public class EntityImpl
 	}
 
 	@Override
-	public Mono<StoredEntityValue> store(StructuredMutation mutation)
+	public Mono<StoredObjectValue> store(StructuredMutation mutation)
 	{
-		return Mono.fromSupplier(() -> new StoredEntityValueImpl(StructuredValue.create(mutation.getType())
+		return Mono.fromSupplier(() -> new StoredObjectValueImpl(StructuredValue.create(mutation.getType())
 			.add("id", SimpleValue.create(ScalarDef.ID, ids.next()))
 			.build()
 		))
@@ -89,15 +85,15 @@ public class EntityImpl
 	}
 
 	@Override
-	public Mono<StoredEntityValue> store(long id, StructuredMutation mutation)
+	public Mono<StoredObjectValue> store(long id, StructuredMutation mutation)
 	{
 		// TODO: If the type changes this should keep the id
 		return backing.get(id)
 			.flatMap(v -> store(v, mutation));
 	}
 
-	private Mono<StoredEntityValue> store(
-		StoredEntityValue current,
+	private Mono<StoredObjectValue> store(
+		StoredObjectValue current,
 		StructuredMutation mutation
 	)
 	{

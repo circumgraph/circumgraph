@@ -4,10 +4,14 @@ import com.circumgraph.model.StructuredDef;
 import com.circumgraph.storage.mutation.StructuredMutation;
 import com.circumgraph.storage.search.Query;
 import com.circumgraph.storage.search.SearchResult;
+import com.circumgraph.values.StructuredValue;
 
 import reactor.core.publisher.Mono;
 
-public interface Entity
+/**
+ * Stored collection of {@link StructuredValue}s.
+ */
+public interface Collection
 {
 	/**
 	 * Get the definition that this entity represents.
@@ -45,7 +49,7 @@ public interface Entity
 	 * @param id
 	 * @return
 	 */
-	Mono<StoredEntityValue> get(long id);
+	Mono<StoredObjectValue> get(long id);
 
 	/**
 	 * Create and store an object.
@@ -54,7 +58,7 @@ public interface Entity
 	 * @return
 	 *   the created object
 	 */
-	Mono<StoredEntityValue> store(StructuredMutation mutation);
+	Mono<StoredObjectValue> store(StructuredMutation mutation);
 
 	/**
 	 * Update an object.
@@ -63,7 +67,7 @@ public interface Entity
 	 * @return
 	 *   the object with mutations applied
 	 */
-	Mono<StoredEntityValue> store(long id, StructuredMutation mutation);
+	Mono<StoredObjectValue> store(long id, StructuredMutation mutation);
 
 	/**
 	 * Delete a stored object.

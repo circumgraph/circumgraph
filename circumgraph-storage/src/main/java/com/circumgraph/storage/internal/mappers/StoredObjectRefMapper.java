@@ -5,48 +5,48 @@ import java.util.function.Supplier;
 
 import com.circumgraph.model.StructuredDef;
 import com.circumgraph.model.validation.ValidationMessage;
-import com.circumgraph.storage.Entity;
-import com.circumgraph.storage.EntityObjectRef;
-import com.circumgraph.storage.internal.EntityObjectRefImpl;
+import com.circumgraph.storage.Collection;
+import com.circumgraph.storage.StoredObjectRef;
+import com.circumgraph.storage.internal.StoredObjectRefImpl;
 import com.circumgraph.storage.mutation.SimpleValueMutation;
 
-public class EntityObjectRefMapper
-	implements ValueMapper<EntityObjectRef, SimpleValueMutation<Long>>
+public class StoredObjectRefMapper
+	implements ValueMapper<StoredObjectRef, SimpleValueMutation<Long>>
 {
 	private final StructuredDef def;
-	private final Supplier<Entity> entity;
+	private final Supplier<Collection> collection;
 
-	public EntityObjectRefMapper(
+	public StoredObjectRefMapper(
 		StructuredDef def,
-		Supplier<Entity> entity
+		Supplier<Collection> collection
 	)
 	{
-		this.entity = entity;
+		this.collection = collection;
 		this.def = def;
 	}
 
 	@Override
-	public EntityObjectRef getInitialValue()
+	public StoredObjectRef getInitialValue()
 	{
 		return null;
 	}
 
 	@Override
-	public EntityObjectRef applyMutation(
-		EntityObjectRef previousValue,
+	public StoredObjectRef applyMutation(
+		StoredObjectRef previousValue,
 		SimpleValueMutation<Long> mutation
 	)
 	{
-		return new EntityObjectRefImpl(def, mutation.getValue());
+		return new StoredObjectRefImpl(def, mutation.getValue());
 	}
 
 	@Override
 	public void validate(
 		Consumer<ValidationMessage> validationCollector,
-		EntityObjectRef value
+		StoredObjectRef value
 	)
 	{
-		entity.get()
+		collection.get()
 			.contains(value.getId())
 			.doOnNext(exists -> {
 				if(! exists)

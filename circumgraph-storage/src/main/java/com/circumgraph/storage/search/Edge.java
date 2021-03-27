@@ -1,6 +1,6 @@
 package com.circumgraph.storage.search;
 
-import com.circumgraph.storage.StoredEntityValue;
+import com.circumgraph.storage.StoredObjectValue;
 
 /**
  * Hit within a {@link SearchResult}.
@@ -26,5 +26,5 @@ public interface Edge
 	 *
 	 * @return
 	 */
-	StoredEntityValue getNode();
+	StoredObjectValue getNode();
 }

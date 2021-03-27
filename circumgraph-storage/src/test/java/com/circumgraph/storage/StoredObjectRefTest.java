@@ -16,7 +16,7 @@ import com.circumgraph.values.ListValue;
 
 import org.junit.jupiter.api.Test;
 
-public class EntityRefTest
+public class StoredObjectRefTest
 	extends StorageTest
 {
 	@Test
@@ -25,7 +25,7 @@ public class EntityRefTest
 		var storage = open(Model.create()
 			.addSchema(StorageSchema.INSTANCE)
 			.addType(ObjectDef.create("Book")
-				.addImplements("Entity")
+				.addImplements(StorageSchema.ENTITY_NAME)
 				.addField(FieldDef.create("title")
 					.withType(ScalarDef.STRING)
 					.build()
@@ -37,7 +37,7 @@ public class EntityRefTest
 				.build()
 			)
 			.addType(ObjectDef.create("Author")
-				.addImplements("Entity")
+				.addImplements(StorageSchema.ENTITY_NAME)
 				.addField(FieldDef.create("name")
 					.withType(ScalarDef.STRING)
 					.build()
@@ -63,13 +63,13 @@ public class EntityRefTest
 			.build()
 		).block();
 
-		var authorRef = book.getField("author", EntityObjectRef.class).get();
+		var authorRef = book.getField("author", StoredObjectRef.class).get();
 		assertThat(authorRef.getDefinition(), is(author.getDefinition()));
 		assertThat(authorRef.getId(), is(authorId));
 
 		var fetchedBook = books.get(book.getId()).block();
 
-		var fetchedAuthorRef = fetchedBook.getField("author", EntityObjectRef.class).get();
+		var fetchedAuthorRef = fetchedBook.getField("author", StoredObjectRef.class).get();
 		assertThat(fetchedAuthorRef.getDefinition(), is(author.getDefinition()));
 		assertThat(fetchedAuthorRef.getId(), is(authorId));
 	}
@@ -80,7 +80,7 @@ public class EntityRefTest
 		var storage = open(Model.create()
 			.addSchema(StorageSchema.INSTANCE)
 			.addType(ObjectDef.create("Book")
-				.addImplements("Entity")
+				.addImplements(StorageSchema.ENTITY_NAME)
 				.addField(FieldDef.create("title")
 					.withType(ScalarDef.STRING)
 					.build()
@@ -92,7 +92,7 @@ public class EntityRefTest
 				.build()
 			)
 			.addType(ObjectDef.create("Author")
-				.addImplements("Entity")
+				.addImplements(StorageSchema.ENTITY_NAME)
 				.addField(FieldDef.create("name")
 					.withType(ScalarDef.STRING)
 					.build()
@@ -118,7 +118,7 @@ public class EntityRefTest
 		var storage = open(Model.create()
 			.addSchema(StorageSchema.INSTANCE)
 			.addType(ObjectDef.create("Book")
-				.addImplements("Entity")
+				.addImplements(StorageSchema.ENTITY_NAME)
 				.addField(FieldDef.create("title")
 					.withType(ScalarDef.STRING)
 					.build()
@@ -130,7 +130,7 @@ public class EntityRefTest
 				.build()
 			)
 			.addType(ObjectDef.create("Author")
-				.addImplements("Entity")
+				.addImplements(StorageSchema.ENTITY_NAME)
 				.addField(FieldDef.create("name")
 					.withType(ScalarDef.STRING)
 					.build()
@@ -158,14 +158,14 @@ public class EntityRefTest
 			.build()
 		).block();
 
-		var authorsRef = (ListValue<EntityObjectRef>) book.getField("authors").get();
+		var authorsRef = (ListValue<StoredObjectRef>) book.getField("authors").get();
 		var authorRef = authorsRef.items().getFirst();
 		assertThat(authorRef.getDefinition(), is(author.getDefinition()));
 		assertThat(authorRef.getId(), is(authorId));
 
 		var fetchedBook = books.get(book.getId()).block();
 
-		var fetchedAuthorsRef = (ListValue<EntityObjectRef>) fetchedBook.getField("authors").get();
+		var fetchedAuthorsRef = (ListValue<StoredObjectRef>) fetchedBook.getField("authors").get();
 		var fetchedAuthorRef = fetchedAuthorsRef.items().getFirst();
 		assertThat(fetchedAuthorRef.getDefinition(), is(author.getDefinition()));
 		assertThat(fetchedAuthorRef.getId(), is(authorId));
@@ -177,7 +177,7 @@ public class EntityRefTest
 		var storage = open(Model.create()
 			.addSchema(StorageSchema.INSTANCE)
 			.addType(ObjectDef.create("Review")
-				.addImplements("Entity")
+				.addImplements(StorageSchema.ENTITY_NAME)
 				.addField(FieldDef.create("reviewBody")
 					.withType(ScalarDef.STRING)
 					.build()
@@ -189,7 +189,7 @@ public class EntityRefTest
 				.build()
 			)
 			.addType(InterfaceDef.create("Thing")
-				.addImplements("Entity")
+				.addImplements(StorageSchema.ENTITY_NAME)
 				.build()
 			)
 			.addType(ObjectDef.create("Book")
@@ -219,13 +219,13 @@ public class EntityRefTest
 			.build()
 		).block();
 
-		var thingRef = review.getField("itemReviewed", EntityObjectRef.class).get();
+		var thingRef = review.getField("itemReviewed", StoredObjectRef.class).get();
 		assertThat(thingRef.getDefinition(), is(things.getDefinition()));
 		assertThat(thingRef.getId(), is(bookId));
 
 		var fetchedReview = reviews.get(review.getId()).block();
 
-		var fetchedThingRef = fetchedReview.getField("itemReviewed", EntityObjectRef.class).get();
+		var fetchedThingRef = fetchedReview.getField("itemReviewed", StoredObjectRef.class).get();
 		assertThat(fetchedThingRef.getDefinition(), is(things.getDefinition()));
 		assertThat(fetchedThingRef.getId(), is(bookId));
 	}
@@ -236,7 +236,7 @@ public class EntityRefTest
 		var storage = open(Model.create()
 			.addSchema(StorageSchema.INSTANCE)
 			.addType(ObjectDef.create("Review")
-				.addImplements("Entity")
+				.addImplements(StorageSchema.ENTITY_NAME)
 				.addField(FieldDef.create("reviewBody")
 					.withType(ScalarDef.STRING)
 					.build()
@@ -248,7 +248,7 @@ public class EntityRefTest
 				.build()
 			)
 			.addType(InterfaceDef.create("Thing")
-				.addImplements("Entity")
+				.addImplements(StorageSchema.ENTITY_NAME)
 				.build()
 			)
 			.addType(ObjectDef.create("Book")
@@ -278,13 +278,13 @@ public class EntityRefTest
 			.build()
 		).block();
 
-		var thingRef = review.getField("itemReviewed", EntityObjectRef.class).get();
+		var thingRef = review.getField("itemReviewed", StoredObjectRef.class).get();
 		assertThat(thingRef.getDefinition(), is(things.getDefinition()));
 		assertThat(thingRef.getId(), is(bookId));
 
 		var fetchedReview = reviews.get(review.getId()).block();
 
-		var fetchedThingRef = fetchedReview.getField("itemReviewed", EntityObjectRef.class).get();
+		var fetchedThingRef = fetchedReview.getField("itemReviewed", StoredObjectRef.class).get();
 		assertThat(fetchedThingRef.getDefinition(), is(things.getDefinition()));
 		assertThat(fetchedThingRef.getId(), is(bookId));
 	}

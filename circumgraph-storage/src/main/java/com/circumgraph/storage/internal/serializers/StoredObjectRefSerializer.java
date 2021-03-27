@@ -4,20 +4,20 @@ import java.io.IOException;
 
 import com.circumgraph.model.StructuredDef;
 import com.circumgraph.model.TypeDef;
-import com.circumgraph.storage.EntityObjectRef;
-import com.circumgraph.storage.internal.EntityObjectRefImpl;
+import com.circumgraph.storage.StoredObjectRef;
+import com.circumgraph.storage.internal.StoredObjectRefImpl;
 import com.circumgraph.storage.types.ValueSerializer;
 
 import se.l4.exobytes.streaming.StreamingInput;
 import se.l4.exobytes.streaming.StreamingOutput;
 import se.l4.exobytes.streaming.Token;
 
-public class EntityObjectRefSerializer
-	implements ValueSerializer<EntityObjectRef>
+public class StoredObjectRefSerializer
+	implements ValueSerializer<StoredObjectRef>
 {
 	private final StructuredDef def;
 
-	public EntityObjectRefSerializer(StructuredDef def)
+	public StoredObjectRefSerializer(StructuredDef def)
 	{
 		this.def = def;
 	}
@@ -29,16 +29,16 @@ public class EntityObjectRefSerializer
 	}
 
 	@Override
-	public EntityObjectRef read(StreamingInput in)
+	public StoredObjectRef read(StreamingInput in)
 		throws IOException
 	{
 		in.next(Token.VALUE);
 		var id = in.readLong();
-		return new EntityObjectRefImpl(def, id);
+		return new StoredObjectRefImpl(def, id);
 	}
 
 	@Override
-	public void write(EntityObjectRef object, StreamingOutput out)
+	public void write(StoredObjectRef object, StreamingOutput out)
 		throws IOException
 	{
 		out.writeLong(object.getId());

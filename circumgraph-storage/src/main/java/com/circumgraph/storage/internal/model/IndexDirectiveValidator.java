@@ -9,7 +9,8 @@ import com.circumgraph.model.SimpleValueDef;
 import com.circumgraph.model.StructuredDef;
 import com.circumgraph.model.validation.DirectiveValidator;
 import com.circumgraph.model.validation.ValidationMessage;
-import com.circumgraph.storage.internal.EntityIndexing;
+import com.circumgraph.storage.StorageSchema;
+import com.circumgraph.storage.internal.ValueIndexers;
 
 /**
  * Validator for the {@code index} directive.
@@ -17,10 +18,10 @@ import com.circumgraph.storage.internal.EntityIndexing;
 public class IndexDirectiveValidator
 	implements DirectiveValidator<FieldDef>
 {
-	private final EntityIndexing indexing;
+	private final ValueIndexers indexing;
 
 	public IndexDirectiveValidator(
-		EntityIndexing indexing
+		ValueIndexers indexing
 	)
 	{
 		this.indexing = indexing;
@@ -47,9 +48,9 @@ public class IndexDirectiveValidator
 	{
 		SimpleValueDef def;
 		if(location.getType() instanceof StructuredDef
-			&& ((StructuredDef) location.getType()).findImplements("Entity"))
+			&& ((StructuredDef) location.getType()).findImplements(StorageSchema.ENTITY_NAME))
 		{
-			// Link to another entity
+			// Link to another collection
 			def = ScalarDef.ID;
 		}
 		else if(location.getType() instanceof SimpleValueDef)

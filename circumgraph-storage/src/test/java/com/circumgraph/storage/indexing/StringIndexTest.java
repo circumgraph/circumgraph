@@ -28,7 +28,7 @@ public class StringIndexTest
 		return Model.create()
 			.addSchema(StorageSchema.INSTANCE)
 			.addType(ObjectDef.create("Book")
-				.addImplements("Entity")
+				.addImplements(StorageSchema.ENTITY_NAME)
 				.addField(FieldDef.create("title")
 					.withType(ScalarDef.STRING)
 					.addDirective(DirectiveUse.create("index")
@@ -56,19 +56,19 @@ public class StringIndexTest
 	@Test
 	public void testStore()
 	{
-		var entity = storage.get("Book");
+		var collection = storage.get("Book");
 
-		var mutation = entity.newMutation()
+		var mutation = collection.newMutation()
 			.updateField("title", SimpleValueMutation.create("A Short History of Nearly Everything"))
 			.updateField("isbn", SimpleValueMutation.create("076790818X"))
 			.build();
 
-		var stored = entity.store(mutation).block();
+		var stored = collection.store(mutation).block();
 
 		var idValue = (SimpleValue) stored.getFields().get("id");
 		long id = (long) idValue.get();
 
-		var fetched = entity.get(id).block();
+		var fetched = collection.get(id).block();
 		assertThat(fetched, is(stored));
 
 		var titleValue = (SimpleValue) fetched.getFields().get("title");
@@ -78,32 +78,32 @@ public class StringIndexTest
 	@Test
 	public void testQueryNoClauses()
 	{
-		var entity = storage.get("Book");
+		var collection = storage.get("Book");
 
-		var mutation = entity.newMutation()
+		var mutation = collection.newMutation()
 			.updateField("title", SimpleValueMutation.create("A Short History of Nearly Everything"))
 			.updateField("isbn", SimpleValueMutation.create("076790818X"))
 			.build();
 
-		entity.store(mutation).block();
+		collection.store(mutation).block();
 
-		var results = entity.search(Query.create()).block();
+		var results = collection.search(Query.create()).block();
 		assertThat(results.getTotalCount(), is(1));
 	}
 
 	@Test
 	public void testQueryNoMatches()
 	{
-		var entity = storage.get("Book");
+		var collection = storage.get("Book");
 
-		var mutation = entity.newMutation()
+		var mutation = collection.newMutation()
 			.updateField("title", SimpleValueMutation.create("A Short History of Nearly Everything"))
 			.updateField("isbn", SimpleValueMutation.create("076790818X"))
 			.build();
 
-		entity.store(mutation).block();
+		collection.store(mutation).block();
 
-		var results = entity.search(
+		var results = collection.search(
 			Query.create()
 				.addClause(FieldQuery.create("isbn", EqualsMatcher.create("a")))
 		).block();
@@ -114,16 +114,16 @@ public class StringIndexTest
 	@Test
 	public void testQueryToken()
 	{
-		var entity = storage.get("Book");
+		var collection = storage.get("Book");
 
-		var mutation = entity.newMutation()
+		var mutation = collection.newMutation()
 			.updateField("title", SimpleValueMutation.create("A Short History of Nearly Everything"))
 			.updateField("isbn", SimpleValueMutation.create("076790818X"))
 			.build();
 
-		entity.store(mutation).block();
+		collection.store(mutation).block();
 
-		var results = entity.search(
+		var results = collection.search(
 			Query.create()
 				.addClause(FieldQuery.create("isbn", EqualsMatcher.create("076790818X")))
 		).block();

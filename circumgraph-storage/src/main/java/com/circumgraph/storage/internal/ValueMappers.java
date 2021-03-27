@@ -11,12 +11,13 @@ import com.circumgraph.model.StructuredDef;
 import com.circumgraph.model.TypeDef;
 import com.circumgraph.model.UnionDef;
 import com.circumgraph.storage.Storage;
-import com.circumgraph.storage.StoredEntityValue;
-import com.circumgraph.storage.internal.mappers.EntityMapper;
-import com.circumgraph.storage.internal.mappers.EntityObjectRefMapper;
+import com.circumgraph.storage.StorageSchema;
+import com.circumgraph.storage.StoredObjectValue;
 import com.circumgraph.storage.internal.mappers.ListValueMapper;
 import com.circumgraph.storage.internal.mappers.PolymorphicValueMapper;
+import com.circumgraph.storage.internal.mappers.RootObjectMapper;
 import com.circumgraph.storage.internal.mappers.ScalarValueMapper;
+import com.circumgraph.storage.internal.mappers.StoredObjectRefMapper;
 import com.circumgraph.storage.internal.mappers.StructuredValueMapper;
 import com.circumgraph.storage.internal.mappers.ValueMapper;
 import com.circumgraph.storage.mutation.StructuredMutation;
@@ -30,12 +31,12 @@ import se.l4.silo.StorageException;
 /**
  * Utility class that creates {@link ValueMapper}s.
  */
-public class EntityMappers
+public class ValueMappers
 {
 	private final Model model;
 	private final Storage storage;
 
-	public EntityMappers(
+	public ValueMappers(
 		Model model,
 		Storage storage
 	)
@@ -44,12 +45,12 @@ public class EntityMappers
 		this.storage = storage;
 	}
 
-	public ValueMapper<StoredEntityValue, StructuredMutation> createRoot(
+	public ValueMapper<StoredObjectValue, StructuredMutation> createRoot(
 		StructuredDef def
 	)
 	{
 		var polymorphic = createPolymorphic(def);
-		return new EntityMapper(polymorphic);
+		return new RootObjectMapper(polymorphic);
 	}
 
 	/**
@@ -94,7 +95,7 @@ public class EntityMappers
 		else if(def instanceof StructuredDef)
 		{
 			var structuredDef = (StructuredDef) def;
- 			if(structuredDef.findImplements("Entity"))
+ 			if(structuredDef.findImplements(StorageSchema.ENTITY_NAME))
 			{
 				/*
 				 * Links to other entities may also be polymorphic in that they
@@ -103,14 +104,14 @@ public class EntityMappers
 				 * implements `Entity` to set the correct definition on mapped
 				 * values.
 				 */
-				if(! structuredDef.hasImplements("Entity"))
+				if(! structuredDef.hasImplements(StorageSchema.ENTITY_NAME))
 				{
-					structuredDef = structuredDef.findImplements(interfaceDef -> interfaceDef.hasImplements("Entity"))
+					structuredDef = structuredDef.findImplements(interfaceDef -> interfaceDef.hasImplements(StorageSchema.ENTITY_NAME))
 						.get();
 				}
 
 				var entityName = structuredDef.getName();
-				return new EntityObjectRefMapper(structuredDef, () -> storage.get(entityName));
+				return new StoredObjectRefMapper(structuredDef, () -> storage.get(entityName));
 			}
 
 			return createPolymorphic(structuredDef);
@@ -137,7 +138,7 @@ public class EntityMappers
 
 	private StructuredValueMapper createDirect(StructuredDef def)
 	{
-		var isEntity = def.findImplements("Entity");
+		var isEntity = def.findImplements(StorageSchema.ENTITY_NAME);
 		return new StructuredValueMapper(
 			def,
 			def.getFields()

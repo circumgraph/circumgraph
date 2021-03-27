@@ -10,7 +10,8 @@ import org.eclipse.collections.api.RichIterable;
 import reactor.core.publisher.Mono;
 
 /**
- * Storage
+ * Storage that contains all the {@link Collection}s created from the active
+ * {@link Model}.
  */
 public interface Storage
 {
@@ -22,17 +23,20 @@ public interface Storage
 	Model getModel();
 
 	/**
-	 * Get all of the entities available in the system.
+	 * Get all of the collections available in the system.
+	 *
+	 * @return
+	 *   iterable with all collections
 	 */
-	RichIterable<? extends Entity> getEntities();
+	RichIterable<? extends Collection> getCollections();
 
 	/**
-	 * Get an entity based on its identifier.
+	 * Get a collection based on its identifier.
 	 *
 	 * @param id
 	 * @return
 	 */
-	Entity get(String id);
+	Collection get(String id);
 
 	/**
 	 * Close this storage.

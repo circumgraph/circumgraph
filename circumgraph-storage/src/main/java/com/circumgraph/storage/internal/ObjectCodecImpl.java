@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import com.circumgraph.storage.StoredEntityValue;
+import com.circumgraph.storage.StoredObjectValue;
 import com.circumgraph.storage.internal.serializers.PolymorphicValueSerializer;
 
 import se.l4.exobytes.streaming.StreamingFormat;
@@ -16,7 +16,7 @@ import se.l4.silo.engine.ObjectCodec;
  * Codec built on top of {@link PolymorphicValueSerializer}.
  */
 public class ObjectCodecImpl
-	implements ObjectCodec<StoredEntityValue>
+	implements ObjectCodec<StoredObjectValue>
 {
 	private final PolymorphicValueSerializer serializer;
 
@@ -28,18 +28,18 @@ public class ObjectCodecImpl
 	}
 
 	@Override
-	public StoredEntityValue decode(InputStream in0)
+	public StoredObjectValue decode(InputStream in0)
 		throws IOException
 	{
 		try(StreamingInput in = StreamingFormat.CBOR.createInput(in0))
 		{
 			var object = serializer.read(in);
-			return new StoredEntityValueImpl(object);
+			return new StoredObjectValueImpl(object);
 		}
 	}
 
 	@Override
-	public void encode(StoredEntityValue instance, OutputStream out0)
+	public void encode(StoredObjectValue instance, OutputStream out0)
 		throws IOException
 	{
 		try(StreamingOutput out = StreamingFormat.CBOR.createOutput(out0))

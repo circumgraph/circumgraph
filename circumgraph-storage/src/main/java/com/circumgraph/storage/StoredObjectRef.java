@@ -5,7 +5,7 @@ import com.circumgraph.values.Value;
 /**
  * Reference to another stored object.
  */
-public interface EntityObjectRef
+public interface StoredObjectRef
 	extends Value
 {
 	/**

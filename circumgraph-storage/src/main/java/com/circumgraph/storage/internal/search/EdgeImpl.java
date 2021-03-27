@@ -1,6 +1,6 @@
 package com.circumgraph.storage.internal.search;
 
-import com.circumgraph.storage.StoredEntityValue;
+import com.circumgraph.storage.StoredObjectValue;
 import com.circumgraph.storage.search.Cursor;
 import com.circumgraph.storage.search.Edge;
 
@@ -12,12 +12,12 @@ public class EdgeImpl
 {
 	private final float score;
 	private final Cursor cursor;
-	private final StoredEntityValue node;
+	private final StoredObjectValue node;
 
 	public EdgeImpl(
 		float score,
 		Cursor cursor,
-		StoredEntityValue node
+		StoredObjectValue node
 	)
 	{
 		this.score = score;
@@ -38,7 +38,7 @@ public class EdgeImpl
 	}
 
 	@Override
-	public StoredEntityValue getNode()
+	public StoredObjectValue getNode()
 	{
 		return node;
 	}

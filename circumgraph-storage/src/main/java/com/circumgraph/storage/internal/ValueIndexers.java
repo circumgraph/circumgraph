@@ -12,7 +12,8 @@ import com.circumgraph.model.ScalarDef;
 import com.circumgraph.model.SimpleValueDef;
 import com.circumgraph.model.StructuredDef;
 import com.circumgraph.model.TypeDef;
-import com.circumgraph.storage.StoredEntityValue;
+import com.circumgraph.storage.StorageSchema;
+import com.circumgraph.storage.StoredObjectValue;
 import com.circumgraph.storage.internal.indexing.EnumValueIndexer;
 import com.circumgraph.storage.internal.indexing.FloatValueIndexer;
 import com.circumgraph.storage.internal.indexing.FullTextStringValueIndexer;
@@ -40,14 +41,14 @@ import se.l4.silo.engine.index.search.SearchIndexDef;
 import se.l4.silo.engine.index.search.types.SearchFieldType;
 
 /**
- * Helper for indexing of entities.
+ * Helper for indexing of objects.
  */
-public class EntityIndexing
+public class ValueIndexers
 {
 	private final ImmutableMap<String, ValueIndexer<?>> indexersByName;
 	private final ImmutableMultimap<SimpleValueDef, ValueIndexer<?>> indexersByType;
 
-	public EntityIndexing()
+	public ValueIndexers()
 	{
 		var indexers = Sets.mutable.<ValueIndexer<?>>of(
 			new TokenStringValueIndexer(),
@@ -132,11 +133,11 @@ public class EntityIndexing
 		return guessBestIndexer(def).get();
 	}
 
-	public SearchIndexDef<StoredEntityValue> generateDefinition(
+	public SearchIndexDef<StoredObjectValue> generateDefinition(
 		StructuredDef def
 	)
 	{
-		var fields = Lists.mutable.<SearchFieldDef<StoredEntityValue>>empty();
+		var fields = Lists.mutable.<SearchFieldDef<StoredObjectValue>>empty();
 
 		ValueGenerator gen = (root, consumer) -> consumer.accept(root);
 		collectFields(
@@ -148,7 +149,7 @@ public class EntityIndexing
 			fields::add
 		);
 
-		return SearchIndexDef.create(StoredEntityValue.class, "main")
+		return SearchIndexDef.create(StoredObjectValue.class, "main")
 			.addFields(fields)
 			.build();
 	}
@@ -160,7 +161,7 @@ public class EntityIndexing
 		boolean multiple,
 		ValueGenerator generator,
 
-		Consumer<SearchFieldDef<StoredEntityValue>> fieldReceiver
+		Consumer<SearchFieldDef<StoredObjectValue>> fieldReceiver
 	)
 	{
 		if(def instanceof ListDef)
@@ -198,7 +199,7 @@ public class EntityIndexing
 
 			if(multiple)
 			{
-				var searchField = SearchFieldDef.create(StoredEntityValue.class, path)
+				var searchField = SearchFieldDef.create(StoredObjectValue.class, path)
 					.withType(indexer.getSearchFieldType())
 					.collection()
 					.withSupplier(value -> {
@@ -213,7 +214,7 @@ public class EntityIndexing
 			}
 			else
 			{
-				var searchField = SearchFieldDef.create(StoredEntityValue.class, path)
+				var searchField = SearchFieldDef.create(StoredObjectValue.class, path)
 					.withType((SearchFieldType<Object>) indexer.getSearchFieldType())
 					.withHighlighting(highlightable)
 					.withSupplier(value -> {
@@ -232,13 +233,13 @@ public class EntityIndexing
 			/*
 			 * Three cases, either:
 			 *
-			 * 1) Link to another entity - handle as ID type
+			 * 1) Link to another collection - handle as ID type
 			 * 2) InterfaceDef
 			 * 3) ObjectDef
 			 */
 			var structuredDef = (StructuredDef) def;
 
-			if(path != null && structuredDef.findImplements("Entity"))
+			if(path != null && structuredDef.findImplements(StorageSchema.ENTITY_NAME))
 			{
 				// Not root entity and implements entity - index as an ID
 				collectFields(
@@ -256,7 +257,7 @@ public class EntityIndexing
 				// TODO: Indexing of fields in interface implementations
 
 				// For interfaces we first make sure that __typename is available
-				var typenameField = SearchFieldDef.create(StoredEntityValue.class, join(path, "__typename"))
+				var typenameField = SearchFieldDef.create(StoredObjectValue.class, join(path, "__typename"))
 					.withType(SearchFieldType.forString().token().build())
 					.withSupplier(value -> {
 						var list = Lists.mutable.<String>empty();

@@ -25,7 +25,7 @@ public class ListTests
 		var storage = open(Model.create()
 			.addSchema(StorageSchema.INSTANCE)
 			.addType(ObjectDef.create("Test")
-				.addImplements("Entity")
+				.addImplements(StorageSchema.ENTITY_NAME)
 				.addField(FieldDef.create("titles")
 					.withType(ListDef.output(ScalarDef.STRING))
 					.build()
@@ -35,16 +35,16 @@ public class ListTests
 			.build()
 		);
 
-		var entity = storage.get("Test");
+		var collection = storage.get("Test");
 
-		var mutation = entity.newMutation()
+		var mutation = collection.newMutation()
 			.updateField("titles", ListSetMutation.create(
 				SimpleValueMutation.create("a"),
 				SimpleValueMutation.create("b")
 			))
 			.build();
 
-		var stored = entity.store(mutation).block();
+		var stored = collection.store(mutation).block();
 
 		var titles1 = (ListValue<? extends SimpleValue>) stored.getField("titles", ListValue.class).get();
 		assertThat(titles1.items(), contains(
@@ -54,7 +54,7 @@ public class ListTests
 
 		var id = stored.getId();
 
-		var fetched = entity.get(id).block();
+		var fetched = collection.get(id).block();
 
 		var titles2 = (ListValue<? extends SimpleValue>) fetched.getField("titles", ListValue.class).get();
 		assertThat(titles2.items(), contains(
@@ -70,7 +70,7 @@ public class ListTests
 		var storage = open(Model.create()
 			.addSchema(StorageSchema.INSTANCE)
 			.addType(ObjectDef.create("Test")
-				.addImplements("Entity")
+				.addImplements(StorageSchema.ENTITY_NAME)
 				.addField(FieldDef.create("titles")
 					.withType(ListDef.output(ScalarDef.STRING))
 					.build()
@@ -80,15 +80,15 @@ public class ListTests
 			.build()
 		);
 
-		var entity = storage.get("Test");
+		var collection = storage.get("Test");
 
-		var mutation = entity.newMutation()
+		var mutation = collection.newMutation()
 			.updateField("titles", ListSetMutation.create(
 				SimpleValueMutation.create("a")
 			))
 			.build();
 
-		var stored = entity.store(mutation).block();
+		var stored = collection.store(mutation).block();
 
 		var titles1 = (ListValue<? extends SimpleValue>) stored.getField("titles", ListValue.class).get();
 		assertThat(titles1.items(), contains(
@@ -97,16 +97,16 @@ public class ListTests
 
 		var id = stored.getId();
 
-		var mutation2 = entity.newMutation()
+		var mutation2 = collection.newMutation()
 			.updateField("titles", ListSetMutation.create(
 				SimpleValueMutation.create("a"),
 				SimpleValueMutation.create("b")
 			))
 			.build();
 
-		entity.store(id, mutation2).block();
+		collection.store(id, mutation2).block();
 
-		var fetched = entity.get(id).block();
+		var fetched = collection.get(id).block();
 
 		var titles2 = (ListValue<? extends SimpleValue>) fetched.getField("titles", ListValue.class).get();
 		assertThat(titles2.items(), contains(

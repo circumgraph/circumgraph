@@ -1,7 +1,7 @@
 package com.circumgraph.storage;
 
-import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 
 import com.circumgraph.model.FieldDef;
 import com.circumgraph.model.InterfaceDef;
@@ -23,7 +23,7 @@ public class PolymorphyTest
 		return Model.create()
 			.addSchema(StorageSchema.INSTANCE)
 			.addType(InterfaceDef.create("Test")
-				.addImplements("Entity")
+				.addImplements(StorageSchema.ENTITY_NAME)
 				.addField(FieldDef.create("title")
 					.withType(ScalarDef.STRING)
 					.build()
@@ -56,20 +56,20 @@ public class PolymorphyTest
 	@Test
 	public void testStoreT1()
 	{
-		var entity = storage.get("Test");
+		var collection = storage.get("Test");
 
 		var def = (StructuredDef) model.get("T1").get();
 
-		var mutation = entity.newMutation(def)
+		var mutation = collection.newMutation(def)
 			.updateField("title", SimpleValueMutation.create("Hello World"))
 			.build();
 
-		var stored = entity.store(mutation).block();
+		var stored = collection.store(mutation).block();
 
 		var idValue = (SimpleValue) stored.getFields().get("id");
 		long id = (long) idValue.get();
 
-		var fetched = entity.get(id).block();
+		var fetched = collection.get(id).block();
 		assertThat(fetched, is(stored));
 
 		assertThat(fetched.getDefinition(), is(def));
@@ -81,21 +81,21 @@ public class PolymorphyTest
 	@Test
 	public void testStoreT2()
 	{
-		var entity = storage.get("Test");
+		var collection = storage.get("Test");
 
 		var def = (StructuredDef) model.get("T2").get();
 
-		var mutation = entity.newMutation(def)
+		var mutation = collection.newMutation(def)
 			.updateField("title", SimpleValueMutation.create("Hello World"))
 			.updateField("age", SimpleValueMutation.create(20))
 			.build();
 
-		var stored = entity.store(mutation).block();
+		var stored = collection.store(mutation).block();
 
 		var idValue = (SimpleValue) stored.getFields().get("id");
 		long id = (long) idValue.get();
 
-		var fetched = entity.get(id).block();
+		var fetched = collection.get(id).block();
 		assertThat(fetched, is(stored));
 
 		assertThat(fetched.getDefinition(), is(def));
@@ -110,20 +110,20 @@ public class PolymorphyTest
 	@Test
 	public void testStoreT3()
 	{
-		var entity = storage.get("Test");
+		var collection = storage.get("Test");
 
 		var def = (StructuredDef) model.get("T3").get();
 
-		var mutation = entity.newMutation(def)
+		var mutation = collection.newMutation(def)
 			.updateField("title", SimpleValueMutation.create("Hello World"))
 			.build();
 
-		var stored = entity.store(mutation).block();
+		var stored = collection.store(mutation).block();
 
 		var idValue = (SimpleValue) stored.getFields().get("id");
 		long id = (long) idValue.get();
 
-		var fetched = entity.get(id).block();
+		var fetched = collection.get(id).block();
 		assertThat(fetched, is(stored));
 
 		assertThat(fetched.getDefinition(), is(def));

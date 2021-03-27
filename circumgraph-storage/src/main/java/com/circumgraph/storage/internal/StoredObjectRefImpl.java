@@ -4,18 +4,18 @@ import java.util.Objects;
 
 import com.circumgraph.model.StructuredDef;
 import com.circumgraph.model.TypeDef;
-import com.circumgraph.storage.EntityObjectRef;
+import com.circumgraph.storage.StoredObjectRef;
 
 /**
- * Implementation of {@link EntityObjectRef}.
+ * Implementation of {@link StoredObjectRef}.
  */
-public class EntityObjectRefImpl
-	implements EntityObjectRef
+public class StoredObjectRefImpl
+	implements StoredObjectRef
 {
 	private final StructuredDef def;
 	private final long id;
 
-	public EntityObjectRefImpl(
+	public StoredObjectRefImpl(
 		StructuredDef def,
 		long id
 	)
@@ -48,7 +48,7 @@ public class EntityObjectRefImpl
 		if(this == obj) return true;
 		if(obj == null) return false;
 		if(getClass() != obj.getClass()) return false;
-		EntityObjectRefImpl other = (EntityObjectRefImpl) obj;
+		StoredObjectRefImpl other = (StoredObjectRefImpl) obj;
 		return Objects.equals(def, other.def)
 			&& id == other.id;
 	}
@@ -56,6 +56,6 @@ public class EntityObjectRefImpl
 	@Override
 	public String toString()
 	{
-		return "EntityObjectRef{id=" + id + ", def=" + def + "}";
+		return "StoredObjectRef{id=" + id + ", def=" + def + "}";
 	}
 }

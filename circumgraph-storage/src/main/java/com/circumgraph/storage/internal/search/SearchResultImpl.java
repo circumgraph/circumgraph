@@ -1,6 +1,6 @@
 package com.circumgraph.storage.internal.search;
 
-import com.circumgraph.storage.StoredEntityValue;
+import com.circumgraph.storage.StoredObjectValue;
 import com.circumgraph.storage.search.Edge;
 import com.circumgraph.storage.search.PageCursors;
 import com.circumgraph.storage.search.PageInfo;
@@ -16,11 +16,11 @@ import se.l4.silo.index.search.PaginatedSearchResult;
 public class SearchResultImpl
 	implements SearchResult
 {
-	private final PaginatedSearchResult<StoredEntityValue> result;
+	private final PaginatedSearchResult<StoredObjectValue> result;
 	private final PageInfo pageInfo;
 
 	public SearchResultImpl(
-		PaginatedSearchResult<StoredEntityValue> result
+		PaginatedSearchResult<StoredObjectValue> result
 	)
 	{
 		this.result = result;
@@ -75,7 +75,7 @@ public class SearchResultImpl
 	}
 
 	@Override
-	public ListIterable<StoredEntityValue> getNodes()
+	public ListIterable<StoredObjectValue> getNodes()
 	{
 		return getEdges().collect(Edge::getNode);
 	}

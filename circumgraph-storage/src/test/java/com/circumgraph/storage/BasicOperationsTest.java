@@ -23,7 +23,7 @@ public class BasicOperationsTest
 		return Model.create()
 			.addSchema(StorageSchema.INSTANCE)
 			.addType(ObjectDef.create("Test")
-				.addImplements("Entity")
+				.addImplements(StorageSchema.ENTITY_NAME)
 				.addField(FieldDef.create("title")
 					.withType(ScalarDef.STRING)
 					.build()
@@ -36,16 +36,16 @@ public class BasicOperationsTest
 	@Test
 	public void testStore()
 	{
-		var entity = storage.get("Test");
+		var collection = storage.get("Test");
 
-		var mutation = entity.newMutation()
+		var mutation = collection.newMutation()
 			.updateField("title", SimpleValueMutation.create("Hello World!"))
 			.build();
 
-		var stored = entity.store(mutation).block();
+		var stored = collection.store(mutation).block();
 		var id = stored.getId();
 
-		var fetched = entity.get(id).block();
+		var fetched = collection.get(id).block();
 		assertThat(fetched, is(stored));
 
 		var titleValue = (SimpleValue) fetched.getFields().get("title");
@@ -55,22 +55,22 @@ public class BasicOperationsTest
 	@Test
 	public void testUpdate()
 	{
-		var entity = storage.get("Test");
+		var collection = storage.get("Test");
 
-		var m1 = entity.newMutation()
+		var m1 = collection.newMutation()
 			.updateField("title", SimpleValueMutation.create("Hello"))
 			.build();
 
-		var stored = entity.store(m1).block();
+		var stored = collection.store(m1).block();
 		var id = stored.getId();
 
-		var m2 = entity.newMutation()
+		var m2 = collection.newMutation()
 			.updateField("title", SimpleValueMutation.create("Hello World!"))
 			.build();
 
-		entity.store(id, m2).block();
+		collection.store(id, m2).block();
 
-		var fetched = entity.get(id).block();
+		var fetched = collection.get(id).block();
 
 		var titleValue = (SimpleValue) fetched.getFields().get("title");
 		assertThat(titleValue.get(), is("Hello World!"));
@@ -79,39 +79,39 @@ public class BasicOperationsTest
 	@Test
 	public void testUpdateIdFails()
 	{
-		var entity = storage.get("Test");
+		var collection = storage.get("Test");
 
-		var m1 = entity.newMutation()
+		var m1 = collection.newMutation()
 			.updateField("title", SimpleValueMutation.create("Hello"))
 			.build();
 
-		var stored = entity.store(m1).block();
+		var stored = collection.store(m1).block();
 		var id = stored.getId();
 
 		assertThrows(StorageException.class, () -> {
-			var m2 = entity.newMutation()
+			var m2 = collection.newMutation()
 				.updateField("id", SimpleValueMutation.create(100l))
 				.build();
 
-			entity.store(id, m2).block();
+			collection.store(id, m2).block();
 		});
 	}
 
 	@Test
 	public void testDelete()
 	{
-		var entity = storage.get("Test");
+		var collection = storage.get("Test");
 
-		var mutation = entity.newMutation()
+		var mutation = collection.newMutation()
 			.updateField("title", SimpleValueMutation.create("Hello World!"))
 			.build();
 
-		var stored = entity.store(mutation).block();
+		var stored = collection.store(mutation).block();
 		var id = stored.getId();
 
-		entity.delete(id).block();
+		collection.delete(id).block();
 
-		var fetched = entity.get(id).block();
+		var fetched = collection.get(id).block();
 		assertThat(fetched, nullValue());
 	}
 }
