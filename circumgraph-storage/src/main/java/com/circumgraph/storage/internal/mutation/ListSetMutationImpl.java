@@ -3,27 +3,27 @@ package com.circumgraph.storage.internal.mutation;
 import java.util.Objects;
 
 import com.circumgraph.storage.mutation.ListSetMutation;
-import com.circumgraph.values.Value;
+import com.circumgraph.storage.mutation.Mutation;
 
 import org.eclipse.collections.api.list.ListIterable;
 
 /**
  * Implementation of {@link ListSetMutation}.
  */
-public class ListSetMutationImpl<V extends Value>
-	implements ListSetMutation<V>
+public class ListSetMutationImpl<M extends Mutation>
+	implements ListSetMutation<M>
 {
-	private final ListIterable<V> values;
+	private final ListIterable<M> values;
 
 	public ListSetMutationImpl(
-		ListIterable<V> values
+		ListIterable<M> values
 	)
 	{
 		this.values = values;
 	}
 
 	@Override
-	public ListIterable<V> getValues()
+	public ListIterable<M> getValues()
 	{
 		return values;
 	}

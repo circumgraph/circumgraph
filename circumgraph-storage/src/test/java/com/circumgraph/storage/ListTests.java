@@ -9,6 +9,7 @@ import com.circumgraph.model.Model;
 import com.circumgraph.model.ObjectDef;
 import com.circumgraph.model.ScalarDef;
 import com.circumgraph.storage.mutation.ListSetMutation;
+import com.circumgraph.storage.mutation.SimpleValueMutation;
 import com.circumgraph.values.ListValue;
 import com.circumgraph.values.SimpleValue;
 
@@ -38,8 +39,8 @@ public class ListTests
 
 		var mutation = entity.newMutation()
 			.updateField("titles", ListSetMutation.create(
-				SimpleValue.createString("a"),
-				SimpleValue.createString("b")
+				SimpleValueMutation.create("a"),
+				SimpleValueMutation.create("b")
 			))
 			.build();
 
@@ -83,7 +84,7 @@ public class ListTests
 
 		var mutation = entity.newMutation()
 			.updateField("titles", ListSetMutation.create(
-				SimpleValue.createString("a")
+				SimpleValueMutation.create("a")
 			))
 			.build();
 
@@ -98,8 +99,8 @@ public class ListTests
 
 		var mutation2 = entity.newMutation()
 			.updateField("titles", ListSetMutation.create(
-				SimpleValue.createString("a"),
-				SimpleValue.createString("b")
+				SimpleValueMutation.create("a"),
+				SimpleValueMutation.create("b")
 			))
 			.build();
 

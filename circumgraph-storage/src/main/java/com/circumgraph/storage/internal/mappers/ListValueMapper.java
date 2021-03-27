@@ -6,24 +6,25 @@ import com.circumgraph.model.ListDef;
 import com.circumgraph.model.validation.ValidationMessage;
 import com.circumgraph.storage.mutation.ListMutation;
 import com.circumgraph.storage.mutation.ListSetMutation;
+import com.circumgraph.storage.mutation.Mutation;
 import com.circumgraph.storage.types.ValueValidator;
 import com.circumgraph.values.ListValue;
 import com.circumgraph.values.Value;
 
 import org.eclipse.collections.api.list.ListIterable;
 
-public class ListValueMapper<V extends Value>
-	implements ValueMapper<ListValue<V>, ListMutation<V>>
+public class ListValueMapper<V extends Value, M extends Mutation>
+	implements ValueMapper<ListValue<V>, ListMutation<M>>
 {
 	private final ListDef typeDef;
 
 	private final ListIterable<ValueValidator<ListValue<V>>> validators;
-	private final ValueMapper<V, ?> itemMapper;
+	private final ValueMapper<V, M> itemMapper;
 
 	public ListValueMapper(
 		ListDef typeDef,
 		ListIterable<ValueValidator<ListValue<V>>> validators,
-		ValueMapper<V, ?> itemMapper
+		ValueMapper<V, M> itemMapper
 	)
 	{
 		this.typeDef = typeDef;
@@ -40,15 +41,16 @@ public class ListValueMapper<V extends Value>
 	@Override
 	public ListValue<V> applyMutation(
 		ListValue<V> previousValue,
-		ListMutation<V> mutation
+		ListMutation<M> mutation
 	)
 	{
 		if(mutation instanceof ListSetMutation)
 		{
-			var casted = (ListSetMutation<V>) mutation;
+			var casted = (ListSetMutation<M>) mutation;
 			return ListValue.create(
 				typeDef,
 				casted.getValues()
+					.collect(m -> itemMapper.applyMutation(null, m))
 			);
 		}
 

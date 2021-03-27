@@ -1,11 +1,9 @@
 package com.circumgraph.storage.mutation;
 
-import com.circumgraph.values.Value;
-
 /**
  * Base interface for list mutations.
  */
-public interface ListMutation<V extends Value>
+public interface ListMutation<M extends Mutation>
 	extends Mutation
 {
 }
