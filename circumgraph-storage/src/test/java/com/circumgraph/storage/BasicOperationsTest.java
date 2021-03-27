@@ -2,6 +2,7 @@ package com.circumgraph.storage;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.circumgraph.model.FieldDef;
@@ -94,5 +95,23 @@ public class BasicOperationsTest
 
 			entity.store(id, m2).block();
 		});
+	}
+
+	@Test
+	public void testDelete()
+	{
+		var entity = storage.get("Test");
+
+		var mutation = entity.newMutation()
+			.updateField("title", SimpleValueMutation.create("Hello World!"))
+			.build();
+
+		var stored = entity.store(mutation).block();
+		var id = stored.getId();
+
+		entity.delete(id).block();
+
+		var fetched = entity.get(id).block();
+		assertThat(fetched, nullValue());
 	}
 }
