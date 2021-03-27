@@ -10,8 +10,10 @@ import com.circumgraph.model.ScalarDef;
 import com.circumgraph.model.StructuredDef;
 import com.circumgraph.model.TypeDef;
 import com.circumgraph.model.UnionDef;
+import com.circumgraph.storage.Storage;
 import com.circumgraph.storage.StoredEntityValue;
 import com.circumgraph.storage.internal.mappers.EntityMapper;
+import com.circumgraph.storage.internal.mappers.EntityObjectRefMapper;
 import com.circumgraph.storage.internal.mappers.ListValueMapper;
 import com.circumgraph.storage.internal.mappers.PolymorphicValueMapper;
 import com.circumgraph.storage.internal.mappers.ScalarValueMapper;
@@ -25,15 +27,21 @@ import org.eclipse.collections.api.set.SetIterable;
 
 import se.l4.silo.StorageException;
 
+/**
+ * Utility class that creates {@link ValueMapper}s.
+ */
 public class EntityMappers
 {
 	private final Model model;
+	private final Storage storage;
 
 	public EntityMappers(
-		Model model
+		Model model,
+		Storage storage
 	)
 	{
 		this.model = model;
+		this.storage = storage;
 	}
 
 	public ValueMapper<StoredEntityValue, StructuredMutation> createRoot(
@@ -85,7 +93,27 @@ public class EntityMappers
 		}
 		else if(def instanceof StructuredDef)
 		{
-			return createPolymorphic((StructuredDef) def);
+			var structuredDef = (StructuredDef) def;
+ 			if(structuredDef.findImplements("Entity"))
+			{
+				/*
+				 * Links to other entities may also be polymorphic in that they
+				 * may be declared as a more specific type of an entity. In
+				 * that case we need to find the interface that directly
+				 * implements `Entity` to set the correct definition on mapped
+				 * values.
+				 */
+				if(! structuredDef.hasImplements("Entity"))
+				{
+					structuredDef = structuredDef.findImplements(interfaceDef -> interfaceDef.hasImplements("Entity"))
+						.get();
+				}
+
+				var entityName = structuredDef.getName();
+				return new EntityObjectRefMapper(structuredDef, () -> storage.get(entityName));
+			}
+
+			return createPolymorphic(structuredDef);
 		}
 		else if(def instanceof UnionDef)
 		{

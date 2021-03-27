@@ -11,6 +11,7 @@ import com.circumgraph.model.StructuredDef;
 import com.circumgraph.model.TypeDef;
 import com.circumgraph.model.UnionDef;
 import com.circumgraph.storage.internal.serializers.BooleanValueSerializer;
+import com.circumgraph.storage.internal.serializers.EntityObjectRefSerializer;
 import com.circumgraph.storage.internal.serializers.FloatValueSerializer;
 import com.circumgraph.storage.internal.serializers.IdValueSerializer;
 import com.circumgraph.storage.internal.serializers.IntValueSerializer;
@@ -63,10 +64,23 @@ public class EntitySerializers
 		}
 		else if(def instanceof StructuredDef)
 		{
-			StructuredDef structuredDef = (StructuredDef) def;
- 			if(structuredDef.getImplementsNames().contains("Entity"))
+			var structuredDef = (StructuredDef) def;
+ 			if(structuredDef.findImplements("Entity"))
 			{
-				throw new IllegalArgumentException(def + " is a reference to another entity");
+				/*
+				 * Links to other entities may also be polymorphic in that they
+				 * may be declared as a more specific type of an entity. In
+				 * that case we need to find the interface that directly
+				 * implements `Entity` to get the correct definition when
+				 * deserialized.
+				 */
+				if(! structuredDef.hasImplements("Entity"))
+				{
+					structuredDef = structuredDef.findImplements(interfaceDef -> interfaceDef.hasImplements("Entity"))
+						.get();
+				}
+
+				return new EntityObjectRefSerializer(structuredDef);
 			}
 
 			return resolvePolymorphic(structuredDef);

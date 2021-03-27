@@ -35,7 +35,7 @@ public class StorageImpl
 
 		LongIdGenerator ids = new SequenceLongIdGenerator();
 
-		EntityMappers mappers = new EntityMappers(model);
+		EntityMappers mappers = new EntityMappers(model, this);
 		this.entities = model.getImplements("Entity")
 			.toMap(StructuredDef::getName, def -> new EntityImpl(
 				ids,

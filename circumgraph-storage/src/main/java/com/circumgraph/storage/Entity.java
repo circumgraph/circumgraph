@@ -32,6 +32,14 @@ public interface Entity
 	StructuredMutation.Builder newMutation(StructuredDef subType);
 
 	/**
+	 * Check if the given identifier exists.
+	 *
+	 * @param id
+	 * @return
+	 */
+	Mono<Boolean> contains(long id);
+
+	/**
 	 * Get a value based on its identifier.
 	 *
 	 * @param id

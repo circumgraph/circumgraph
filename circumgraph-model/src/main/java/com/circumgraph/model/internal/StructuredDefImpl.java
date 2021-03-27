@@ -2,6 +2,7 @@ package com.circumgraph.model.internal;
 
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Predicate;
 
 import com.circumgraph.model.DirectiveUse;
 import com.circumgraph.model.FieldDef;
@@ -18,6 +19,7 @@ import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.ListIterable;
 import org.eclipse.collections.api.map.ImmutableMap;
 import org.eclipse.collections.api.map.MutableMap;
+import org.eclipse.collections.api.set.SetIterable;
 
 public abstract class StructuredDefImpl
 	implements StructuredDef, HasPreparation
@@ -76,6 +78,27 @@ public abstract class StructuredDefImpl
 	}
 
 	@Override
+	public SetIterable<InterfaceDef> getAllImplements()
+	{
+		var result = Sets.mutable.<InterfaceDef>empty();
+
+		var stack = getImplements().toStack();
+		while(! stack.isEmpty())
+		{
+			var def = stack.pop();
+			for(var subDef : def.getImplements())
+			{
+				if(result.add(subDef))
+				{
+					stack.push(subDef);
+				}
+			}
+		}
+
+		return result;
+	}
+
+	@Override
 	public boolean findImplements(String name)
 	{
 		var checked = Sets.mutable.<String>empty();
@@ -98,6 +121,33 @@ public abstract class StructuredDefImpl
 		}
 
 		return false;
+	}
+
+	@Override
+	public Optional<InterfaceDef> findImplements(
+		Predicate<InterfaceDef> predicate
+	)
+	{
+		var checked = Sets.mutable.<String>empty();
+		var stack = getImplements().toStack();
+		while(! stack.isEmpty())
+		{
+			var def = stack.pop();
+			if(predicate.test(def))
+			{
+				return Optional.of(def);
+			}
+
+			for(var subDef : def.getImplements())
+			{
+				if(checked.add(subDef.getName()))
+				{
+					stack.push(subDef);
+				}
+			}
+		}
+
+		return Optional.empty();
 	}
 
 	@Override

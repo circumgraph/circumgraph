@@ -49,6 +49,12 @@ public class EntityImpl
 	}
 
 	@Override
+	public Mono<Boolean> contains(long id)
+	{
+		return backing.contains(id);
+	}
+
+	@Override
 	public Mono<StoredEntityValue> get(long id)
 	{
 		return backing.get(id)
