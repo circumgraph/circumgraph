@@ -12,6 +12,7 @@ import com.circumgraph.values.SimpleValue;
 import com.circumgraph.values.StructuredValue;
 
 import org.eclipse.collections.api.RichIterable;
+import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.map.ImmutableMap;
 
 import reactor.core.publisher.Mono;
@@ -19,8 +20,6 @@ import se.l4.silo.CollectionRef;
 import se.l4.silo.StorageException;
 import se.l4.silo.engine.CollectionDef;
 import se.l4.silo.engine.LocalSilo;
-import se.l4.ylem.ids.LongIdGenerator;
-import se.l4.ylem.ids.SequenceLongIdGenerator;
 
 public class StorageImpl
 	implements Storage
@@ -34,12 +33,11 @@ public class StorageImpl
 		this.model = model;
 		this.silo = silo;
 
-		LongIdGenerator ids = new SequenceLongIdGenerator();
-
-		ValueMappers mappers = new ValueMappers(model, this);
+		var providers = new ValueProviders();
+		var mappers = new ValueMappers(model, this, providers);
 		this.collections = model.getImplements(StorageSchema.ENTITY_NAME)
 			.toMap(StructuredDef::getName, def -> new CollectionImpl(
-				ids,
+				silo.transactions(),
 				def,
 				silo.getCollection(CollectionRef.create("collection:" + def.getName(), Long.class, StoredObjectValue.class)),
 				mappers.createRoot(def)
@@ -80,7 +78,11 @@ public class StorageImpl
 		return model.getImplements(StorageSchema.ENTITY_NAME)
 			.collect(def -> {
 				var codec = new ObjectCodecImpl(
-					serializers.resolvePolymorphic(def)
+					serializers.resolvePolymorphic(
+						def,
+						Lists.immutable.of(def),
+						false
+					)
 				);
 
 				return CollectionDef.create(StoredObjectValue.class, "collection:" + def.getName())

@@ -41,13 +41,6 @@ public interface FieldDef
 	String getTypeName();
 
 	/**
-	 * Get if the field is nullable.
-	 *
-	 * @return
-	 */
-	boolean isNullable();
-
-	/**
 	 * Get the arguments of this field.
 	 *
 	 * @return
@@ -91,21 +84,6 @@ public interface FieldDef
 		 * @return
 		 */
 		Builder withType(OutputTypeDef type);
-
-		/**
-		 * Set if the field will be nullable.
-		 *
-		 * @param nullable
-		 * @return
-		 */
-		Builder withNullable(boolean nullable);
-
-		/**
-		 * Mark the field as nullable.
-		 *
-		 * @return
-		 */
-		Builder nullable();
 
 		/**
 		 * Add an argument to the field.

@@ -5,5 +5,4 @@ package com.circumgraph.storage.mutation;
  */
 public interface Mutation
 {
-
 }

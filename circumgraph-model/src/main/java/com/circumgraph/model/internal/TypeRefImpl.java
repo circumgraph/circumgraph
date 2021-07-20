@@ -1,5 +1,6 @@
 package com.circumgraph.model.internal;
 
+import java.util.Objects;
 import java.util.Optional;
 
 import com.circumgraph.model.TypeRef;
@@ -26,5 +27,27 @@ public class TypeRefImpl
 	public Optional<String> getDescription()
 	{
 		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public int hashCode()
+	{
+		return Objects.hash(id);
+	}
+
+	@Override
+	public boolean equals(Object obj)
+	{
+		if(this == obj) return true;
+		if(obj == null) return false;
+		if(getClass() != obj.getClass()) return false;
+		TypeRefImpl other = (TypeRefImpl) obj;
+		return Objects.equals(id, other.id);
+	}
+
+	@Override
+	public String toString()
+	{
+		return "TypeRef{" + id + "}";
 	}
 }

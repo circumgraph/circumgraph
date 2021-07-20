@@ -45,6 +45,8 @@ public abstract class ListDefImpl
 	public void prepare(ModelDefs defs)
 	{
 		this.defs = defs;
+
+		HasPreparation.maybePrepare(getItemType(), defs);
 	}
 
 	@Override
@@ -87,7 +89,7 @@ public abstract class ListDefImpl
 		@Override
 		public OutputTypeDef getItemType()
 		{
-			return defs.getType(itemType, OutputTypeDef.class);
+			return defs == null ? (OutputTypeDef) itemType : defs.getType(itemType, OutputTypeDef.class);
 		}
 	}
 
@@ -103,7 +105,7 @@ public abstract class ListDefImpl
 		@Override
 		public InputTypeDef getItemType()
 		{
-			return defs.getType(itemType, InputTypeDef.class);
+			return defs == null ? (InputTypeDef) itemType : defs.getType(itemType, InputTypeDef.class);
 		}
 	}
 }

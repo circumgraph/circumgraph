@@ -5,14 +5,14 @@ import com.circumgraph.model.internal.BasicSourceLocation;
 /**
  * Representation of a source location.
  */
+@FunctionalInterface
 public interface SourceLocation
 {
 	/**
 	 * Turn this object into a developer-friendly message describing the
 	 * location.
 	 */
-	@Override
-	String toString();
+	String describe();
 
 	/**
 	 * Create a location representing a position in the code. This will attempt

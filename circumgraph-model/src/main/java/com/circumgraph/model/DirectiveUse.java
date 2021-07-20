@@ -1,17 +1,13 @@
 package com.circumgraph.model;
 
-import java.util.Optional;
-
 import com.circumgraph.model.internal.DirectiveUseImpl;
-
-import org.eclipse.collections.api.list.ListIterable;
 
 /**
  * Directive as applied to a {@link TypeDef type}, {@link FieldDef field}
  * or {@link ArgumentDef argument}.
  */
 public interface DirectiveUse
-	extends HasSourceLocation
+	extends HasSourceLocation, HasArgumentUse
 {
 	/**
 	 * Get the name of the directive.
@@ -19,21 +15,6 @@ public interface DirectiveUse
 	 * @return
 	 */
 	String getName();
-
-	/**
-	 * Get the arguments of this directive.
-	 *
-	 * @return
-	 */
-	ListIterable<Argument> getArguments();
-
-	/**
-	 * Get an argument via name.
-	 *
-	 * @param name
-	 * @return
-	 */
-	Optional<Argument> getArgument(String name);
 
 	/**
 	 * Start building a new instance.
@@ -46,35 +27,9 @@ public interface DirectiveUse
 		return DirectiveUseImpl.create(name);
 	}
 
-	interface Argument
-	{
-		/**
-		 * Get the name of this argument.
-		 *
-		 * @return
-		 */
-		String getName();
-
-		/**
-		 * Get the value of this argument.
-		 *
-		 * @return
-		 */
-		Object getValue();
-	}
-
 	interface Builder
-		extends HasSourceLocation.Builder<Builder>
+		extends HasSourceLocation.Builder<Builder>, HasArgumentUse.Builder<Builder>
 	{
-		/**
-		 * Add an argument to the directive.
-		 *
-		 * @param name
-		 * @param value
-		 * @return
-		 */
-		Builder addArgument(String name, Object value);
-
 		/**
 		 * Build the instance.
 		 *

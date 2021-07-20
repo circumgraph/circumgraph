@@ -1,10 +1,14 @@
 package com.circumgraph.storage.internal;
 
-import com.circumgraph.model.ScalarDef;
 import com.circumgraph.model.StructuredDef;
+import com.circumgraph.model.validation.ValidationMessage;
+import com.circumgraph.model.validation.ValidationMessageLevel;
 import com.circumgraph.storage.Collection;
 import com.circumgraph.storage.StorageException;
+import com.circumgraph.storage.StorageValidationException;
 import com.circumgraph.storage.StoredObjectValue;
+import com.circumgraph.storage.internal.mappers.MappingEncounter;
+import com.circumgraph.storage.internal.mappers.ObjectLocation;
 import com.circumgraph.storage.internal.mappers.ValueMapper;
 import com.circumgraph.storage.internal.search.QueryImpl;
 import com.circumgraph.storage.internal.search.SearchResultImpl;
@@ -12,31 +16,33 @@ import com.circumgraph.storage.mutation.StructuredMutation;
 import com.circumgraph.storage.mutation.StructuredMutation.Builder;
 import com.circumgraph.storage.search.Query;
 import com.circumgraph.storage.search.SearchResult;
-import com.circumgraph.values.SimpleValue;
-import com.circumgraph.values.StructuredValue;
+import com.circumgraph.values.Value;
+
+import org.eclipse.collections.api.factory.Lists;
+import org.eclipse.collections.api.list.MutableList;
 
 import reactor.core.publisher.Mono;
 import se.l4.silo.StoreResult;
-import se.l4.ylem.ids.LongIdGenerator;
+import se.l4.silo.Transactions;
 
 public class CollectionImpl
 	implements Collection
 {
+	private final Transactions txs;
+
 	private final StructuredDef definition;
-
 	private final se.l4.silo.Collection<Long, StoredObjectValue> backing;
-	private final LongIdGenerator ids;
-
 	private final ValueMapper<StoredObjectValue, StructuredMutation> mapper;
 
 	public CollectionImpl(
-		LongIdGenerator ids,
+		Transactions txs,
 		StructuredDef definition,
 		se.l4.silo.Collection<Long, StoredObjectValue> backing,
 		ValueMapper<StoredObjectValue, StructuredMutation> mapper
 	)
 	{
-		this.ids = ids;
+		this.txs = txs;
+
 		this.definition = definition;
 		this.backing = backing;
 		this.mapper = mapper;
@@ -77,19 +83,16 @@ public class CollectionImpl
 	@Override
 	public Mono<StoredObjectValue> store(StructuredMutation mutation)
 	{
-		return Mono.fromSupplier(() -> new StoredObjectValueImpl(StructuredValue.create(mutation.getType())
-			.add("id", SimpleValue.create(ScalarDef.ID, ids.next()))
-			.build()
-		))
-			.flatMap(v -> store(v, mutation));
+		return txs.transactional(store(null, mutation));
 	}
 
 	@Override
 	public Mono<StoredObjectValue> store(long id, StructuredMutation mutation)
 	{
 		// TODO: If the type changes this should keep the id
-		return backing.get(id)
-			.flatMap(v -> store(v, mutation));
+		return txs.transactional(backing.get(id)
+			.flatMap(v -> store(v, mutation))
+		);
 	}
 
 	private Mono<StoredObjectValue> store(
@@ -97,9 +100,19 @@ public class CollectionImpl
 		StructuredMutation mutation
 	)
 	{
-		// TODO: This should validate before it stores
-		// TODO: Do we need to do a reverse mapping of the result?
-		return Mono.fromSupplier(() -> mapper.applyMutation(current, mutation))
+		var encounter = new MappingEncounterImpl();
+		return mapper.applyMutation(
+			encounter,
+			ObjectLocation.root(),
+			current,
+			mutation
+		)
+			.doOnNext(v -> {
+				if(! encounter.errors.isEmpty())
+				{
+					throw new StorageValidationException(encounter.errors);
+				}
+			})
 			.flatMap(backing::store)
 			.map(StoreResult::getData)
 			.onErrorMap(se.l4.silo.StorageException.class, e -> new StorageException("Unable to store; " + e.getMessage(), e));
@@ -116,5 +129,53 @@ public class CollectionImpl
 	{
 		return backing.fetch(((QueryImpl) query).buildQuery())
 			.map(sr -> new SearchResultImpl(sr));
+	}
+
+	private static class MappingEncounterImpl
+		implements MappingEncounter
+	{
+		private final MutableList<ValidationMessage> errors;
+
+		public MappingEncounterImpl()
+		{
+			errors = Lists.mutable.empty();
+		}
+
+		@Override
+		public void reportError(ValidationMessage message)
+		{
+			if(message.getLevel() == ValidationMessageLevel.ERROR)
+			{
+				errors.add(message);
+			}
+		}
+
+		@Override
+		public Value externalize(Value value)
+		{
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		@Override
+		public void removeExternal(Value value)
+		{
+			// TODO Auto-generated method stub
+
+		}
+
+		@Override
+		public void link(String collection, long object)
+		{
+			// TODO Auto-generated method stub
+
+		}
+
+		@Override
+		public void unlink(String collection, long object)
+		{
+			// TODO Auto-generated method stub
+
+		}
 	}
 }

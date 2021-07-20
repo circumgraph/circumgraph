@@ -1,14 +1,17 @@
 package com.circumgraph.storage.internal;
 
+import java.util.LinkedList;
+
 import com.circumgraph.model.EnumDef;
 import com.circumgraph.model.FieldDef;
 import com.circumgraph.model.InterfaceDef;
 import com.circumgraph.model.ListDef;
 import com.circumgraph.model.Model;
+import com.circumgraph.model.NonNullDef;
 import com.circumgraph.model.ObjectDef;
+import com.circumgraph.model.OutputTypeDef;
 import com.circumgraph.model.ScalarDef;
 import com.circumgraph.model.StructuredDef;
-import com.circumgraph.model.TypeDef;
 import com.circumgraph.model.UnionDef;
 import com.circumgraph.storage.StorageSchema;
 import com.circumgraph.storage.internal.serializers.BooleanValueSerializer;
@@ -24,10 +27,11 @@ import com.circumgraph.storage.types.ValueSerializer;
 import com.circumgraph.values.SimpleValue;
 import com.circumgraph.values.StructuredValue;
 
+import org.eclipse.collections.api.RichIterable;
+import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.factory.Maps;
-import org.eclipse.collections.api.factory.Sets;
 import org.eclipse.collections.api.map.MapIterable;
-import org.eclipse.collections.api.set.SetIterable;
+import org.eclipse.collections.api.map.MutableMap;
 
 import se.l4.silo.StorageException;
 
@@ -53,11 +57,15 @@ public class ValueSerializers
 			.newWithKeyValue(ScalarDef.ID, new IdValueSerializer());
 	}
 
-	private ValueSerializer<?> resolve(TypeDef def)
+	private ValueSerializer<?> resolve(OutputTypeDef def)
 	{
-		if(def instanceof ListDef)
+		if(def instanceof NonNullDef.Output)
 		{
-			ListDef listDef = (ListDef) def;
+			return resolve(((NonNullDef.Output) def).getType());
+		}
+		else if(def instanceof ListDef.Output)
+		{
+			ListDef.Output listDef = (ListDef.Output) def;
 			return new ListValueSerializer<>(
 				listDef,
 				resolve(listDef.getItemType())
@@ -65,34 +73,23 @@ public class ValueSerializers
 		}
 		else if(def instanceof StructuredDef)
 		{
-			var structuredDef = (StructuredDef) def;
- 			if(structuredDef.findImplements(StorageSchema.ENTITY_NAME))
-			{
-				/*
-				 * Links to other entities may also be polymorphic in that they
-				 * may be declared as a more specific type of an entity. In
-				 * that case we need to find the interface that directly
-				 * implements `Entity` to get the correct definition when
-				 * deserialized.
-				 */
-				if(! structuredDef.hasImplements(StorageSchema.ENTITY_NAME))
-				{
-					structuredDef = structuredDef.findImplements(interfaceDef -> interfaceDef.hasImplements(StorageSchema.ENTITY_NAME))
-						.get();
-				}
-
-				return new StoredObjectRefSerializer(structuredDef);
-			}
-
-			return resolvePolymorphic(structuredDef);
+			return resolvePolymorphic(
+				def,
+				Lists.immutable.of(def),
+				true
+			);
 		}
 		else if(def instanceof UnionDef)
 		{
-
+			return resolvePolymorphic(
+				def,
+				((UnionDef) def).getTypes(),
+				true
+			);
 		}
 		else if(def instanceof EnumDef)
 		{
-
+			return scalars.get(ScalarDef.STRING);
 		}
 		else if(def instanceof ScalarDef)
 		{
@@ -114,23 +111,59 @@ public class ValueSerializers
 	 * @param def
 	 * @return
 	 */
-	public PolymorphicValueSerializer resolvePolymorphic(StructuredDef def)
+	public PolymorphicValueSerializer resolvePolymorphic(
+		OutputTypeDef def,
+		RichIterable<? extends OutputTypeDef> initialDefs,
+		boolean allowReferences
+	)
 	{
-		SetIterable<ObjectDef> defs;
-		if(def instanceof ObjectDef)
+		MutableMap<String, ValueSerializer<?>> defs = Maps.mutable.empty();
+
+		var queue = new LinkedList<OutputTypeDef>();
+		initialDefs.each(queue::add);
+
+		while(! queue.isEmpty())
 		{
-			defs = Sets.immutable.of((ObjectDef) def);
-		}
-		else
-		{
-			defs = model
-				.findImplements(def.getName())
-				.selectInstancesOf(ObjectDef.class);
+			var subDef = queue.poll();
+			if(allowReferences
+				&& subDef instanceof StructuredDef
+				&& ((StructuredDef) subDef).findImplements(StorageSchema.ENTITY_NAME))
+			{
+				var structuredDef = (StructuredDef) subDef;
+
+				/*
+				 * Links to other entities may also be polymorphic in that they
+				 * may be declared as a more specific type of an entity. In
+				 * that case we need to find the interface that directly
+				 * implements `Entity` to set the correct definition on mapped
+				 * values.
+				 */
+				if(! structuredDef.hasImplements(StorageSchema.ENTITY_NAME))
+				{
+					structuredDef = structuredDef.findImplements(interfaceDef -> interfaceDef.hasImplements(StorageSchema.ENTITY_NAME))
+						.get();
+				}
+
+				var entityName = structuredDef.getName();
+				defs.put(
+					entityName,
+					new StoredObjectRefSerializer(structuredDef)
+				);
+			}
+			else if(subDef instanceof ObjectDef)
+			{
+				defs.put(subDef.getName(), resolveDirect((ObjectDef) subDef));
+			}
+			else if(subDef instanceof InterfaceDef)
+			{
+				model.getImplements(subDef.getName())
+					.each(queue::add);
+			}
 		}
 
 		return new PolymorphicValueSerializer(
 			def,
-			defs.toMap(TypeDef::getName, this::resolveDirect)
+			defs
 		);
 	}
 

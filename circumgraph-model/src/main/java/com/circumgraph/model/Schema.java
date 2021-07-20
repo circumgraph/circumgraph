@@ -1,6 +1,9 @@
 package com.circumgraph.model;
 
+import java.util.function.Consumer;
+
 import com.circumgraph.model.validation.DirectiveValidator;
+import com.circumgraph.model.validation.ValidationMessage;
 
 import org.eclipse.collections.api.factory.Lists;
 
@@ -27,5 +30,15 @@ public interface Schema
 	default Iterable<? extends DirectiveValidator<?>> getDirectiveValidators()
 	{
 		return Lists.immutable.empty();
+	}
+
+	/**
+	 * Validate the given type.
+	 *
+	 * @param type
+	 * @param validationCollector
+	 */
+	default void validate(TypeDef type, Consumer<ValidationMessage> validationCollector)
+	{
 	}
 }

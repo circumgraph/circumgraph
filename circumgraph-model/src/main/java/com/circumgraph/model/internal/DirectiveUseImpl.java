@@ -1,8 +1,8 @@
 package com.circumgraph.model.internal;
 
 import java.util.Objects;
-import java.util.Optional;
 
+import com.circumgraph.model.ArgumentUse;
 import com.circumgraph.model.DirectiveUse;
 import com.circumgraph.model.validation.SourceLocation;
 
@@ -15,12 +15,12 @@ public class DirectiveUseImpl
 {
 	private final SourceLocation sourceLocation;
 	private final String name;
-	private final ImmutableList<Argument> arguments;
+	private final ImmutableList<ArgumentUse> arguments;
 
 	public DirectiveUseImpl(
 		SourceLocation sourceLocation,
 		String name,
-		ImmutableList<Argument> arguments
+		ImmutableList<ArgumentUse> arguments
 	)
 	{
 		this.sourceLocation = sourceLocation;
@@ -41,15 +41,9 @@ public class DirectiveUseImpl
 	}
 
 	@Override
-	public ListIterable<Argument> getArguments()
+	public ListIterable<ArgumentUse> getArguments()
 	{
 		return arguments;
-	}
-
-	@Override
-	public Optional<Argument> getArgument(String name)
-	{
-		return arguments.detectOptional(p -> p.getName().equals(name));
 	}
 
 	@Override
@@ -72,7 +66,7 @@ public class DirectiveUseImpl
 	@Override
 	public String toString()
 	{
-		return "DirectiveUse{arguments=" + arguments + ", name=" + name + "}";
+		return "DirectiveUse{name=" + name + ", arguments=" + arguments + "}";
 	}
 
 	public static Builder create(String name)
@@ -80,65 +74,17 @@ public class DirectiveUseImpl
 		return new BuilderImpl(null, name, Lists.immutable.empty());
 	}
 
-	private static class ArgumentImpl
-		implements Argument
-	{
-		private final String name;
-		private final Object value;
-
-		public ArgumentImpl(String name, Object value)
-		{
-			this.name = name;
-			this.value = value;
-		}
-
-		@Override
-		public String getName()
-		{
-			return name;
-		}
-
-		@Override
-		public Object getValue()
-		{
-			return value;
-		}
-
-		@Override
-		public int hashCode()
-		{
-			return Objects.hash(name, value);
-		}
-
-		@Override
-		public boolean equals(Object obj)
-		{
-			if(this == obj) return true;
-			if(obj == null) return false;
-			if(getClass() != obj.getClass()) return false;
-			ArgumentImpl other = (ArgumentImpl) obj;
-			return Objects.equals(name, other.name)
-				&& Objects.equals(value, other.value);
-		}
-
-		@Override
-		public String toString()
-		{
-			return "DirectiveUse.Argument{name=" + name + ", value=" + value + "}";
-		}
-	}
-
 	private static class BuilderImpl
 		implements Builder
 	{
 		private final SourceLocation sourceLocation;
 		private final String name;
-		private final ImmutableList<Argument> arguments;
+		private final ImmutableList<ArgumentUse> arguments;
 
 		public BuilderImpl(
 			SourceLocation sourceLocation,
 			String name,
-			ImmutableList<Argument> arguments
+			ImmutableList<ArgumentUse> arguments
 		)
 		{
 			this.sourceLocation = sourceLocation;
@@ -157,12 +103,22 @@ public class DirectiveUseImpl
 		}
 
 		@Override
-		public Builder addArgument(String name, Object value)
+		public Builder addArgument(ArgumentUse argument)
 		{
 			return new BuilderImpl(
 				sourceLocation,
-				this.name,
-				arguments.newWith(new ArgumentImpl(name, value))
+				name,
+				arguments.newWith(argument)
+			);
+		}
+
+		@Override
+		public Builder addArguments(Iterable<? extends ArgumentUse> arguments)
+		{
+			return new BuilderImpl(
+				sourceLocation,
+				name,
+				this.arguments.newWithAll(arguments)
 			);
 		}
 

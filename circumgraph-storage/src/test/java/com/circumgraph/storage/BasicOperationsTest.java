@@ -9,7 +9,7 @@ import com.circumgraph.model.FieldDef;
 import com.circumgraph.model.Model;
 import com.circumgraph.model.ObjectDef;
 import com.circumgraph.model.ScalarDef;
-import com.circumgraph.storage.mutation.SimpleValueMutation;
+import com.circumgraph.storage.mutation.ScalarValueMutation;
 import com.circumgraph.values.SimpleValue;
 
 import org.junit.jupiter.api.Test;
@@ -39,7 +39,7 @@ public class BasicOperationsTest
 		var collection = storage.get("Test");
 
 		var mutation = collection.newMutation()
-			.updateField("title", SimpleValueMutation.create("Hello World!"))
+			.updateField("title", ScalarValueMutation.createString("Hello World!"))
 			.build();
 
 		var stored = collection.store(mutation).block();
@@ -58,14 +58,14 @@ public class BasicOperationsTest
 		var collection = storage.get("Test");
 
 		var m1 = collection.newMutation()
-			.updateField("title", SimpleValueMutation.create("Hello"))
+			.updateField("title", ScalarValueMutation.createString("Hello"))
 			.build();
 
 		var stored = collection.store(m1).block();
 		var id = stored.getId();
 
 		var m2 = collection.newMutation()
-			.updateField("title", SimpleValueMutation.create("Hello World!"))
+			.updateField("title", ScalarValueMutation.createString("Hello World!"))
 			.build();
 
 		collection.store(id, m2).block();
@@ -77,12 +77,36 @@ public class BasicOperationsTest
 	}
 
 	@Test
+	public void testEmptyUpdate()
+	{
+		var collection = storage.get("Test");
+
+		var m1 = collection.newMutation()
+			.updateField("title", ScalarValueMutation.createString("Hello"))
+			.build();
+
+		var stored = collection.store(m1).block();
+		var id = stored.getId();
+
+		var m2 = collection.newMutation()
+			.build();
+
+		collection.store(id, m2).block();
+
+		var fetched = collection.get(id).block();
+
+		var titleValue = (SimpleValue) fetched.getFields().get("title");
+		assertThat(titleValue.get(), is("Hello"));
+	}
+
+
+	@Test
 	public void testUpdateIdFails()
 	{
 		var collection = storage.get("Test");
 
 		var m1 = collection.newMutation()
-			.updateField("title", SimpleValueMutation.create("Hello"))
+			.updateField("title", ScalarValueMutation.createString("Hello"))
 			.build();
 
 		var stored = collection.store(m1).block();
@@ -90,7 +114,7 @@ public class BasicOperationsTest
 
 		assertThrows(StorageException.class, () -> {
 			var m2 = collection.newMutation()
-				.updateField("id", SimpleValueMutation.create(100l))
+				.updateField("id", ScalarValueMutation.create(ScalarDef.ID, 100l))
 				.build();
 
 			collection.store(id, m2).block();
@@ -103,7 +127,7 @@ public class BasicOperationsTest
 		var collection = storage.get("Test");
 
 		var mutation = collection.newMutation()
-			.updateField("title", SimpleValueMutation.create("Hello World!"))
+			.updateField("title", ScalarValueMutation.createString("Hello World!"))
 			.build();
 
 		var stored = collection.store(mutation).block();

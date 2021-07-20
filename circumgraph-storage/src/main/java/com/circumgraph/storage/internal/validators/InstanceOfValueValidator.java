@@ -1,10 +1,12 @@
 package com.circumgraph.storage.internal.validators;
 
-import java.util.function.Consumer;
-
+import com.circumgraph.model.validation.SourceLocation;
 import com.circumgraph.model.validation.ValidationMessage;
 import com.circumgraph.storage.types.ValueValidator;
 import com.circumgraph.values.SimpleValue;
+
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 /**
  * Validator for making sure a {@link SimpleValue} is the correct type.
@@ -22,19 +24,20 @@ public class InstanceOfValueValidator
 	}
 
 	@Override
-	public void validate(
-		SimpleValue value,
-		Consumer<ValidationMessage> validationCollector
+	public Flux<ValidationMessage> validate(
+		SourceLocation location,
+		SimpleValue value
 	)
 	{
-		if(value == null) return;
+		return Mono.fromSupplier(() -> {
+			if(value != null && type.isAssignableFrom(value.get().getClass()))
+			{
+				return ValidationMessage.error()
+					.withMessage("Value has the wrong type")
+					.build();
+			}
 
-		if(type.isAssignableFrom(value.get().getClass()))
-		{
-			validationCollector.accept(ValidationMessage.error()
-				.withMessage("Value has the wrong type")
-				.build()
-			);
-		}
+			return null;
+		}).flux();
 	}
 }

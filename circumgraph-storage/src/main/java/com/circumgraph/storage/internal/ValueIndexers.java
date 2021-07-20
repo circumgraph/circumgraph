@@ -3,7 +3,7 @@ package com.circumgraph.storage.internal;
 import java.util.Optional;
 import java.util.function.Consumer;
 
-import com.circumgraph.model.DirectiveUse;
+import com.circumgraph.model.ArgumentUse;
 import com.circumgraph.model.EnumDef;
 import com.circumgraph.model.FieldDef;
 import com.circumgraph.model.InterfaceDef;
@@ -191,8 +191,8 @@ public class ValueIndexers
 			if(index.isEmpty()) return;
 
 			var indexer = getIndexer(
-				(String) index.get().getArgument("type")
-					.map(DirectiveUse.Argument::getValue)
+				index.get().getArgument("type")
+					.flatMap(ArgumentUse::getValueAsString)
 					.orElse(null),
 				(SimpleValueDef) def
 			);

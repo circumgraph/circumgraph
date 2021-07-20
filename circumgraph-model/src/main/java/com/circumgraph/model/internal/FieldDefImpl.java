@@ -25,7 +25,6 @@ public class FieldDefImpl
 
 	private final String name;
 	private final String description;
-	private final boolean nullable;
 
 	private final OutputTypeDef type;
 	private final ImmutableList<ArgumentDef> arguments;
@@ -38,7 +37,6 @@ public class FieldDefImpl
 		String name,
 		String description,
 		OutputTypeDef type,
-		boolean nullable,
 		ImmutableList<ArgumentDef> arguments,
 		ImmutableList<DirectiveUse> directives
 	)
@@ -47,7 +45,6 @@ public class FieldDefImpl
 		this.name = name;
 		this.description = description;
 		this.type = type;
-		this.nullable = nullable;
 		this.arguments = arguments;
 		this.directives = directives;
 	}
@@ -83,12 +80,6 @@ public class FieldDefImpl
 	}
 
 	@Override
-	public boolean isNullable()
-	{
-		return nullable;
-	}
-
-	@Override
 	public ListIterable<ArgumentDef> getArguments()
 	{
 		return arguments;
@@ -119,7 +110,6 @@ public class FieldDefImpl
 	{
 		return "FieldDef{name=" + name
 			+ ", type=" + type
-			+ ", nullable=" + nullable
 			+ ", description=" + description
 			+ ", directives=" + directives
 			+ ", sourceLocation=" + sourceLocation
@@ -129,7 +119,7 @@ public class FieldDefImpl
 	@Override
 	public int hashCode()
 	{
-		return Objects.hash(arguments, description, directives, name, nullable, type);
+		return Objects.hash(arguments, description, directives, name, type);
 	}
 
 	@Override
@@ -143,7 +133,6 @@ public class FieldDefImpl
 			&& Objects.equals(description, other.description)
 			&& Objects.equals(directives, other.directives)
 			&& Objects.equals(name, other.name)
-			&& nullable == other.nullable
 			&& Objects.equals(type.getName(), other.type.getName());
 	}
 
@@ -156,7 +145,6 @@ public class FieldDefImpl
 			name,
 			null,
 			null,
-			false,
 			Lists.immutable.empty(),
 			Lists.immutable.empty()
 		);
@@ -169,7 +157,6 @@ public class FieldDefImpl
 		private final String name;
 		private final String description;
 		private final OutputTypeDef type;
-		private final boolean nullable;
 		private final ImmutableList<ArgumentDef> arguments;
 		private final ImmutableList<DirectiveUse> directives;
 
@@ -178,7 +165,6 @@ public class FieldDefImpl
 			String name,
 			String description,
 			OutputTypeDef type,
-			boolean nullable,
 			ImmutableList<ArgumentDef> arguments,
 			ImmutableList<DirectiveUse> directives
 		)
@@ -187,7 +173,6 @@ public class FieldDefImpl
 			this.name = name;
 			this.description = description;
 			this.type = type;
-			this.nullable = nullable;
 			this.arguments = arguments;
 			this.directives = directives;
 		}
@@ -200,7 +185,6 @@ public class FieldDefImpl
 				name,
 				description,
 				type,
-				nullable,
 				arguments,
 				directives
 			);
@@ -214,7 +198,6 @@ public class FieldDefImpl
 				name,
 				description,
 				type,
-				nullable,
 				arguments,
 				directives
 			);
@@ -234,30 +217,9 @@ public class FieldDefImpl
 				name,
 				description,
 				type,
-				nullable,
 				arguments,
 				directives
 			);
-		}
-
-		@Override
-		public Builder withNullable(boolean nullable)
-		{
-			return new BuilderImpl(
-				sourceLocation,
-				name,
-				description,
-				type,
-				nullable,
-				arguments,
-				directives
-			);
-		}
-
-		@Override
-		public Builder nullable()
-		{
-			return withNullable(true);
 		}
 
 		@Override
@@ -268,7 +230,6 @@ public class FieldDefImpl
 				name,
 				description,
 				type,
-				nullable,
 				arguments.newWith(arg),
 				directives
 			);
@@ -282,7 +243,6 @@ public class FieldDefImpl
 				name,
 				description,
 				type,
-				nullable,
 				arguments.newWithAll(args),
 				directives
 			);
@@ -296,7 +256,6 @@ public class FieldDefImpl
 				name,
 				description,
 				type,
-				nullable,
 				arguments,
 				directives.newWith(directive)
 			);
@@ -312,7 +271,6 @@ public class FieldDefImpl
 				name,
 				description,
 				type,
-				nullable,
 				arguments,
 				this.directives.newWithAll(directives)
 			);
@@ -328,7 +286,6 @@ public class FieldDefImpl
 				name,
 				description,
 				type,
-				nullable,
 				arguments,
 				directives
 			);

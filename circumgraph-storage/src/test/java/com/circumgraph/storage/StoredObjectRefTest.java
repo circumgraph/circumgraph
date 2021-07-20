@@ -11,7 +11,8 @@ import com.circumgraph.model.Model;
 import com.circumgraph.model.ObjectDef;
 import com.circumgraph.model.ScalarDef;
 import com.circumgraph.storage.mutation.ListSetMutation;
-import com.circumgraph.storage.mutation.SimpleValueMutation;
+import com.circumgraph.storage.mutation.ScalarValueMutation;
+import com.circumgraph.storage.mutation.StoredObjectRefMutation;
 import com.circumgraph.values.ListValue;
 
 import org.junit.jupiter.api.Test;
@@ -49,7 +50,7 @@ public class StoredObjectRefTest
 		var authors = storage.get("Author");
 
 		var author = authors.store(authors.newMutation()
-			.updateField("name", SimpleValueMutation.create("Example Author"))
+			.updateField("name", ScalarValueMutation.createString("Example Author"))
 			.build()
 		).block();
 
@@ -58,8 +59,8 @@ public class StoredObjectRefTest
 		var books = storage.get("Book");
 
 		var book = books.store(books.newMutation()
-			.updateField("title", "A short history of nearly everything")
-			.updateField("author", authorId)
+			.updateField("title", ScalarValueMutation.createString("A short history of nearly everything"))
+			.updateField("author", StoredObjectRefMutation.create(authors.getDefinition(), authorId))
 			.build()
 		).block();
 
@@ -102,11 +103,12 @@ public class StoredObjectRefTest
 			.build());
 
 		var books = storage.get("Book");
+		var authors = storage.get("Author");
 
 		assertThrows(StorageException.class, () -> {
 			books.store(books.newMutation()
-				.updateField("title", "A short history of nearly everything")
-				.updateField("author", 1l)
+				.updateField("title", ScalarValueMutation.createString("A short history of nearly everything"))
+				.updateField("author", StoredObjectRefMutation.create(authors.getDefinition(), 1l))
 				.build()
 			).block();
 		});
@@ -142,7 +144,7 @@ public class StoredObjectRefTest
 		var authors = storage.get("Author");
 
 		var author = authors.store(authors.newMutation()
-			.updateField("name", SimpleValueMutation.create("Example Author"))
+			.updateField("name", ScalarValueMutation.createString("Example Author"))
 			.build()
 		).block();
 
@@ -151,9 +153,9 @@ public class StoredObjectRefTest
 		var books = storage.get("Book");
 
 		var book = books.store(books.newMutation()
-			.updateField("title", "A short history of nearly everything")
+			.updateField("title", ScalarValueMutation.createString("A short history of nearly everything"))
 			.updateField("authors", ListSetMutation.create(
-				SimpleValueMutation.create(authorId)
+				StoredObjectRefMutation.create(authors.getDefinition(), authorId)
 			))
 			.build()
 		).block();
@@ -205,7 +207,7 @@ public class StoredObjectRefTest
 		var things = storage.get("Thing");
 
 		var book = things.store(things.newMutation((ObjectDef) storage.getModel().get("Book").get())
-			.updateField("title", SimpleValueMutation.create("A short history of nearly everything"))
+			.updateField("title", ScalarValueMutation.createString("A short history of nearly everything"))
 			.build()
 		).block();
 
@@ -214,8 +216,8 @@ public class StoredObjectRefTest
 		var reviews = storage.get("Review");
 
 		var review = reviews.store(reviews.newMutation()
-			.updateField("reviewBody", "...")
-			.updateField("itemReviewed", bookId)
+			.updateField("reviewBody", ScalarValueMutation.createString("..."))
+			.updateField("itemReviewed", StoredObjectRefMutation.create(things.getDefinition(), bookId))
 			.build()
 		).block();
 
@@ -264,7 +266,7 @@ public class StoredObjectRefTest
 		var things = storage.get("Thing");
 
 		var book = things.store(things.newMutation((ObjectDef) storage.getModel().get("Book").get())
-			.updateField("title", SimpleValueMutation.create("A short history of nearly everything"))
+			.updateField("title", ScalarValueMutation.createString("A short history of nearly everything"))
 			.build()
 		).block();
 
@@ -273,8 +275,8 @@ public class StoredObjectRefTest
 		var reviews = storage.get("Review");
 
 		var review = reviews.store(reviews.newMutation()
-			.updateField("reviewBody", "...")
-			.updateField("itemReviewed", bookId)
+			.updateField("reviewBody", ScalarValueMutation.createString("..."))
+			.updateField("itemReviewed", StoredObjectRefMutation.create(things.getDefinition(), bookId))
 			.build()
 		).block();
 
@@ -287,5 +289,38 @@ public class StoredObjectRefTest
 		var fetchedThingRef = fetchedReview.getField("itemReviewed", StoredObjectRef.class).get();
 		assertThat(fetchedThingRef.getDefinition(), is(things.getDefinition()));
 		assertThat(fetchedThingRef.getId(), is(bookId));
+	}
+
+	@Test
+	public void testDirectSelfReference()
+	{
+		var storage = open(Model.create()
+			.addSchema(StorageSchema.INSTANCE)
+			.addType(ObjectDef.create("Node")
+				.addImplements(StorageSchema.ENTITY_NAME)
+				.addField(FieldDef.create("parent")
+					.withType("Node")
+					.build()
+				)
+				.build()
+			)
+			.build());
+
+		var nodes = storage.get("Node");
+
+		var node1 = nodes.store(nodes.newMutation()
+			.build()
+		).block();
+
+		var node2 = nodes.store(nodes.newMutation()
+			.updateField("parent", StoredObjectRefMutation.create(nodes.getDefinition(), node1.getId()))
+			.build()
+		).block();
+
+		var fetchedNode2 = nodes.get(node2.getId()).block();
+		assertThat(fetchedNode2, is(node2));
+
+		var parent = node2.getField("parent", StoredObjectRef.class).get();
+		assertThat(parent.getId(), is(node1.getId()));
 	}
 }

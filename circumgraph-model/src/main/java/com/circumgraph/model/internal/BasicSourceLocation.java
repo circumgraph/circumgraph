@@ -19,4 +19,10 @@ public class BasicSourceLocation
 	{
 		return message;
 	}
+
+	@Override
+	public String describe()
+	{
+		return message;
+	}
 }

@@ -1,7 +1,7 @@
 package com.circumgraph.storage.indexing;
 
-import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 
 import com.circumgraph.model.DirectiveUse;
 import com.circumgraph.model.FieldDef;
@@ -10,7 +10,7 @@ import com.circumgraph.model.ObjectDef;
 import com.circumgraph.model.ScalarDef;
 import com.circumgraph.storage.SingleModelTest;
 import com.circumgraph.storage.StorageSchema;
-import com.circumgraph.storage.mutation.SimpleValueMutation;
+import com.circumgraph.storage.mutation.ScalarValueMutation;
 import com.circumgraph.storage.search.Query;
 import com.circumgraph.values.SimpleValue;
 
@@ -59,8 +59,8 @@ public class StringIndexTest
 		var collection = storage.get("Book");
 
 		var mutation = collection.newMutation()
-			.updateField("title", SimpleValueMutation.create("A Short History of Nearly Everything"))
-			.updateField("isbn", SimpleValueMutation.create("076790818X"))
+			.updateField("title", ScalarValueMutation.createString("A Short History of Nearly Everything"))
+			.updateField("isbn", ScalarValueMutation.createString("076790818X"))
 			.build();
 
 		var stored = collection.store(mutation).block();
@@ -81,8 +81,8 @@ public class StringIndexTest
 		var collection = storage.get("Book");
 
 		var mutation = collection.newMutation()
-			.updateField("title", SimpleValueMutation.create("A Short History of Nearly Everything"))
-			.updateField("isbn", SimpleValueMutation.create("076790818X"))
+			.updateField("title", ScalarValueMutation.createString("A Short History of Nearly Everything"))
+			.updateField("isbn", ScalarValueMutation.createString("076790818X"))
 			.build();
 
 		collection.store(mutation).block();
@@ -97,8 +97,8 @@ public class StringIndexTest
 		var collection = storage.get("Book");
 
 		var mutation = collection.newMutation()
-			.updateField("title", SimpleValueMutation.create("A Short History of Nearly Everything"))
-			.updateField("isbn", SimpleValueMutation.create("076790818X"))
+			.updateField("title", ScalarValueMutation.createString("A Short History of Nearly Everything"))
+			.updateField("isbn", ScalarValueMutation.createString("076790818X"))
 			.build();
 
 		collection.store(mutation).block();
@@ -117,8 +117,8 @@ public class StringIndexTest
 		var collection = storage.get("Book");
 
 		var mutation = collection.newMutation()
-			.updateField("title", SimpleValueMutation.create("A Short History of Nearly Everything"))
-			.updateField("isbn", SimpleValueMutation.create("076790818X"))
+			.updateField("title", ScalarValueMutation.createString("A Short History of Nearly Everything"))
+			.updateField("isbn", ScalarValueMutation.createString("076790818X"))
 			.build();
 
 		collection.store(mutation).block();

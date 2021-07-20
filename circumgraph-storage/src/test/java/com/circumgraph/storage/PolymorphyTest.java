@@ -9,7 +9,7 @@ import com.circumgraph.model.Model;
 import com.circumgraph.model.ObjectDef;
 import com.circumgraph.model.ScalarDef;
 import com.circumgraph.model.StructuredDef;
-import com.circumgraph.storage.mutation.SimpleValueMutation;
+import com.circumgraph.storage.mutation.ScalarValueMutation;
 import com.circumgraph.values.SimpleValue;
 
 import org.junit.jupiter.api.Test;
@@ -61,7 +61,7 @@ public class PolymorphyTest
 		var def = (StructuredDef) model.get("T1").get();
 
 		var mutation = collection.newMutation(def)
-			.updateField("title", SimpleValueMutation.create("Hello World"))
+			.updateField("title", ScalarValueMutation.createString("Hello World"))
 			.build();
 
 		var stored = collection.store(mutation).block();
@@ -86,8 +86,8 @@ public class PolymorphyTest
 		var def = (StructuredDef) model.get("T2").get();
 
 		var mutation = collection.newMutation(def)
-			.updateField("title", SimpleValueMutation.create("Hello World"))
-			.updateField("age", SimpleValueMutation.create(20))
+			.updateField("title", ScalarValueMutation.createString("Hello World"))
+			.updateField("age", ScalarValueMutation.createInt(20))
 			.build();
 
 		var stored = collection.store(mutation).block();
@@ -115,7 +115,7 @@ public class PolymorphyTest
 		var def = (StructuredDef) model.get("T3").get();
 
 		var mutation = collection.newMutation(def)
-			.updateField("title", SimpleValueMutation.create("Hello World"))
+			.updateField("title", ScalarValueMutation.createString("Hello World"))
 			.build();
 
 		var stored = collection.store(mutation).block();
@@ -130,5 +130,94 @@ public class PolymorphyTest
 
 		var titleValue = (SimpleValue) fetched.getFields().get("title");
 		assertThat(titleValue.get(), is("Hello World"));
+	}
+
+	@Test
+	public void testStoreAndSwitchType()
+	{
+		var collection = storage.get("Test");
+
+		var def1 = (StructuredDef) model.get("T1").get();
+
+		var mutation = collection.newMutation(def1)
+			.updateField("title", ScalarValueMutation.createString("Hello World"))
+			.build();
+
+		var stored = collection.store(mutation).block();
+
+		var idValue = (SimpleValue) stored.getFields().get("id");
+		long id = (long) idValue.get();
+
+		var fetched = collection.get(id).block();
+		assertThat(fetched, is(stored));
+
+		assertThat(fetched.getDefinition(), is(def1));
+
+		var titleValue = (SimpleValue) fetched.getFields().get("title");
+		assertThat(titleValue.get(), is("Hello World"));
+
+		var def2 = (StructuredDef) model.get("T2").get();
+
+		var mutation2 = collection.newMutation(def2)
+			.updateField("title", ScalarValueMutation.createString("Hello World!"))
+			.updateField("age", ScalarValueMutation.createInt(20))
+			.build();
+
+		var stored2 = collection.store(id, mutation2).block();
+
+		var fetched2 = collection.get(id).block();
+		assertThat(fetched2, is(stored2));
+
+		assertThat(fetched2.getDefinition(), is(def2));
+
+		var titleValue2 = (SimpleValue) fetched2.getFields().get("title");
+		assertThat(titleValue2.get(), is("Hello World!"));
+
+		SimpleValue ageValue = (SimpleValue) fetched2.getFields().get("age");
+		assertThat(ageValue.get(), is(20));
+	}
+
+	@Test
+	public void testStoreAndSwitchTypeWithInheritedField()
+	{
+		var collection = storage.get("Test");
+
+		var def1 = (StructuredDef) model.get("T1").get();
+
+		var mutation = collection.newMutation(def1)
+			.updateField("title", ScalarValueMutation.createString("Hello World"))
+			.build();
+
+		var stored = collection.store(mutation).block();
+
+		var idValue = (SimpleValue) stored.getFields().get("id");
+		long id = (long) idValue.get();
+
+		var fetched = collection.get(id).block();
+		assertThat(fetched, is(stored));
+
+		assertThat(fetched.getDefinition(), is(def1));
+
+		var titleValue = (SimpleValue) fetched.getFields().get("title");
+		assertThat(titleValue.get(), is("Hello World"));
+
+		var def2 = (StructuredDef) model.get("T2").get();
+
+		var mutation2 = collection.newMutation(def2)
+			.updateField("age", ScalarValueMutation.createInt(20))
+			.build();
+
+		var stored2 = collection.store(id, mutation2).block();
+
+		var fetched2 = collection.get(id).block();
+		assertThat(fetched2, is(stored2));
+
+		assertThat(fetched2.getDefinition(), is(def2));
+
+		var titleValue2 = (SimpleValue) fetched2.getFields().get("title");
+		assertThat(titleValue2.get(), is("Hello World"));
+
+		SimpleValue ageValue = (SimpleValue) fetched2.getFields().get("age");
+		assertThat(ageValue.get(), is(20));
 	}
 }

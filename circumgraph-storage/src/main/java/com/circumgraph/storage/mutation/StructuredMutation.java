@@ -9,12 +9,12 @@ import org.eclipse.collections.api.map.MapIterable;
  * Mutation for changing a structured value.
  */
 public interface StructuredMutation
-	extends Mutation
+	extends TypedMutation
 {
 	/**
 	 * Get the type of structured data being mutated.
 	 */
-	StructuredDef getType();
+	StructuredDef getDef();
 
 	/**
 	 * Get the field that have been mutated.
@@ -46,17 +46,6 @@ public interface StructuredMutation
 		 * @return
 		 */
 		Builder updateField(String field, Mutation mutation);
-
-		/**
-		 * Add a {@link SimpleValueMutation} for the given field.
-		 *
-		 * @param field
-		 *   the name of the field
-		 * @param mutation
-		 *   the mutation to apply
-		 * @return
-		 */
-		Builder updateField(String field, Object simpleValue);
 
 		/**
 		 * Build the mutation.

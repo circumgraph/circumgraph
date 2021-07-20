@@ -3,10 +3,10 @@ package com.circumgraph.storage.internal.serializers;
 import java.io.IOException;
 
 import com.circumgraph.model.ObjectDef;
-import com.circumgraph.model.StructuredDef;
+import com.circumgraph.model.OutputTypeDef;
 import com.circumgraph.model.TypeDef;
 import com.circumgraph.storage.types.ValueSerializer;
-import com.circumgraph.values.StructuredValue;
+import com.circumgraph.values.Value;
 
 import org.eclipse.collections.api.map.MapIterable;
 
@@ -16,32 +16,31 @@ import se.l4.exobytes.streaming.Token;
 
 /**
  * Handler that takes care of polymorphism. This type of value actually handles
- * {@link ObjectDef objects} and requires that these are mapped to a set of
- * {@link ValueSerializer}s.
+ * {@link ObjectDef objects} or references to stored objects.
  */
 public class PolymorphicValueSerializer
-	implements ValueSerializer<StructuredValue>
+	implements ValueSerializer<Value>
 {
-	private final StructuredDef definition;
-	private final MapIterable<String, ValueSerializer<StructuredValue>> subTypes;
+	private final OutputTypeDef def;
+	private final MapIterable<String, ValueSerializer<?>> subTypes;
 
 	public PolymorphicValueSerializer(
-		StructuredDef definition,
-		MapIterable<String, ValueSerializer<StructuredValue>> subTypes
+		OutputTypeDef def,
+		MapIterable<String, ValueSerializer<?>> subTypes
 	)
 	{
-		this.definition = definition;
+		this.def = def;
 		this.subTypes = subTypes;
 	}
 
 	@Override
 	public TypeDef getType()
 	{
-		return definition;
+		return def;
 	}
 
 	@Override
-	public StructuredValue read(StreamingInput in)
+	public Value read(StreamingInput in)
 		throws IOException
 	{
 		in.next(Token.LIST_START);
@@ -49,9 +48,9 @@ public class PolymorphicValueSerializer
 		in.next(Token.VALUE);
 		String typename = in.readString();
 
-		StructuredValue result;
+		Value result;
 
-		ValueSerializer<StructuredValue> subType = subTypes.get(typename);
+		ValueSerializer<?> subType = subTypes.get(typename);
 		if(subType == null)
 		{
 			in.skipNext();
@@ -69,7 +68,8 @@ public class PolymorphicValueSerializer
 	}
 
 	@Override
-	public void write(StructuredValue object, StreamingOutput out)
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	public void write(Value object, StreamingOutput out)
 		throws IOException
 	{
 		out.writeListStart(2);
@@ -77,7 +77,7 @@ public class PolymorphicValueSerializer
 		String typename = object.getDefinition().getName();
 		out.writeString(typename);
 
-		subTypes.get(typename).write(object, out);
+		((ValueSerializer) subTypes.get(typename)).write(object, out);
 
 		out.writeListEnd();
 	}

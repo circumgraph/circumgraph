@@ -1,90 +1,122 @@
 package com.circumgraph.storage.internal.mappers;
 
-import java.util.function.Consumer;
-
-import com.circumgraph.model.StructuredDef;
+import com.circumgraph.model.OutputTypeDef;
+import com.circumgraph.model.TypeDef;
 import com.circumgraph.model.validation.ValidationMessage;
+import com.circumgraph.storage.StoredObjectRef;
+import com.circumgraph.storage.mutation.StoredObjectRefMutation;
 import com.circumgraph.storage.mutation.StructuredMutation;
+import com.circumgraph.storage.mutation.TypedMutation;
 import com.circumgraph.storage.types.ValueValidator;
 import com.circumgraph.values.StructuredValue;
+import com.circumgraph.values.Value;
 
-import org.eclipse.collections.api.factory.Maps;
-import org.eclipse.collections.api.list.ListIterable;
 import org.eclipse.collections.api.map.MapIterable;
 
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+
 /**
- * Mapper that can handle polymorphism of types. Will delegate to instances
- * of {@link StructuredValueMapper}.
+ * Mapper that can handle polymorphism of types. Supports storing either as
+ * {@link StructuredValue} or {@link StoredObjectRef}. Mutation is done via
+ * {@link StructuredMutation} or {@link StoredObjectRefMutation}.
  */
 public class PolymorphicValueMapper
-	implements ValueMapper<StructuredValue, StructuredMutation>
+	implements ValueMapper<Value, TypedMutation>
 {
-	private final StructuredDef type;
-	private final MapIterable<String, StructuredValueMapper> subTypes;
-	private final ListIterable<ValueValidator<StructuredValue>> validators;
+	private final OutputTypeDef type;
+	private final MapIterable<String, ValueMapper<?, ?>> subTypes;
+	private final ValueValidator<Value> validator;
 
 	public PolymorphicValueMapper(
-		StructuredDef type,
-		MapIterable<String, StructuredValueMapper> subTypes,
-		ListIterable<ValueValidator<StructuredValue>> validators
+		OutputTypeDef type,
+		MapIterable<String, ValueMapper<?, ?>> subTypes,
+		ValueValidator<Value> validator
 	)
 	{
 		this.type = type;
 		this.subTypes = subTypes;
-		this.validators = validators;
+		this.validator = validator;
 	}
 
 	@Override
-	public StructuredValue getInitialValue()
+	public OutputTypeDef getDef()
 	{
-		return null;
+		return type;
 	}
 
 	@Override
-	public StructuredValue applyMutation(
-		StructuredValue previousValue,
-		StructuredMutation mutation
+	public Mono<Value> getInitialValue()
+	{
+		// TODO: Initial value should be supported by polymorphic types
+		return Mono.empty();
+	}
+
+	@Override
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	public Mono<Value> applyMutation(
+		MappingEncounter encounter,
+		ObjectLocation location,
+		Value previousValue,
+		TypedMutation mutation
 	)
 	{
-		StructuredValueMapper mapper = subTypes.get(mutation.getType().getName());
-		if(mapper == null)
+		return Mono.defer(() -> {
+			var mapper = subTypes.get(mutation.getDef().getName());
+			if(mapper == null)
+			{
+				/*
+				 * Tried to store an unsupported type, report an error and
+				 * return nothing.
+				 */
+				encounter.reportError(createInvalidSubTypeError(location, mutation.getDef()));
+
+				return Mono.empty();
+			}
+
+			return ((ValueMapper) mapper).applyMutation(encounter, location, previousValue, mutation);
+		});
+	}
+
+	@Override
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	public Flux<ValidationMessage> validate(
+		ObjectLocation location,
+		Value value
+	)
+	{
+		if(value == null)
 		{
-			// Create an empty value with the main type, will fail validation
-			return StructuredValue.create(type, Maps.immutable.empty());
+			// Null values are not validated
+			return Flux.empty();
 		}
 
-		return mapper.applyMutation(
-			previousValue != null && previousValue.getDefinition() == mutation.getType()
-				? previousValue
-				: null,
-			mutation
-		);
-	}
-
-	@Override
-	public void validate(
-		Consumer<ValidationMessage> validationCollector,
-		StructuredValue value
-	)
-	{
-		StructuredValueMapper mapper = subTypes.get(value.getDefinition().getName());
+		var mapper = subTypes.get(value.getDefinition().getName());
 		if(mapper == null)
 		{
-			validationCollector.accept(ValidationMessage.error()
-				.withMessage("Type %s not supported", value.getDefinition().getName())
-				.build()
-			);
+			/*
+			 * Type is invalid, report single error.
+			 */
+			return Flux.just(createInvalidSubTypeError(location, value.getDefinition()));
 		}
 		else
 		{
-			// Ask the subtype to validate
-			mapper.validate(validationCollector, value);
-
-			// Run through all of the other validators
-			for(ValueValidator<StructuredValue> v : validators)
-			{
-				v.validate(value, validationCollector);
-			}
+			return ((ValueMapper) mapper).validate(location, value)
+				.thenMany(validator.validate(location, value));
 		}
+	}
+
+	private ValidationMessage createInvalidSubTypeError(
+		ObjectLocation location,
+		TypeDef receivedType
+	)
+	{
+		return ValidationMessage.error()
+			.withLocation(location)
+			.withMessage("Unable to mutate, expected sub-type of %s but got %s", type.getName(), receivedType.getName())
+			.withCode("storage:mutation:invalid-type")
+			.withArgument("expectedType", type.getName())
+			.withArgument("givenType", receivedType.getName())
+			.build();
 	}
 }

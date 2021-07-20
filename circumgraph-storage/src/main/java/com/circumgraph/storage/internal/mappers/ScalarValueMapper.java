@@ -1,61 +1,74 @@
 package com.circumgraph.storage.internal.mappers;
 
-import java.util.function.Consumer;
-
+import com.circumgraph.model.OutputTypeDef;
 import com.circumgraph.model.ScalarDef;
 import com.circumgraph.model.validation.ValidationMessage;
-import com.circumgraph.storage.mutation.SimpleValueMutation;
+import com.circumgraph.storage.mutation.ScalarValueMutation;
+import com.circumgraph.storage.types.ValueProvider;
 import com.circumgraph.storage.types.ValueValidator;
 import com.circumgraph.values.SimpleValue;
 
-import org.eclipse.collections.api.list.ListIterable;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 /**
  * Mapper for scalar values.
  */
 public class ScalarValueMapper
-	implements ValueMapper<SimpleValue, SimpleValueMutation<?>>
+	implements ValueMapper<SimpleValue, ScalarValueMutation<?>>
 {
 	private final ScalarDef typeDef;
-	private final Object defaultValue;
-
-	private final ListIterable<ValueValidator<SimpleValue>> validators;
+	private final ValueProvider<SimpleValue> defaultValue;
+	private final ValueValidator<SimpleValue> validator;
 
 	public ScalarValueMapper(
 		ScalarDef typeDef,
-		Object defaultValue,
-		ListIterable<ValueValidator<SimpleValue>> validators
+		ValueProvider<SimpleValue> defaultValue,
+		ValueValidator<SimpleValue> validator
 	)
 	{
 		this.typeDef = typeDef;
 		this.defaultValue = defaultValue;
-		this.validators = validators;
+		this.validator = validator;
 	}
 
 	@Override
-	public SimpleValue getInitialValue()
+	public OutputTypeDef getDef()
 	{
-		return SimpleValue.create(typeDef, defaultValue);
+		return typeDef;
 	}
 
 	@Override
-	public SimpleValue applyMutation(
+	public Mono<SimpleValue> getInitialValue()
+	{
+		return defaultValue == null
+			? Mono.empty()
+			: defaultValue.create();
+	}
+
+	@Override
+	public Mono<SimpleValue> applyMutation(
+		MappingEncounter encounter,
+		ObjectLocation location,
 		SimpleValue previousValue,
-		SimpleValueMutation<?> mutation
+		ScalarValueMutation<?> mutation
 	)
 	{
-		return SimpleValue.create(typeDef, mutation.getValue());
+		return Mono.defer(() -> {
+			var value = SimpleValue.create(typeDef, mutation.getValue());
+
+			return validate(location, value)
+				.doOnNext(encounter::reportError)
+				.then(Mono.just(value));
+		});
 	}
 
 	@Override
-	public void validate(
-		Consumer<ValidationMessage> validationCollector,
+	public Flux<ValidationMessage> validate(
+		ObjectLocation location,
 		SimpleValue value
 	)
 	{
-		for(ValueValidator<SimpleValue> v : validators)
-		{
-			v.validate(value, validationCollector);
-		}
+		return validator.validate(location, value);
 	}
 }

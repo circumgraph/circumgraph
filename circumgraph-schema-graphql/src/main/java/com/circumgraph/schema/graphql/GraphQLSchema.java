@@ -13,6 +13,7 @@ import com.circumgraph.model.InputTypeDef;
 import com.circumgraph.model.InterfaceDef;
 import com.circumgraph.model.ListDef;
 import com.circumgraph.model.ModelException;
+import com.circumgraph.model.NonNullDef;
 import com.circumgraph.model.ObjectDef;
 import com.circumgraph.model.OutputTypeDef;
 import com.circumgraph.model.Schema;
@@ -202,24 +203,11 @@ public class GraphQLSchema
 	private static FieldDef defineField(FieldDefinition def)
 	{
 		graphql.language.Type<?> gqlType = def.getType();
-		boolean nullable;
-
-		if(gqlType instanceof NonNullType)
-		{
-			nullable = false;
-			gqlType = ((NonNullType) gqlType).getType();
-		}
-		else
-		{
-			nullable = true;
-		}
-
 		OutputTypeDef dataType = toOutputType(gqlType);
 
 		return FieldDef.create(def.getName())
 			.withSourceLocation(toSourceLocation(def))
 			.withDescription(toDescription(def))
-			.withNullable(nullable)
 			.withType(dataType)
 			.addArguments(createArguments(def))
 			.addDirectives(createDirectives(def))
@@ -274,9 +262,17 @@ public class GraphQLSchema
 
 	private static OutputTypeDef toOutputType(graphql.language.Type<?> type)
 	{
-		if(type instanceof ListType)
+		if(type instanceof NonNullType)
 		{
-			return ListDef.output(toOutputType(type));
+			return NonNullDef.output(
+				toOutputType(((NonNullType) type).getType())
+			);
+		}
+		else if(type instanceof ListType)
+		{
+			return ListDef.output(toOutputType(
+				((ListType) type).getType()
+			));
 		}
 
 		TypeName tn = (TypeName) type;
@@ -285,9 +281,17 @@ public class GraphQLSchema
 
 	private static InputTypeDef toInputType(graphql.language.Type<?> type)
 	{
-		if(type instanceof ListType)
+		if(type instanceof NonNullType)
 		{
-			return ListDef.input(toInputType(type));
+			return NonNullDef.input(
+				toInputType(((NonNullType) type).getType())
+			);
+		}
+		else if(type instanceof ListType)
+		{
+			return ListDef.input(toInputType(
+				((ListType) type).getType()
+			));
 		}
 
 		TypeName tn = (TypeName) type;

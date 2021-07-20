@@ -14,12 +14,15 @@ import com.circumgraph.model.EnumValueDef;
 import com.circumgraph.model.FieldDef;
 import com.circumgraph.model.HasDirectives;
 import com.circumgraph.model.InterfaceDef;
+import com.circumgraph.model.ListDef;
 import com.circumgraph.model.Model;
 import com.circumgraph.model.ModelException;
+import com.circumgraph.model.NonNullDef;
 import com.circumgraph.model.ObjectDef;
 import com.circumgraph.model.ScalarDef;
 import com.circumgraph.model.StructuredDef;
 import com.circumgraph.model.TypeDef;
+import com.circumgraph.model.TypeRef;
 import com.circumgraph.model.UnionDef;
 import com.circumgraph.model.validation.DirectiveValidator;
 import com.circumgraph.model.validation.ValidationMessage;
@@ -180,8 +183,7 @@ public class GraphQLSchemaTest
 
 		FieldDef f1 = s.getField("title").get();
 		assertThat(f1.getName(), is("title"));
-		assertThat(f1.getType(), is(ScalarDef.STRING));
-		assertThat(f1.isNullable(), is(false));
+		assertThat(f1.getType(), is(NonNullDef.output(ScalarDef.STRING)));
 	}
 
 	@Test
@@ -199,7 +201,82 @@ public class GraphQLSchemaTest
 		FieldDef f1 = s.getField("title").get();
 		assertThat(f1.getName(), is("title"));
 		assertThat(f1.getType(), is(ScalarDef.STRING));
-		assertThat(f1.isNullable(), is(true));
+	}
+
+	@Test
+	public void testObjectFieldDirective()
+	{
+		Model model = parse("type Page {\ntitle: String! @test\n}");
+
+		TypeDef t = model.get("Page").get();
+		assertThat(t, instanceOf(StructuredDef.class));
+		assertThat(t, instanceOf(ObjectDef.class));
+		assertThat(t.getName(), is("Page"));
+
+		StructuredDef s = (StructuredDef) t;
+
+		FieldDef f1 = s.getField("title").get();
+		assertThat(f1.getName(), is("title"));
+		assertThat(f1.getType(), is(NonNullDef.output(ScalarDef.STRING)));
+		assertThat(f1.getDirectives(), contains(
+			DirectiveUse.create("test")
+				.build()
+		));
+	}
+
+
+	@Test
+	public void testObjectFieldList()
+	{
+		Model model = parse(
+			"""
+				type Book { authors: [String!]! }
+			"""
+		);
+
+		TypeDef t = model.get("Book").get();
+		assertThat(t, instanceOf(ObjectDef.class));
+		assertThat(t.getName(), is("Book"));
+
+		StructuredDef s = (StructuredDef) t;
+
+		FieldDef f1 = s.getField("authors").get();
+		assertThat(f1.getName(), is("authors"));
+		assertThat(f1.getType(), is(
+			NonNullDef.output(
+				ListDef.output(
+					NonNullDef.output(ScalarDef.STRING)
+				)
+			)
+		));
+	}
+
+	@Test
+	public void testObjectFieldListDirective()
+	{
+		Model model = parse(
+			"""
+				type Book { authors: [String]! @test }
+			"""
+		);
+
+		TypeDef t = model.get("Book").get();
+		assertThat(t, instanceOf(ObjectDef.class));
+		assertThat(t.getName(), is("Book"));
+
+		StructuredDef s = (StructuredDef) t;
+
+		FieldDef f1 = s.getField("authors").get();
+		assertThat(f1.getName(), is("authors"));
+		assertThat(f1.getType(), is(
+			NonNullDef.output(
+				ListDef.output(TypeRef.create("String"))
+			)
+		));
+		assertThat(f1.getDirectives(), contains(
+			DirectiveUse.create("test")
+				.build()
+		));
 	}
 
 	@Test
@@ -218,8 +295,7 @@ public class GraphQLSchemaTest
 
 		FieldDef f1 = def.getField("field").get();
 		assertThat(f1.getName(), is("field"));
-		assertThat(f1.getType(), is(ScalarDef.STRING));
-		assertThat(f1.isNullable(), is(false));
+		assertThat(f1.getType(), is(NonNullDef.output(ScalarDef.STRING)));
 		assertThat(f1.getDirectives(), contains(
 			DirectiveUse.create("test")
 				.addArgument("v", 100)

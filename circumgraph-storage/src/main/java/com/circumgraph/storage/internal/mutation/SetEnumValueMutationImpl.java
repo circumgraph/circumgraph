@@ -2,23 +2,23 @@ package com.circumgraph.storage.internal.mutation;
 
 import java.util.Objects;
 
-import com.circumgraph.storage.mutation.SimpleValueMutation;
+import com.circumgraph.storage.mutation.SetEnumValueMutation;
 
 /**
- * Implementation of {@link SimpleValueMutation}.
+ * Implementation of {@link SetEnumValueMutation}.
  */
-public class SimpleValueMutationImpl<V>
-	implements SimpleValueMutation<V>
+public class SetEnumValueMutationImpl
+	implements SetEnumValueMutation
 {
-	private final V value;
+	private final String value;
 
-	public SimpleValueMutationImpl(V value)
+	public SetEnumValueMutationImpl(String value)
 	{
 		this.value = value;
 	}
 
 	@Override
-	public V getValue()
+	public String getValue()
 	{
 		return value;
 	}
@@ -35,13 +35,13 @@ public class SimpleValueMutationImpl<V>
 		if(this == obj) return true;
 		if(obj == null) return false;
 		if(getClass() != obj.getClass()) return false;
-		SimpleValueMutationImpl other = (SimpleValueMutationImpl) obj;
+		SetEnumValueMutationImpl other = (SetEnumValueMutationImpl) obj;
 		return Objects.equals(value, other.value);
 	}
 
 	@Override
 	public String toString()
 	{
-		return "SimpleValueMutation{value=" + value + "}";
+		return "SetEnumValueMutation{value=" + value + "}";
 	}
 }

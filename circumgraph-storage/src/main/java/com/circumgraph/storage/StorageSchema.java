@@ -1,13 +1,18 @@
 package com.circumgraph.storage;
 
+import com.circumgraph.model.DirectiveUse;
 import com.circumgraph.model.FieldDef;
 import com.circumgraph.model.InterfaceDef;
+import com.circumgraph.model.NonNullDef;
 import com.circumgraph.model.ScalarDef;
 import com.circumgraph.model.Schema;
 import com.circumgraph.model.TypeDef;
 import com.circumgraph.model.validation.DirectiveValidator;
-import com.circumgraph.storage.internal.Indexing;
+import com.circumgraph.storage.internal.ValueIndexers;
+import com.circumgraph.storage.internal.ValueProviders;
+import com.circumgraph.storage.internal.model.DefaultDirectiveValidator;
 import com.circumgraph.storage.internal.model.IndexDirectiveValidator;
+import com.circumgraph.storage.internal.model.ReadonlyDirectiveValidator;
 import com.circumgraph.storage.internal.model.SortableDirectiveValidator;
 
 import org.eclipse.collections.api.factory.Lists;
@@ -31,7 +36,10 @@ public class StorageSchema
 	public Iterable<? extends DirectiveValidator<?>> getDirectiveValidators()
 	{
 		return Lists.immutable.of(
-			new IndexDirectiveValidator(new Indexing()),
+			new DefaultDirectiveValidator(new ValueProviders()),
+			new ReadonlyDirectiveValidator(),
+
+			new IndexDirectiveValidator(new ValueIndexers()),
 			new SortableDirectiveValidator()
 		);
 	}
@@ -42,7 +50,14 @@ public class StorageSchema
 		return Lists.immutable.of(
 			InterfaceDef.create(ENTITY_NAME)
 				.addField(FieldDef.create("id")
-					.withType(ScalarDef.ID)
+					.withType(NonNullDef.output(ScalarDef.ID))
+					.addDirective(DirectiveUse.create("default")
+						.addArgument("provider", "ID")
+						.build()
+					)
+					.addDirective(DirectiveUse.create("readonly")
+						.build()
+					)
 					.build()
 				)
 				.build()

@@ -10,7 +10,7 @@ import com.circumgraph.model.ObjectDef;
 import com.circumgraph.model.ScalarDef;
 import com.circumgraph.storage.SingleModelTest;
 import com.circumgraph.storage.StorageSchema;
-import com.circumgraph.storage.mutation.SimpleValueMutation;
+import com.circumgraph.storage.mutation.ScalarValueMutation;
 import com.circumgraph.storage.search.Query;
 import com.circumgraph.values.SimpleValue;
 
@@ -51,7 +51,7 @@ public class IntIndexTest
 		var collection = storage.get("Test");
 
 		var mutation = collection.newMutation()
-			.updateField("value", SimpleValueMutation.create(10))
+			.updateField("value", ScalarValueMutation.createInt(10))
 			.build();
 
 		var stored = collection.store(mutation).block();
@@ -72,7 +72,7 @@ public class IntIndexTest
 		var collection = storage.get("Test");
 
 		var mutation = collection.newMutation()
-			.updateField("value", SimpleValueMutation.create(10))
+			.updateField("value", ScalarValueMutation.createInt(10))
 			.build();
 
 		collection.store(mutation).block();
@@ -90,7 +90,7 @@ public class IntIndexTest
 		var collection = storage.get("Test");
 
 		var mutation = collection.newMutation()
-			.updateField("value", SimpleValueMutation.create(10))
+			.updateField("value", ScalarValueMutation.createInt(10))
 			.build();
 
 		collection.store(mutation).block();
@@ -108,7 +108,7 @@ public class IntIndexTest
 		var collection = storage.get("Test");
 
 		var mutation = collection.newMutation()
-			.updateField("value", SimpleValueMutation.create(10))
+			.updateField("value", ScalarValueMutation.createInt(10))
 			.build();
 
 		collection.store(mutation).block();

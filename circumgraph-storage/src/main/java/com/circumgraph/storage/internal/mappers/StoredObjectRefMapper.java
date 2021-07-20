@@ -1,17 +1,20 @@
 package com.circumgraph.storage.internal.mappers;
 
-import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+import com.circumgraph.model.OutputTypeDef;
 import com.circumgraph.model.StructuredDef;
 import com.circumgraph.model.validation.ValidationMessage;
 import com.circumgraph.storage.Collection;
 import com.circumgraph.storage.StoredObjectRef;
 import com.circumgraph.storage.internal.StoredObjectRefImpl;
-import com.circumgraph.storage.mutation.SimpleValueMutation;
+import com.circumgraph.storage.mutation.StoredObjectRefMutation;
+
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 public class StoredObjectRefMapper
-	implements ValueMapper<StoredObjectRef, SimpleValueMutation<Long>>
+	implements ValueMapper<StoredObjectRef, StoredObjectRefMutation>
 {
 	private final StructuredDef def;
 	private final Supplier<Collection> collection;
@@ -26,40 +29,58 @@ public class StoredObjectRefMapper
 	}
 
 	@Override
-	public StoredObjectRef getInitialValue()
+	public OutputTypeDef getDef()
 	{
-		return null;
+		return def;
 	}
 
 	@Override
-	public StoredObjectRef applyMutation(
+	public Mono<StoredObjectRef> getInitialValue()
+	{
+		return Mono.empty();
+	}
+
+	@Override
+	public Mono<StoredObjectRef> applyMutation(
+		MappingEncounter encounter,
+		ObjectLocation location,
 		StoredObjectRef previousValue,
-		SimpleValueMutation<Long> mutation
+		StoredObjectRefMutation mutation
 	)
 	{
-		return new StoredObjectRefImpl(def, mutation.getValue());
+		return Mono.defer(() -> {
+			var value = new StoredObjectRefImpl(def, mutation.getId());
+
+			return validate(location, value)
+				.doOnNext(encounter::reportError)
+				.then(Mono.just(value));
+		});
 	}
 
 	@Override
-	public void validate(
-		Consumer<ValidationMessage> validationCollector,
+	public Flux<ValidationMessage> validate(
+		ObjectLocation location,
 		StoredObjectRef value
 	)
 	{
-		collection.get()
+		return collection.get()
 			.contains(value.getId())
-			.doOnNext(exists -> {
-				if(! exists)
+			.flatMapMany(b -> {
+				if(b)
 				{
-					validationCollector.accept(ValidationMessage.error()
-						.withCode("storage:invalid-reference")
-						.withMessage("Invalid reference to `%s`, object with id `%s` does not exist", def.getName(), value.getId())
-						.withArgument("type", def.getName())
-						.withArgument("id", value.getId())
-						.build()
+					return Flux.empty();
+				}
+				else
+				{
+					return Flux.just(
+						ValidationMessage.error()
+							.withCode("storage:invalid-reference")
+							.withMessage("Invalid reference to `%s`, object with id `%s` does not exist", def.getName(), value.getId())
+							.withArgument("type", def.getName())
+							.withArgument("id", value.getId())
+							.build()
 					);
 				}
-			})
-			.block();
+			});
 	}
 }

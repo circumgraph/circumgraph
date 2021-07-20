@@ -186,7 +186,7 @@ public class ModelBuilderImpl
 			throw new ModelException(
 				"Invalid model, errors reported:\n"
 				+ validationMessages.select(isError)
-					.collect(msg -> "  * " + msg.getLocation() + ": " + msg.getMessage())
+					.collect(msg -> "  * " + msg.getLocation().describe() + ": " + msg.getMessage())
 					.makeString("\n")
 			);
 		}
@@ -360,7 +360,6 @@ public class ModelBuilderImpl
 		return FieldDef.create(f1.getName())
 			.withSourceLocation(f1.getSourceLocation())
 			.withDescription(pickFirstNonBlank(f1.getDescription(), f2.getDescription()))
-			.withNullable(f1.isNullable())
 			.withType(f1.getType())
 			.addArguments(mergeArguments(validationCollector, type, f1, f1.getArguments(), f2.getArguments()))
 			.addDirectives(mergeDirectives(validationCollector, f1, f2))

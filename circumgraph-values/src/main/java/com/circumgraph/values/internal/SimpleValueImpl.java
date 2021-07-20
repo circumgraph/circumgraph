@@ -84,7 +84,6 @@ public class SimpleValueImpl
 	@Override
 	public String toString()
 	{
-		return "ScalarValueImpl{object=" + object + ", definition=" + definition + "}";
+		return "SimpleValue{object=" + object + ", definition=" + definition + "}";
 	}
-
 }

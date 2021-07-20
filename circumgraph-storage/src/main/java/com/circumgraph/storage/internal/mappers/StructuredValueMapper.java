@@ -1,20 +1,23 @@
 package com.circumgraph.storage.internal.mappers;
 
-import java.util.function.Consumer;
-
+import com.circumgraph.model.OutputTypeDef;
 import com.circumgraph.model.StructuredDef;
 import com.circumgraph.model.validation.ValidationMessage;
-import com.circumgraph.storage.StorageException;
+import com.circumgraph.storage.mutation.Mutation;
 import com.circumgraph.storage.mutation.StructuredMutation;
 import com.circumgraph.storage.types.ValueValidator;
 import com.circumgraph.values.StructuredValue;
 import com.circumgraph.values.Value;
-import com.circumgraph.values.internal.StructuredValueImpl;
 
 import org.eclipse.collections.api.factory.Maps;
-import org.eclipse.collections.api.list.ListIterable;
 import org.eclipse.collections.api.map.MapIterable;
 import org.eclipse.collections.api.map.MutableMap;
+import org.eclipse.collections.api.tuple.Pair;
+import org.eclipse.collections.impl.collector.Collectors2;
+import org.eclipse.collections.impl.tuple.Tuples;
+
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 /**
  * Mapper for {@link StructuredValue}.
@@ -24,105 +27,144 @@ public class StructuredValueMapper
 {
 	private final StructuredDef type;
 	private final MapIterable<String, ValueMapper<?, ?>> fields;
-	private final ListIterable<ValueValidator<StructuredValue>> validators;
+	private final ValueValidator<StructuredValue> validator;
 
 	public StructuredValueMapper(
 		StructuredDef type,
 		MapIterable<String, ValueMapper<?, ?>> fields,
-		ListIterable<ValueValidator<StructuredValue>> validators
+		ValueValidator<StructuredValue> validator
 	)
 	{
 		this.type = type;
 		this.fields = fields;
-		this.validators = validators;
+		this.validator = validator;
 	}
 
 	@Override
-	public StructuredValue getInitialValue()
+	public OutputTypeDef getDef()
 	{
-		MutableMap<String, Value> values = Maps.mutable.withInitialCapacity(
-			fields.size()
-		);
-
-		fields.forEachKeyValue((key, mapper) -> {
-			Value value = mapper.getInitialValue();
-			if(value != null)
-			{
-				values.put(key, value);
-			}
-		});
-
-		return new StructuredValueImpl(type, values);
+		return type;
 	}
 
 	@Override
-	public StructuredValue applyMutation(
+	public Mono<StructuredValue> getInitialValue()
+	{
+		return Flux.fromIterable(fields.keyValuesView())
+			.flatMap(pair -> {
+				var key = pair.getOne();
+				var mapper = pair.getTwo();
+
+				return mapper.getInitialValue()
+					.map(initialValue -> Tuples.pair(key, initialValue));
+			})
+			.collect(Collectors2.toMap(Pair::getOne, Pair::getTwo))
+			.map(newValues -> StructuredValue.create(type, newValues));
+	}
+
+	@Override
+	@SuppressWarnings({ "unchecked" })
+	public Mono<StructuredValue> applyMutation(
+		MappingEncounter encounter,
+		ObjectLocation location,
 		StructuredValue previousValue,
 		StructuredMutation mutation
 	)
 	{
-		boolean hasPreviousValue = previousValue != null;
+		return Mono.defer(() -> {
+			boolean hasPreviousValue = previousValue != null;
 
-		MutableMap<String, Value> values = hasPreviousValue
-			? Maps.mutable.ofMapIterable(previousValue.getFields())
-			: Maps.mutable.ofInitialCapacity(fields.size());
+			MutableMap<String, Value> previousFieldValues = hasPreviousValue
+				? Maps.mutable.ofMapIterable(previousValue.getFields())
+				: Maps.mutable.ofInitialCapacity(fields.size());
 
-		mutation.getFields().forEachKeyValue((key, fieldMutation) -> {
-			Value value;
-			var mapper = (ValueMapper) fields.get(key);
-			if(mapper == null)
-			{
-				throw new StorageException("Unable to store, unknown field in input");
-			}
+			var fieldMutations = mutation.getFields();
 
-			if(fieldMutation == null)
-			{
-				// No mutation, assume null
-				if(hasPreviousValue)
-				{
-					value = null;
-				}
-				else
-				{
-					value = mapper.getInitialValue();
-				}
-			}
-			else
-			{
-				value = mapper.applyMutation(
-					values.get(key),
-					fieldMutation
-				);
-			}
+			return Flux.fromIterable(fields.keyValuesView())
+				.flatMap(pair -> {
+					var key = pair.getOne();
+					var mapper = (ValueMapper<Value, Mutation>) pair.getTwo();
 
-			if(value == null)
-			{
-				values.remove(key);
-			}
-			else
-			{
-				values.put(key, value);
-			}
+					var fieldMutation = fieldMutations.get(key);
+					if(fieldMutation == null)
+					{
+						/*
+						 * Not mutating the value means two cases:
+						 *
+						 * 1) A value exists, return it
+						 * 2) No value exists, create a default value
+						 */
+						if(previousFieldValues.containsKey(key))
+						{
+							/*
+							 * This value has previously been set, return it if
+							 * the definition is compatible.
+							 */
+							var previousFieldValue = previousFieldValues.get(key);
+							if(previousFieldValue.getDefinition() == mapper.getDef())
+							{
+								// TODO: This should check if type are compatible - not equal, type widening and narrowing should be supportd
+								return Mono.just(Tuples.pair(key, previousFieldValue));
+							}
+						}
+
+						// No value, create and validate initial value
+						return mapper.getInitialValue()
+							.flatMap(initialValue -> {
+								return mapper.validate(
+									location.forField(key),
+									initialValue
+								)
+									.doOnNext(encounter::reportError)
+									.then(Mono.just(Tuples.pair(key, initialValue)));
+							})
+							// If there is no value - validate it as null
+							.switchIfEmpty(mapper.validate(location.forField(key), null)
+								.doOnNext(encounter::reportError)
+								.then(Mono.empty())
+							);
+					}
+
+					/*
+					 * Field is being mutated so defer to the mapper for
+					 * the field.
+					 */
+					return mapper.applyMutation(
+						encounter,
+						location.forField(key),
+						previousFieldValues.get(key),
+						fieldMutation
+					).map(updatedValue -> Tuples.pair(key, updatedValue));
+				})
+				.collect(Collectors2.toMap(Pair::getOne, Pair::getTwo))
+				.map(newValues -> StructuredValue.create(type, newValues))
+				.flatMap(newValue -> {
+					/*
+					 * There may be some validation that applies to the
+					 * entire structured value. So validate after mutation has
+					 * been applied.
+					 */
+					return validator.validate(location, newValue)
+						.doOnNext(encounter::reportError)
+						.then(Mono.just(newValue));
+				});
 		});
-
-		return new StructuredValueImpl(type, values);
 	}
 
 	@Override
-	public void validate(
-		Consumer<ValidationMessage> validationCollector,
+	public Flux<ValidationMessage> validate(
+		ObjectLocation location,
 		StructuredValue value
 	)
 	{
-		var fields = value.getFields();
+		var values = value.getFields();
+		return Flux.fromIterable(this.fields.keyValuesView())
+			.flatMap(p -> {
+				var key = p.getOne();
+				var fieldValue = values.get(key);
+				var fieldMapper = (ValueMapper<Value, Mutation>) p.getTwo();
 
-		this.fields.forEachKeyValue((key, mapper) -> {
-			((ValueMapper) mapper).validate(validationCollector, fields.get(key));
-		});
-
-		for(ValueValidator<StructuredValue> v : validators)
-		{
-			v.validate(value, validationCollector);
-		}
+				return fieldMapper.validate(location.forField(key), fieldValue);
+			})
+			.thenMany(validator.validate(location, value));
 	}
 }

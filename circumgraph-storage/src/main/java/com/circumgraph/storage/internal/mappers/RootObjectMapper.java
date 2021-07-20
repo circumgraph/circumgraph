@@ -1,12 +1,14 @@
 package com.circumgraph.storage.internal.mappers;
 
-import java.util.function.Consumer;
-
+import com.circumgraph.model.OutputTypeDef;
 import com.circumgraph.model.validation.ValidationMessage;
 import com.circumgraph.storage.StoredObjectValue;
 import com.circumgraph.storage.internal.StoredObjectValueImpl;
 import com.circumgraph.storage.mutation.StructuredMutation;
 import com.circumgraph.values.StructuredValue;
+
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 /**
  * Mapper for root object stored in a {@link com.circumgraph.storage.Collection}.
@@ -16,7 +18,6 @@ public class RootObjectMapper
 {
 	private final ValueMapper<StructuredValue, StructuredMutation> mapper;
 
-
 	public RootObjectMapper(
 		ValueMapper<StructuredValue, StructuredMutation> mapper
 	)
@@ -25,27 +26,39 @@ public class RootObjectMapper
 	}
 
 	@Override
-	public StoredObjectValue getInitialValue()
+	public OutputTypeDef getDef()
+	{
+		return mapper.getDef();
+	}
+
+	@Override
+	public Mono<StoredObjectValue> getInitialValue()
 	{
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public StoredObjectValue applyMutation(
+	public Mono<StoredObjectValue> applyMutation(
+		MappingEncounter encounter,
+		ObjectLocation location,
 		StoredObjectValue previousValue,
 		StructuredMutation mutation
 	)
 	{
-		var mutated = mapper.applyMutation(previousValue, mutation);
-		return new StoredObjectValueImpl(mutated);
+		return mapper.applyMutation(
+			encounter,
+			location,
+			previousValue,
+			mutation
+		).map(StoredObjectValueImpl::new);
 	}
 
 	@Override
-	public void validate(
-		Consumer<ValidationMessage> validationCollector,
+	public Flux<ValidationMessage> validate(
+		ObjectLocation location,
 		StoredObjectValue value
 	)
 	{
-		mapper.validate(validationCollector, value);
+		return mapper.validate(location,value);
 	}
 }

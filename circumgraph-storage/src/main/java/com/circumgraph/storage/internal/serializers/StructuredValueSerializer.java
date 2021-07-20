@@ -87,7 +87,7 @@ public class StructuredValueSerializer
 			}
 
 			out.writeString(e.getOne());
-			serializer.write(e.getTwo(), out);
+			out.writeObject(serializer, e.getTwo());
 		}
 
 		out.writeObjectEnd();
