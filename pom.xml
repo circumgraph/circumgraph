@@ -28,6 +28,8 @@
 		<module>circumgraph-values</module>
 
 		<module>circumgraph-storage</module>
+
+		<module>circumgraph-graphql</module>
 	</modules>
 
 	<!-- License -->
