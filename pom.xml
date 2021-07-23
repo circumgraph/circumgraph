@@ -30,6 +30,8 @@
 		<module>circumgraph-storage</module>
 
 		<module>circumgraph-graphql</module>
+
+		<module>circumgraph-app</module>
 	</modules>
 
 	<!-- License -->
