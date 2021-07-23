@@ -15,7 +15,6 @@ import com.circumgraph.model.OutputTypeDef;
 import com.circumgraph.model.ScalarDef;
 import com.circumgraph.model.SimpleValueDef;
 import com.circumgraph.model.StructuredDef;
-import com.circumgraph.model.TypeDef;
 import com.circumgraph.model.UnionDef;
 import com.circumgraph.storage.Storage;
 import com.circumgraph.storage.StorageSchema;
@@ -221,40 +220,6 @@ public class ValueMappers
 		return new PolymorphicValueMapper(
 			def,
 			defs,
-			validator
-		);
-	}
-
-	/**
-	 * Create a polymorphic mapper for unions.
-	 *
-	 * @param def
-	 * @return
-	 */
-	private PolymorphicValueMapper createUnion(
-		UnionDef def,
-		ValueValidator<Value> validator
-	)
-	{
-		MutableList<ObjectDef> defs = Lists.mutable.empty();
-		for(var subDef : def.getTypes())
-		{
-			if(subDef instanceof ObjectDef)
-			{
-				defs.add((ObjectDef) subDef);
-			}
-			else
-			{
-				model
-					.findImplements(subDef.getName())
-					.selectInstancesOf(ObjectDef.class)
-					.each(defs::add);
-			}
-		}
-
-		return new PolymorphicValueMapper(
-			def,
-			defs.toMap(TypeDef::getName, this::createDirect),
 			validator
 		);
 	}
