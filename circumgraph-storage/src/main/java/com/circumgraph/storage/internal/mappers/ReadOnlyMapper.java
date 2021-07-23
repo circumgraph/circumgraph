@@ -53,7 +53,7 @@ public class ReadOnlyMapper<V extends Value, M extends Mutation>
 					.build()
 				);
 
-				return Mono.empty();
+				return Mono.just(previousValue);
 			}
 
 			return mapper.applyMutation(encounter, location, previousValue, mutation);

@@ -112,7 +112,7 @@ public class BasicOperationsTest
 		var stored = collection.store(m1).block();
 		var id = stored.getId();
 
-		assertThrows(StorageException.class, () -> {
+		assertThrows(StorageValidationException.class, () -> {
 			var m2 = collection.newMutation()
 				.updateField("id", ScalarValueMutation.create(ScalarDef.ID, 100l))
 				.build();
