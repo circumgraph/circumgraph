@@ -4,6 +4,7 @@ import com.circumgraph.model.OutputTypeDef;
 import com.circumgraph.model.StructuredDef;
 import com.circumgraph.model.validation.ValidationMessage;
 import com.circumgraph.storage.mutation.Mutation;
+import com.circumgraph.storage.mutation.NullMutation;
 import com.circumgraph.storage.mutation.StructuredMutation;
 import com.circumgraph.storage.types.ValueValidator;
 import com.circumgraph.values.StructuredValue;
@@ -122,6 +123,17 @@ public class StructuredValueMapper
 								.doOnNext(encounter::reportError)
 								.then(Mono.empty())
 							);
+					}
+
+					if(fieldMutation instanceof NullMutation)
+					{
+						/*
+						 * NullMutation should set the value to null - validate
+						 * that is possible before attempting to do so.
+						 */
+						return mapper.validate(location, null)
+							.doOnNext(encounter::reportError)
+							.then(Mono.empty());
 					}
 
 					/*

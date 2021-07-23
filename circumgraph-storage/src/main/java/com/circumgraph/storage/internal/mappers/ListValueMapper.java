@@ -6,6 +6,7 @@ import com.circumgraph.model.validation.ValidationMessage;
 import com.circumgraph.storage.mutation.ListMutation;
 import com.circumgraph.storage.mutation.ListSetMutation;
 import com.circumgraph.storage.mutation.Mutation;
+import com.circumgraph.storage.mutation.NullMutation;
 import com.circumgraph.storage.types.ValueValidator;
 import com.circumgraph.values.ListValue;
 import com.circumgraph.values.Value;
@@ -18,6 +19,8 @@ import reactor.core.publisher.Mono;
 public class ListValueMapper<V extends Value, M extends Mutation>
 	implements ValueMapper<ListValue<V>, ListMutation<M>>
 {
+	private static final Object NULL = new Object();
+
 	private final ListDef.Output typeDef;
 
 	private final ValueValidator<ListValue<V>> validator;
@@ -47,6 +50,7 @@ public class ListValueMapper<V extends Value, M extends Mutation>
 	}
 
 	@Override
+	@SuppressWarnings("unchecked")
 	public Mono<ListValue<V>> applyMutation(
 		MappingEncounter encounter,
 		ObjectLocation location,
@@ -63,15 +67,31 @@ public class ListValueMapper<V extends Value, M extends Mutation>
 				 */
 				var casted = (ListSetMutation<M>) mutation;
 				return Flux.fromIterable(casted.getValues())
-					.flatMapSequential(m -> itemMapper.applyMutation(
-						encounter,
-						location,
-						null,
-						m
-					))
+					.flatMapSequential(m -> {
+						if(m instanceof NullMutation)
+						{
+							/*
+							* NullMutation should set the value to null - validate
+							* that is possible before attempting to do so.
+							*/
+							return itemMapper.validate(location, null)
+								.doOnNext(encounter::reportError)
+								.then(Mono.just(NULL));
+						}
+
+						return itemMapper.applyMutation(
+							encounter,
+							location,
+							null,
+							m
+						);
+					})
 					.collect(Collectors2.toImmutableList())
 					.flatMap(values -> {
-						var value = ListValue.create(typeDef, values);
+						var value = ListValue.create(
+							typeDef,
+							values.collect(v -> v == NULL ? null : (V) v)
+						);
 
 						return validator.validate(location, value)
 							.doOnNext(encounter::reportError)
