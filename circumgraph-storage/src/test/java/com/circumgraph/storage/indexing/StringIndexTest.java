@@ -6,6 +6,7 @@ import static org.hamcrest.Matchers.is;
 import com.circumgraph.model.DirectiveUse;
 import com.circumgraph.model.FieldDef;
 import com.circumgraph.model.Model;
+import com.circumgraph.model.NonNullDef;
 import com.circumgraph.model.ObjectDef;
 import com.circumgraph.model.ScalarDef;
 import com.circumgraph.storage.SingleModelTest;
@@ -41,7 +42,7 @@ public class StringIndexTest
 					.build()
 				)
 				.addField(FieldDef.create("isbn")
-					.withType(ScalarDef.STRING)
+					.withType(NonNullDef.output(ScalarDef.STRING))
 					.addDirective(DirectiveUse.create("index")
 						.addArgument("type", "TOKEN")
 						.build()

@@ -4,9 +4,11 @@ import java.util.function.Consumer;
 
 import com.circumgraph.model.DirectiveUse;
 import com.circumgraph.model.FieldDef;
+import com.circumgraph.model.NonNullDef;
 import com.circumgraph.model.ScalarDef;
 import com.circumgraph.model.SimpleValueDef;
 import com.circumgraph.model.StructuredDef;
+import com.circumgraph.model.TypeDef;
 import com.circumgraph.model.validation.DirectiveValidator;
 import com.circumgraph.model.validation.ValidationMessage;
 import com.circumgraph.storage.StorageSchema;
@@ -46,17 +48,23 @@ public class IndexDirectiveValidator
 		Consumer<ValidationMessage> validationCollector
 	)
 	{
+		TypeDef fieldType = location.getType();
+		if(fieldType instanceof NonNullDef.Output)
+		{
+			fieldType = ((NonNullDef.Output) fieldType).getType();
+		}
+
 		SimpleValueDef def;
-		if(location.getType() instanceof StructuredDef
+		if(fieldType instanceof StructuredDef
 			&& ((StructuredDef) location.getType()).findImplements(StorageSchema.ENTITY_NAME))
 		{
 			// Link to another collection
 			def = ScalarDef.ID;
 		}
-		else if(location.getType() instanceof SimpleValueDef)
+		else if(fieldType instanceof SimpleValueDef)
 		{
 			// Simple edge value
-			def = (SimpleValueDef) location.getType();
+			def = (SimpleValueDef) fieldType;
 		}
 		else
 		{

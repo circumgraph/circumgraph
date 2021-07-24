@@ -8,6 +8,7 @@ import com.circumgraph.model.EnumDef;
 import com.circumgraph.model.FieldDef;
 import com.circumgraph.model.InterfaceDef;
 import com.circumgraph.model.ListDef;
+import com.circumgraph.model.NonNullDef;
 import com.circumgraph.model.ScalarDef;
 import com.circumgraph.model.SimpleValueDef;
 import com.circumgraph.model.StructuredDef;
@@ -164,6 +165,11 @@ public class ValueIndexers
 		Consumer<SearchFieldDef<StoredObjectValue>> fieldReceiver
 	)
 	{
+		if(def instanceof NonNullDef.Output)
+		{
+			def = ((NonNullDef.Output) def).getType();
+		}
+
 		if(def instanceof ListDef)
 		{
 			var listDef = (ListDef) def;
