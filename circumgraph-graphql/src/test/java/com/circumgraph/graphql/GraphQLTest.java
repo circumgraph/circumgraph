@@ -46,12 +46,9 @@ public class GraphQLTest
 			.start()
 			.block();
 
-		// Create a GraphQL schema for the storage
-		var schema = new GraphQLGenerator(storage)
+		// Create a GraphQL instance for the storage
+		var graphQL = new GraphQLGenerator(storage)
 			.generate();
-
-		var graphQL = GraphQL.newGraphQL(schema)
-			.build();
 
 		return new Context(storage, graphQL);
 	}

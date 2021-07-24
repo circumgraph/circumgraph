@@ -142,7 +142,6 @@ public class CircumgraphApp
 		Storage storage
 	)
 	{
-		var schema = new GraphQLGenerator(storage).generate();
-		return GraphQL.newGraphQL(schema).build();
+		return new GraphQLGenerator(storage).generate();
 	}
 }

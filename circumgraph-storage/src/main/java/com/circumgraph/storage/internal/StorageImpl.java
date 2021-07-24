@@ -18,6 +18,7 @@ import org.eclipse.collections.api.map.ImmutableMap;
 import reactor.core.publisher.Mono;
 import se.l4.silo.CollectionRef;
 import se.l4.silo.StorageException;
+import se.l4.silo.Transactions;
 import se.l4.silo.engine.CollectionDef;
 import se.l4.silo.engine.LocalSilo;
 
@@ -67,6 +68,12 @@ public class StorageImpl
 	public void close()
 	{
 		silo.close();
+	}
+
+	@Override
+	public Transactions transactions()
+	{
+		return silo.transactions();
 	}
 
 	public static RichIterable<CollectionDef<Long, StoredObjectValue>> generateCollectionDefinitions(

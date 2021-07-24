@@ -1,7 +1,8 @@
-package com.circumgraph.graphql.internal;
+package com.circumgraph.graphql.internal.datafetchers;
 
 import java.util.concurrent.CompletableFuture;
 
+import com.circumgraph.graphql.internal.StorageContext;
 import com.circumgraph.storage.Collection;
 import com.circumgraph.values.StructuredValue;
 
@@ -30,6 +31,10 @@ public class CollectionGetByIdFetcher
 		Collection entity = environment.getSource();
 		String id = environment.getArgument("id");
 		long numericId = idCodec.decode(id);
-		return entity.get(numericId).toFuture();
+
+		StorageContext ctx = environment.getContext();
+		return ctx.getTx()
+			.wrap(entity.get(numericId))
+			.toFuture();
 	}
 }

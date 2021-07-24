@@ -8,6 +8,7 @@ import com.circumgraph.storage.internal.StorageImpl;
 import org.eclipse.collections.api.RichIterable;
 
 import reactor.core.publisher.Mono;
+import se.l4.silo.Transactions;
 
 /**
  * Storage that contains all the {@link Collection}s created from the active
@@ -44,6 +45,13 @@ public interface Storage
 	 * @return
 	 */
 	void close();
+
+	/**
+	 * Access transaction support.
+	 *
+	 * @return
+	 */
+	Transactions transactions();
 
 	static Builder open(Model model, Path path)
 	{

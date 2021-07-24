@@ -1,4 +1,4 @@
-package com.circumgraph.graphql.internal;
+package com.circumgraph.graphql.internal.datafetchers;
 
 import com.circumgraph.graphql.OutputMapper;
 import com.circumgraph.values.StructuredValue;

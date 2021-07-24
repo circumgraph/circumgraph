@@ -1,10 +1,10 @@
 package com.circumgraph.graphql;
 
-import java.util.concurrent.CompletableFuture;
-
-import com.circumgraph.graphql.internal.CollectionGetByIdFetcher;
 import com.circumgraph.graphql.internal.InterfaceResolver;
-import com.circumgraph.graphql.internal.StructuredValueDataFetcher;
+import com.circumgraph.graphql.internal.TransactionInstrumentation;
+import com.circumgraph.graphql.internal.datafetchers.CollectionGetByIdFetcher;
+import com.circumgraph.graphql.internal.datafetchers.CollectionStoreDataFetcher;
+import com.circumgraph.graphql.internal.datafetchers.StructuredValueDataFetcher;
 import com.circumgraph.graphql.internal.mutation.PolymorphicMutationMapper;
 import com.circumgraph.graphql.internal.mutation.ScalarMutationMapper;
 import com.circumgraph.graphql.internal.mutation.StructuredValueMutationMapper;
@@ -28,12 +28,11 @@ import com.circumgraph.model.StructuredDef;
 import com.circumgraph.model.TypeDef;
 import com.circumgraph.storage.Collection;
 import com.circumgraph.storage.Storage;
-import com.circumgraph.storage.mutation.StructuredMutation;
-import com.circumgraph.values.StructuredValue;
 
 import org.eclipse.collections.api.factory.Maps;
 import org.eclipse.collections.api.map.ImmutableMap;
 
+import graphql.GraphQL;
 import graphql.Scalars;
 import graphql.schema.DataFetcher;
 import graphql.schema.FieldCoordinates;
@@ -72,7 +71,16 @@ public class GraphQLGenerator
 			.newWithKeyValue(ScalarDef.STRING, new StringScalar());
 	}
 
-	public GraphQLSchema generate()
+	public GraphQL generate()
+	{
+		GraphQLSchema schema = generateSchema();
+		return GraphQL.newGraphQL(schema)
+			.doNotAddDefaultInstrumentations()
+			.instrumentation(new TransactionInstrumentation(storage))
+			.build();
+	}
+
+	public GraphQLSchema generateSchema()
 	{
 		GraphQLSchema.Builder schema = GraphQLSchema.newSchema();
 		GraphQLCodeRegistry.Builder registry = GraphQLCodeRegistry.newCodeRegistry();
@@ -284,26 +292,7 @@ public class GraphQLGenerator
 
 		registry.dataFetcher(
 			FieldCoordinates.coordinates("Mutation", "store" + entity.getDefinition().getName()),
-			new DataFetcher<CompletableFuture<? extends StructuredValue>>()
-			{
-				public CompletableFuture<? extends StructuredValue> get(graphql.schema.DataFetchingEnvironment environment)
-					throws Exception
-				{
-					// TODO: Input validation for id
-					var id = environment.getArgument("id");
-					var parsedId = id == null ? 0 : idCodec.decode((String) id);
-					var mutation =  (StructuredMutation) mapper.toMutation(environment.getArgument("mutation"));
-
-					if(parsedId > 0)
-					{
-						return entity.store(parsedId, mutation).toFuture();
-					}
-					else
-					{
-						return entity.store(mutation).toFuture();
-					}
-				};
-			}
+			new CollectionStoreDataFetcher(entity, idCodec, mapper)
 		);
 	}
 
