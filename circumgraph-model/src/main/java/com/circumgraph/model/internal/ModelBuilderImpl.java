@@ -107,8 +107,59 @@ public class ModelBuilderImpl
 			}
 		}
 
+		// Create an instance of type finder to deal with lists
+		TypeFinder typeFinder = name -> {
+			if(name.isEmpty())
+			{
+				return null;
+			}
+			else if(name.charAt(0) == '[')
+			{
+				var type = typeMap.get(name.substring(1, name.length() - 1));
+				if(type == null) return null;
 
-		// Create the directive validator map
+				return type instanceof OutputTypeDef
+					? ListDef.output((OutputTypeDef) type)
+					: ListDef.input((InputTypeDef) type);
+			}
+			else
+			{
+				return typeMap.get(name);
+			}
+		};
+
+		// Validate all of the types
+		for(TypeDef type : typeMap)
+		{
+			validate(
+				typeFinder,
+				type,
+				validation
+			);
+		}
+
+		// Raise an error if any validation error has been found
+		Predicate<ValidationMessage> isError = m -> m.getLevel() == ValidationMessageLevel.ERROR;
+		if(validationMessages.anySatisfy(isError))
+		{
+			throw new ModelException(
+				"Invalid model, errors reported:\n"
+				+ validationMessages.select(isError)
+					.collect(msg -> "  * " + msg.getLocation().describe() + ": " + msg.getMessage())
+					.makeString("\n")
+			);
+		}
+
+		// Prepare and create model
+		ImmutableMap<String, TypeDef> types = typeMap.toImmutable();
+		ModelDefs defs = types::get;
+
+		for(TypeDef type : types)
+		{
+			HasPreparation.maybePrepare(type, defs);
+		}
+
+		// Validate directives after preparation
 		MutableMultimap<String, DirectiveValidator<?>> directives = Multimaps.mutable.set.empty();
 		for(DirectiveValidator<?> v : directiveValidators)
 		{
@@ -147,57 +198,9 @@ public class ModelBuilderImpl
 			}
 		};
 
-		// Create an instance of type finder to deal with lists
-		TypeFinder typeFinder = name -> {
-			if(name.isEmpty())
-			{
-				return null;
-			}
-			else if(name.charAt(0) == '[')
-			{
-				var type = typeMap.get(name.substring(1, name.length() - 1));
-				if(type == null) return null;
-
-				return type instanceof OutputTypeDef
-					? ListDef.output((OutputTypeDef) type)
-					: ListDef.input((InputTypeDef) type);
-			}
-			else
-			{
-				return typeMap.get(name);
-			}
-		};
-
-		// Validate all of the types
-		for(TypeDef type : typeMap)
-		{
-			validate(
-				typeFinder,
-				type,
-				directiveValidator,
-				validation
-			);
-		}
-
-		// Raise an error if any validation error has been found
-		Predicate<ValidationMessage> isError = m -> m.getLevel() == ValidationMessageLevel.ERROR;
-		if(validationMessages.anySatisfy(isError))
-		{
-			throw new ModelException(
-				"Invalid model, errors reported:\n"
-				+ validationMessages.select(isError)
-					.collect(msg -> "  * " + msg.getLocation().describe() + ": " + msg.getMessage())
-					.makeString("\n")
-			);
-		}
-
-		// Prepare and create model
-		ImmutableMap<String, TypeDef> types = typeMap.toImmutable();
-		ModelDefs defs = types::get;
-
 		for(TypeDef type : types)
 		{
-			HasPreparation.maybePrepare(type, defs);
+			validateDirectives(type, directiveValidator);
 		}
 
 		return new ModelImpl(types);
@@ -500,33 +503,16 @@ public class ModelBuilderImpl
 	private void validate(
 		TypeFinder types,
 		TypeDef type,
-		Consumer<HasDirectives> directiveValidator,
 		Consumer<ValidationMessage> validationCollector
 	)
 	{
 		// TODO: Schema specific validation
-
-		// Validate all the directives
-		if(type instanceof HasDirectives)
-		{
-			directiveValidator.accept((HasDirectives) type);
-		}
 
 		if(type instanceof StructuredDef)
 		{
 			StructuredDef structured = (StructuredDef) type;
 
 			validateImplements(types, structured, validationCollector);
-
-			for(FieldDef field : structured.getDirectFields())
-			{
-				directiveValidator.accept(field);
-
-				for(ArgumentDef arg : field.getArguments())
-				{
-					directiveValidator.accept(arg);
-				}
-			}
 		}
 	}
 
@@ -636,6 +622,35 @@ public class ModelBuilderImpl
 				{
 					// Descend into the type to validate
 					stack.push(name);
+				}
+			}
+		}
+	}
+
+	private void validateDirectives(
+		TypeDef type,
+		Consumer<HasDirectives> directiveValidator
+	)
+	{
+		// TODO: Schema specific validation
+
+		// Validate all the directives
+		if(type instanceof HasDirectives)
+		{
+			directiveValidator.accept((HasDirectives) type);
+		}
+
+		if(type instanceof StructuredDef)
+		{
+			StructuredDef structured = (StructuredDef) type;
+
+			for(FieldDef field : structured.getDirectFields())
+			{
+				directiveValidator.accept(field);
+
+				for(ArgumentDef arg : field.getArguments())
+				{
+					directiveValidator.accept(arg);
 				}
 			}
 		}
