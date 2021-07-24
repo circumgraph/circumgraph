@@ -6,8 +6,12 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.circumgraph.model.Model;
+import com.circumgraph.schema.graphql.GraphQLSchema;
 import com.circumgraph.storage.Storage;
+import com.circumgraph.storage.StorageSchema;
 
+import org.eclipse.collections.api.factory.Lists;
+import org.eclipse.collections.api.list.ListIterable;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -35,12 +39,17 @@ public class GraphQLTest
 		}
 	}
 
-	protected Context open(Model model)
+	protected Context open(String schema)
 	{
 		if(storage != null)
 		{
 			throw new AssertionError("Can not open multiple storages in the same test");
 		}
+
+		var model = Model.create()
+			.addSchema(StorageSchema.INSTANCE)
+			.addSchema(GraphQLSchema.create(schema))
+			.build();
 
 		storage = Storage.open(model, tmp)
 			.start()
@@ -127,6 +136,11 @@ public class GraphQLTest
 
 				throw error;
 			}
+		}
+
+		public ListIterable<GraphQLError> errors()
+		{
+			return Lists.immutable.ofAll(result.getErrors());
 		}
 
 		public <T> T getData()

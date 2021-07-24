@@ -3,13 +3,7 @@ package com.circumgraph.graphql;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
-import com.circumgraph.model.FieldDef;
-import com.circumgraph.model.Model;
-import com.circumgraph.model.NonNullDef;
-import com.circumgraph.model.ObjectDef;
-import com.circumgraph.model.ScalarDef;
 import com.circumgraph.storage.Collection;
-import com.circumgraph.storage.StorageSchema;
 import com.circumgraph.storage.mutation.ScalarValueMutation;
 import com.circumgraph.values.SimpleValue;
 import com.circumgraph.values.StructuredValue;
@@ -26,29 +20,11 @@ public class GraphQLQueryTest
 	@Test
 	public void testGetPreviouslyStored()
 	{
-		var ctx = open(Model.create()
-			.addSchema(StorageSchema.INSTANCE)
-			.addType(ObjectDef.create("Embedded")
-				.addField(FieldDef.create("age")
-					.withType(ScalarDef.INT)
-					.build()
-				)
-				.build()
-			)
-			.addType(ObjectDef.create("Test")
-				.addImplements("Entity")
-				.addField(FieldDef.create("title")
-					.withType(NonNullDef.output(ScalarDef.STRING))
-					.build()
-				)
-				.addField(FieldDef.create("object")
-					.withType("Embedded")
-					.build()
-				)
-				.build()
-			)
-			.build()
-		);
+		var ctx = open("""
+			type Test implements Entity {
+				title: String!
+			}
+		""");
 
 		LongIdCodec<String> idCodec = new Base62LongIdCodec();
 
@@ -84,31 +60,13 @@ public class GraphQLQueryTest
 	}
 
 	@Test
-	public void testMutation()
+	public void testMutationNew()
 	{
-		var ctx = open(Model.create()
-			.addSchema(StorageSchema.INSTANCE)
-			.addType(ObjectDef.create("Embedded")
-				.addField(FieldDef.create("age")
-					.withType(ScalarDef.INT)
-					.build()
-				)
-				.build()
-			)
-			.addType(ObjectDef.create("Test")
-				.addImplements("Entity")
-				.addField(FieldDef.create("title")
-					.withType(NonNullDef.output(ScalarDef.STRING))
-					.build()
-				)
-				.addField(FieldDef.create("object")
-					.withType("Embedded")
-					.build()
-				)
-				.build()
-			)
-			.build()
-		);
+		var ctx = open("""
+			type Test implements Entity {
+				title: String!
+			}
+		""");
 
 		// Store a new object
 		var result = ctx.execute(
