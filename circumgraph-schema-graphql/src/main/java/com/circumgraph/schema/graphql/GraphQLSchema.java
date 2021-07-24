@@ -249,7 +249,8 @@ public class GraphQLSchema
 	{
 		return Lists.immutable.ofAll(def.getDirectives())
 			.collect(d -> {
-				var builder = DirectiveUse.create(d.getName());
+				var builder = DirectiveUse.create(d.getName())
+					.withSourceLocation(toSourceLocation(d));
 
 				for(var arg : d.getArguments())
 				{
