@@ -312,7 +312,7 @@ public class GraphQLSchema
 		if(loc == null) return SourceLocation.unknown();
 
 		return SourceLocation.create(
-			loc.getSourceName() == null ? "<source>" : loc.getSourceName()
+			(loc.getSourceName() == null ? "<source>" : loc.getSourceName())
 			+ ":" + loc.getLine() + ":" + loc.getColumn()
 		);
 	}
