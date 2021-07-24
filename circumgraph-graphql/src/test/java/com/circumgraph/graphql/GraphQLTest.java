@@ -62,7 +62,7 @@ public class GraphQLTest
 		return new Context(storage, graphQL);
 	}
 
-	protected class Context
+	public static class Context
 	{
 		private final Storage storage;
 		private final GraphQL ql;
@@ -104,9 +104,9 @@ public class GraphQLTest
 		}
 	}
 
-	protected class Result
+	public static class Result
 	{
-		private ExecutionResult result;
+		private final ExecutionResult result;
 
 		public Result(ExecutionResult result)
 		{

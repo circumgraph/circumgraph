@@ -2,8 +2,9 @@ package com.circumgraph.graphql;
 
 import com.circumgraph.graphql.internal.InterfaceResolver;
 import com.circumgraph.graphql.internal.TransactionInstrumentation;
+import com.circumgraph.graphql.internal.datafetchers.CollectionDeleteMutation;
 import com.circumgraph.graphql.internal.datafetchers.CollectionGetByIdFetcher;
-import com.circumgraph.graphql.internal.datafetchers.CollectionStoreDataFetcher;
+import com.circumgraph.graphql.internal.datafetchers.CollectionStoreMutation;
 import com.circumgraph.graphql.internal.datafetchers.StructuredValueDataFetcher;
 import com.circumgraph.graphql.internal.mutation.PolymorphicMutationMapper;
 import com.circumgraph.graphql.internal.mutation.ScalarMutationMapper;
@@ -35,6 +36,7 @@ import org.eclipse.collections.api.map.ImmutableMap;
 import graphql.GraphQL;
 import graphql.Scalars;
 import graphql.schema.DataFetcher;
+import graphql.schema.DataFetchingEnvironment;
 import graphql.schema.FieldCoordinates;
 import graphql.schema.GraphQLArgument;
 import graphql.schema.GraphQLCodeRegistry;
@@ -92,6 +94,22 @@ public class GraphQLGenerator
 			generateType(type, schema, registry);
 		}
 
+		// Type returned when deleting something
+		schema.additionalType(GraphQLObjectType.newObject()
+			.name("DeleteResult")
+			.field(GraphQLFieldDefinition.newFieldDefinition()
+				.name("success")
+				.type(GraphQLNonNull.nonNull(Scalars.GraphQLBoolean))
+			)
+			.build()
+		);
+
+		registry.dataFetcher(
+			FieldCoordinates.coordinates("DeleteResult", "success"),
+			(DataFetchingEnvironment env) -> env.getContext()
+		);
+
+		// Generate the query and mutation root objects
 		GraphQLObjectType.Builder queryBuilder = GraphQLObjectType.newObject()
 			.name("Query");
 		GraphQLObjectType.Builder mutationBuilder = GraphQLObjectType.newObject()
@@ -118,7 +136,6 @@ public class GraphQLGenerator
 	{
 		if(t instanceof ScalarDef)
 		{
-			// TODO: Deal with dynamic scalars
 			var scalar = scalars.get(t);
 			if(scalar == null)
 			{
@@ -276,23 +293,43 @@ public class GraphQLGenerator
 	)
 	{
 		var mapper = (MutationInputMapper) generateMutationInput(entity.getDefinition());
+		var name = entity.getDefinition().getName();
 
 		mutationBuilder.field(GraphQLFieldDefinition.newFieldDefinition()
-			.name("store" + entity.getDefinition().getName())
+			.name("store" + name)
+			.description("Create or update an object of type " + name)
 			.type(GraphQLNonNull.nonNull(GraphQLTypeReference.typeRef(entity.getDefinition().getName())))
 			.argument(GraphQLArgument.newArgument()
 				.name("id")
+				.description("Identifier of object to update, no id will store a new object")
 				.type(Scalars.GraphQLID)
 			)
 			.argument(GraphQLArgument.newArgument()
 				.name("mutation")
+				.description("Mutation to apply")
 				.type(GraphQLNonNull.nonNull(mapper.getGraphQLType()))
 			)
 		);
 
 		registry.dataFetcher(
-			FieldCoordinates.coordinates("Mutation", "store" + entity.getDefinition().getName()),
-			new CollectionStoreDataFetcher(entity, idCodec, mapper)
+			FieldCoordinates.coordinates("Mutation", "store" + name),
+			new CollectionStoreMutation(entity, idCodec, mapper)
+		);
+
+		mutationBuilder.field(GraphQLFieldDefinition.newFieldDefinition()
+			.name("delete" + name)
+			.description("Delete an object of type " + name)
+			.type(GraphQLTypeReference.typeRef("DeleteResult"))
+			.argument(GraphQLArgument.newArgument()
+				.name("id")
+				.description("Identifier of object to delete")
+				.type(GraphQLNonNull.nonNull(Scalars.GraphQLID))
+			)
+		);
+
+		registry.dataFetcher(
+			FieldCoordinates.coordinates("Mutation", "delete" + name),
+			new CollectionDeleteMutation(entity, idCodec)
 		);
 	}
 

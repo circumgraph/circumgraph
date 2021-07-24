@@ -13,14 +13,14 @@ import graphql.schema.DataFetchingEnvironment;
 import reactor.core.publisher.Mono;
 import se.l4.ylem.ids.LongIdCodec;
 
-public class CollectionStoreDataFetcher
+public class CollectionStoreMutation
 	implements DataFetcher<CompletableFuture<StoredObjectValue>>
 {
 	private final Collection collection;
 	private final LongIdCodec<String> idCodec;
 	private final MutationInputMapper<?> mutationMapper;
 
-	public CollectionStoreDataFetcher(
+	public CollectionStoreMutation(
 		Collection collection,
 		LongIdCodec<String> idCodec,
 		MutationInputMapper<?> mutationMapper
@@ -52,5 +52,5 @@ public class CollectionStoreDataFetcher
 
 		StorageContext ctx = environment.getContext();
 		return ctx.getTx().wrap(store).toFuture();
-	};
+	}
 }
