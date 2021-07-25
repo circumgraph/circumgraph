@@ -1,6 +1,7 @@
 package com.circumgraph.graphql.internal.output;
 
 import com.circumgraph.graphql.OutputMapper;
+import com.circumgraph.model.OutputTypeDef;
 import com.circumgraph.model.StructuredDef;
 import com.circumgraph.values.StructuredValue;
 
@@ -19,7 +20,7 @@ public class StructuredValueOutputMapper
 	private final GraphQLTypeReference type;
 
 	public StructuredValueOutputMapper(
-		StructuredDef type
+		OutputTypeDef type
 	)
 	{
 		this.type = GraphQLTypeReference.typeRef(type.getName());

@@ -31,6 +31,7 @@ import com.circumgraph.model.OutputTypeDef;
 import com.circumgraph.model.ScalarDef;
 import com.circumgraph.model.StructuredDef;
 import com.circumgraph.model.TypeDef;
+import com.circumgraph.model.UnionDef;
 import com.circumgraph.storage.Collection;
 import com.circumgraph.storage.Storage;
 import com.circumgraph.storage.StorageSchema;
@@ -52,6 +53,7 @@ import graphql.schema.GraphQLNonNull;
 import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLSchema;
 import graphql.schema.GraphQLTypeReference;
+import graphql.schema.GraphQLUnionType;
 import se.l4.ylem.ids.Base62LongIdCodec;
 import se.l4.ylem.ids.LongIdCodec;
 
@@ -223,6 +225,23 @@ public class GraphQLGenerator
 
 			registry.typeResolver(type, new InterfaceResolver());
 		}
+		else if(t instanceof UnionDef)
+		{
+			var def = (UnionDef) t;
+
+			GraphQLUnionType.Builder builder = GraphQLUnionType.newUnionType()
+				.name(def.getName())
+				.description(def.getDescription().orElse(null));
+
+			for(var subDef : def.getTypes())
+			{
+				builder.possibleType(GraphQLTypeReference.typeRef(subDef.getName()));
+			}
+
+			var type = builder.build();
+			schema.additionalType(type);
+			registry.typeResolver(type, new InterfaceResolver());
+		}
 	}
 
 	private OutputMapper<?, ?> resolveOutputType(OutputTypeDef type)
@@ -258,6 +277,11 @@ public class GraphQLGenerator
 			}
 
 			return new StructuredValueOutputMapper(structuredDef);
+		}
+		else if(type instanceof UnionDef)
+		{
+			var unionDef = (UnionDef) type;
+			return new StructuredValueOutputMapper(unionDef);
 		}
 
 		throw new ModelException("Can not map the given type to GraphQL: " + type);
@@ -385,6 +409,14 @@ public class GraphQLGenerator
 			mapper = new ListMutationMapper(
 				listDef,
 				generateMutationInput(listDef.getItemType())
+			);
+		}
+		else if(def instanceof UnionDef)
+		{
+			var unionDef = (UnionDef) def;
+			mapper = new PolymorphicMutationMapper(
+				unionDef,
+				unionDef.getTypes().collect(subDef -> generateMutationInput(subDef))
 			);
 		}
 		else
