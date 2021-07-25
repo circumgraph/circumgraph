@@ -37,6 +37,7 @@ import com.circumgraph.storage.StorageSchema;
 
 import org.eclipse.collections.api.factory.Maps;
 import org.eclipse.collections.api.map.ImmutableMap;
+import org.eclipse.collections.api.map.MutableMap;
 
 import graphql.GraphQL;
 import graphql.Scalars;
@@ -62,6 +63,8 @@ public class GraphQLGenerator
 	private final ImmutableMap<ScalarDef, ScalarMapper<?>> scalars;
 	private final LongIdCodec<String> idCodec;
 
+	private final MutableMap<OutputTypeDef, MutationInputMapper<?>> mutationMappers;
+
 	public GraphQLGenerator(Storage storage)
 	{
 		this.storage = storage;
@@ -76,11 +79,17 @@ public class GraphQLGenerator
 			.newWithKeyValue(ScalarDef.ID, new IDScalar(idCodec))
 			.newWithKeyValue(ScalarDef.INT, new IntScalar())
 			.newWithKeyValue(ScalarDef.STRING, new StringScalar());
+
+		mutationMappers = Maps.mutable.empty();
 	}
 
 	public GraphQL generate()
 	{
-		GraphQLSchema schema = generateSchema();
+		return generate(generateSchema());
+	}
+
+	public GraphQL generate(GraphQLSchema schema)
+	{
 		return GraphQL.newGraphQL(schema)
 			.doNotAddDefaultInstrumentations()
 			.instrumentation(new TransactionInstrumentation(storage))
@@ -176,9 +185,9 @@ public class GraphQLGenerator
 				);
 			}
 
-			for(String i : def.getImplementsNames())
+			for(var i : def.getAllImplements())
 			{
-				builder.withInterface(new GraphQLTypeReference(i));
+				builder.withInterface(new GraphQLTypeReference(i.getName()));
 			}
 
 			schema.additionalType(builder.build());
@@ -191,7 +200,7 @@ public class GraphQLGenerator
 				.name(def.getName())
 				.description(def.getDescription().orElse(null));
 
-			for(FieldDef field : def.getDirectFields())
+			for(FieldDef field : def.getFields())
 			{
 				var fieldMapper = resolveOutputType(field.getType());
 
@@ -204,9 +213,9 @@ public class GraphQLGenerator
 				builder.field(fieldDef);
 			}
 
-			for(String i : def.getImplementsNames())
+			for(var i : def.getAllImplements())
 			{
-				builder.withInterface(new GraphQLTypeReference(i));
+				builder.withInterface(new GraphQLTypeReference(i.getName()));
 			}
 
 			GraphQLInterfaceType type = builder.build();
@@ -355,24 +364,36 @@ public class GraphQLGenerator
 			def = ((NonNullDef.Output) def).getType();
 		}
 
+		// Check if this mutation mapper has already been generated
+		var mapper = mutationMappers.get(def);
+		if(mapper != null)
+		{
+			return mapper;
+		}
+
 		if(def instanceof ScalarDef)
 		{
-			return new ScalarMutationMapper((ScalarMapper) scalars.get(def));
+			mapper = new ScalarMutationMapper((ScalarMapper) scalars.get(def));
 		}
 		else if(def instanceof StructuredDef)
 		{
-			return generateStructuredMutationInput((StructuredDef) def, true);
+			mapper = generateStructuredMutationInput((StructuredDef) def, true);
 		}
 		else if(def instanceof ListDef.Output)
 		{
 			var listDef = (ListDef.Output) def;
-			return new ListMutationMapper(
+			mapper = new ListMutationMapper(
 				listDef,
 				generateMutationInput(listDef.getItemType())
 			);
 		}
+		else
+		{
+			throw new ModelException("Unable to model " + def + " as an input type");
+		}
 
-		throw new ModelException("Unable to model " + def + " as an input type");
+		mutationMappers.put(def, mapper);
+		return mapper;
 	}
 
 	private MutationInputMapper<?> generateStructuredMutationInput(
@@ -388,7 +409,7 @@ public class GraphQLGenerator
 		if(def instanceof InterfaceDef)
 		{
 			var mappers = storage.getModel().getImplements(def.getName())
-				.collect(d -> generateMutationInput(d));
+				.collect(d -> generateStructuredMutationInput(d, false));
 
 			return new PolymorphicMutationMapper(def, mappers);
 		}

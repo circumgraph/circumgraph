@@ -66,6 +66,8 @@ public class PolymorphicMutationMapper
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public Mutation toMutation(Map<String, Object> value)
 	{
+		// TODO: This should validate that exactly one field has been provided
+
 		for(var entry : value.entrySet())
 		{
 			return ((MutationInputMapper) mappers.get(entry.getKey()))

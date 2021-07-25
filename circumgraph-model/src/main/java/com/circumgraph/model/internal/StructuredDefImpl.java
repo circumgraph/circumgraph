@@ -80,7 +80,7 @@ public abstract class StructuredDefImpl
 	@Override
 	public SetIterable<InterfaceDef> getAllImplements()
 	{
-		var result = Sets.mutable.<InterfaceDef>empty();
+		var result = Sets.mutable.ofAll(getImplements());
 
 		var stack = getImplements().toStack();
 		while(! stack.isEmpty())
