@@ -6,10 +6,12 @@ import com.circumgraph.graphql.internal.datafetchers.CollectionDeleteMutation;
 import com.circumgraph.graphql.internal.datafetchers.CollectionGetByIdFetcher;
 import com.circumgraph.graphql.internal.datafetchers.CollectionStoreMutation;
 import com.circumgraph.graphql.internal.datafetchers.StructuredValueDataFetcher;
+import com.circumgraph.graphql.internal.mutation.ListMutationMapper;
 import com.circumgraph.graphql.internal.mutation.PolymorphicMutationMapper;
 import com.circumgraph.graphql.internal.mutation.ScalarMutationMapper;
 import com.circumgraph.graphql.internal.mutation.StoredObjectRefMutationMapper;
 import com.circumgraph.graphql.internal.mutation.StructuredValueMutationMapper;
+import com.circumgraph.graphql.internal.output.ListOutputMapper;
 import com.circumgraph.graphql.internal.output.NonNullOutputMapper;
 import com.circumgraph.graphql.internal.output.StoredObjectRefOutputMapper;
 import com.circumgraph.graphql.internal.output.StructuredValueOutputMapper;
@@ -224,11 +226,11 @@ public class GraphQLGenerator
 		}
 		else if(type instanceof ListDef.Output)
 		{
-			/*
-			return GraphQLList.list(
-				resolveOutputType(((ListDef.Output) type).getItemType())
+			var listDef = (ListDef.Output) type;
+			return new ListOutputMapper(
+				listDef,
+				resolveOutputType(listDef.getItemType())
 			);
-			*/
 		}
 		else if(type instanceof ScalarDef)
 		{
@@ -360,6 +362,14 @@ public class GraphQLGenerator
 		else if(def instanceof StructuredDef)
 		{
 			return generateStructuredMutationInput((StructuredDef) def, true);
+		}
+		else if(def instanceof ListDef.Output)
+		{
+			var listDef = (ListDef.Output) def;
+			return new ListMutationMapper(
+				listDef,
+				generateMutationInput(listDef.getItemType())
+			);
 		}
 
 		throw new ModelException("Unable to model " + def + " as an input type");
