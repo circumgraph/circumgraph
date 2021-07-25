@@ -8,8 +8,10 @@ import com.circumgraph.graphql.internal.datafetchers.CollectionStoreMutation;
 import com.circumgraph.graphql.internal.datafetchers.StructuredValueDataFetcher;
 import com.circumgraph.graphql.internal.mutation.PolymorphicMutationMapper;
 import com.circumgraph.graphql.internal.mutation.ScalarMutationMapper;
+import com.circumgraph.graphql.internal.mutation.StoredObjectRefMutationMapper;
 import com.circumgraph.graphql.internal.mutation.StructuredValueMutationMapper;
 import com.circumgraph.graphql.internal.output.NonNullOutputMapper;
+import com.circumgraph.graphql.internal.output.StoredObjectRefOutputMapper;
 import com.circumgraph.graphql.internal.output.StructuredValueOutputMapper;
 import com.circumgraph.graphql.internal.scalars.BooleanScalar;
 import com.circumgraph.graphql.internal.scalars.FloatScalar;
@@ -29,6 +31,7 @@ import com.circumgraph.model.StructuredDef;
 import com.circumgraph.model.TypeDef;
 import com.circumgraph.storage.Collection;
 import com.circumgraph.storage.Storage;
+import com.circumgraph.storage.StorageSchema;
 
 import org.eclipse.collections.api.factory.Maps;
 import org.eclipse.collections.api.map.ImmutableMap;
@@ -234,7 +237,16 @@ public class GraphQLGenerator
 		}
 		else if(type instanceof StructuredDef)
 		{
-			return new StructuredValueOutputMapper((StructuredDef) type);
+			var structuredDef = (StructuredDef) type;
+			if(structuredDef.findImplements(StorageSchema.ENTITY_NAME))
+			{
+				// Reference to another entity
+				return new StoredObjectRefOutputMapper(
+					storage.get(structuredDef.getName())
+				);
+			}
+
+			return new StructuredValueOutputMapper(structuredDef);
 		}
 
 		throw new ModelException("Can not map the given type to GraphQL: " + type);
@@ -292,7 +304,7 @@ public class GraphQLGenerator
 		GraphQLObjectType.Builder mutationBuilder
 	)
 	{
-		var mapper = (MutationInputMapper) generateMutationInput(entity.getDefinition());
+		var mapper = (MutationInputMapper) generateStructuredMutationInput(entity.getDefinition(), false);
 		var name = entity.getDefinition().getName();
 
 		mutationBuilder.field(GraphQLFieldDefinition.newFieldDefinition()
@@ -345,7 +357,25 @@ public class GraphQLGenerator
 		{
 			return new ScalarMutationMapper((ScalarMapper) scalars.get(def));
 		}
-		else if(def instanceof InterfaceDef)
+		else if(def instanceof StructuredDef)
+		{
+			return generateStructuredMutationInput((StructuredDef) def, true);
+		}
+
+		throw new ModelException("Unable to model " + def + " as an input type");
+	}
+
+	private MutationInputMapper<?> generateStructuredMutationInput(
+		StructuredDef def,
+		boolean allowReferences
+	)
+	{
+		if(allowReferences && def.findImplements(StorageSchema.ENTITY_NAME))
+		{
+			return generateReferenceInput(def);
+		}
+
+		if(def instanceof InterfaceDef)
 		{
 			var mappers = storage.getModel().getImplements(def.getName())
 				.collect(d -> generateMutationInput(d));
@@ -362,5 +392,10 @@ public class GraphQLGenerator
 		}
 
 		throw new ModelException("Unable to model " + def + " as an input type");
+	}
+
+	private MutationInputMapper<?> generateReferenceInput(StructuredDef def)
+	{
+		return new StoredObjectRefMutationMapper(idCodec, def);
 	}
 }
