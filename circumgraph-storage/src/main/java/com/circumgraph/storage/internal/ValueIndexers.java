@@ -14,6 +14,7 @@ import com.circumgraph.model.SimpleValueDef;
 import com.circumgraph.model.StructuredDef;
 import com.circumgraph.model.TypeDef;
 import com.circumgraph.storage.StorageSchema;
+import com.circumgraph.storage.StoredObjectRef;
 import com.circumgraph.storage.StoredObjectValue;
 import com.circumgraph.storage.internal.indexing.EnumValueIndexer;
 import com.circumgraph.storage.internal.indexing.FloatValueIndexer;
@@ -210,7 +211,7 @@ public class ValueIndexers
 					.collection()
 					.withSupplier(value -> {
 						var list = Lists.mutable.empty();
-						generator.generate(value, v -> list.add(v == null ? null : ((SimpleValue) v).get()));
+						generator.generate(value, v -> list.add(extractValue(v)));
 						return (Iterable) list;
 					})
 					.withHighlighting(highlightable)
@@ -225,7 +226,7 @@ public class ValueIndexers
 					.withHighlighting(highlightable)
 					.withSupplier(value -> {
 						var list = Lists.mutable.empty();
-						generator.generate(value, v -> list.add(v == null ? null : ((SimpleValue) v).get()));
+						generator.generate(value, v -> list.add(extractValue(v)));
 						return (Object) list.getFirst();
 					})
 					.withSortable(sortable)
@@ -323,6 +324,22 @@ public class ValueIndexers
 	private String join(String path, String next)
 	{
 		return path == null || path.isEmpty() ? next : path + '.' + next;
+	}
+
+	private static Object extractValue(Value v)
+	{
+		if(v == null) return null;
+
+		if(v instanceof SimpleValue)
+		{
+			return ((SimpleValue) v).get();
+		}
+		else if(v instanceof StoredObjectRef)
+		{
+			return ((StoredObjectRef) v).getId();
+		}
+
+		return null;
 	}
 
 	interface ValueGenerator
