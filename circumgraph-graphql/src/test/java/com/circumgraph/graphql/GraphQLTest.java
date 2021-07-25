@@ -21,6 +21,7 @@ import graphql.ExecutionResult;
 import graphql.GraphQL;
 import graphql.GraphQLContext;
 import graphql.GraphQLError;
+import graphql.schema.idl.SchemaPrinter;
 
 public class GraphQLTest
 {
@@ -56,21 +57,38 @@ public class GraphQLTest
 			.block();
 
 		// Create a GraphQL instance for the storage
-		var graphQL = new GraphQLGenerator(storage)
-			.generate();
+		var generator = new GraphQLGenerator(storage);
+		var generatedSchema = generator.generateSchema();
+		var ql = generator.generate(generatedSchema);
 
-		return new Context(storage, graphQL);
+		return new Context(storage, generatedSchema, ql);
 	}
 
 	public static class Context
 	{
 		private final Storage storage;
+		private final graphql.schema.GraphQLSchema schema;
 		private final GraphQL ql;
 
-		public Context(Storage storage, GraphQL ql)
+		public Context(
+			Storage storage,
+			graphql.schema.GraphQLSchema schema,
+			GraphQL ql
+		)
 		{
 			this.storage = storage;
+			this.schema = schema;
 			this.ql = ql;
+		}
+
+		public void printSchema()
+		{
+			System.out.println(new SchemaPrinter().print(schema));
+		}
+
+		public graphql.schema.GraphQLSchema schema()
+		{
+			return schema;
 		}
 
 		public Storage storage()
