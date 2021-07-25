@@ -210,7 +210,7 @@ public class ValueIndexers
 					.collection()
 					.withSupplier(value -> {
 						var list = Lists.mutable.empty();
-						generator.generate(value, v -> list.add(((SimpleValue) v).get()));
+						generator.generate(value, v -> list.add(v == null ? null : ((SimpleValue) v).get()));
 						return (Iterable) list;
 					})
 					.withHighlighting(highlightable)
@@ -225,7 +225,7 @@ public class ValueIndexers
 					.withHighlighting(highlightable)
 					.withSupplier(value -> {
 						var list = Lists.mutable.empty();
-						generator.generate(value, v -> list.add(((SimpleValue) v).get()));
+						generator.generate(value, v -> list.add(v == null ? null : ((SimpleValue) v).get()));
 						return (Object) list.getFirst();
 					})
 					.withSortable(sortable)

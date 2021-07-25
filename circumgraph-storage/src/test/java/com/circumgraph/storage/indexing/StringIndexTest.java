@@ -31,7 +31,7 @@ public class StringIndexTest
 			.addType(ObjectDef.create("Book")
 				.addImplements(StorageSchema.ENTITY_NAME)
 				.addField(FieldDef.create("title")
-					.withType(ScalarDef.STRING)
+					.withType(NonNullDef.output(ScalarDef.STRING))
 					.addDirective(DirectiveUse.create("index")
 						.addArgument("type", "FULL_TEXT")
 						.build()
@@ -42,7 +42,7 @@ public class StringIndexTest
 					.build()
 				)
 				.addField(FieldDef.create("isbn")
-					.withType(NonNullDef.output(ScalarDef.STRING))
+					.withType(ScalarDef.STRING)
 					.addDirective(DirectiveUse.create("index")
 						.addArgument("type", "TOKEN")
 						.build()
@@ -127,6 +127,25 @@ public class StringIndexTest
 		var results = collection.search(
 			Query.create()
 				.addClause(FieldQuery.create("isbn", EqualsMatcher.create("076790818X")))
+		).block();
+
+		assertThat(results.getTotalCount(), is(1));
+	}
+
+	@Test
+	public void testQueryNull()
+	{
+		var collection = storage.get("Book");
+
+		var mutation = collection.newMutation()
+			.updateField("title", ScalarValueMutation.createString("A Short History of Nearly Everything"))
+			.build();
+
+		collection.store(mutation).block();
+
+		var results = collection.search(
+			Query.create()
+				.addClause(FieldQuery.create("isbn", EqualsMatcher.create(null)))
 		).block();
 
 		assertThat(results.getTotalCount(), is(1));
