@@ -20,6 +20,7 @@ import com.circumgraph.graphql.internal.scalars.FloatScalar;
 import com.circumgraph.graphql.internal.scalars.IDScalar;
 import com.circumgraph.graphql.internal.scalars.IntScalar;
 import com.circumgraph.graphql.internal.scalars.StringScalar;
+import com.circumgraph.graphql.internal.search.SearchQueryGenerator;
 import com.circumgraph.model.FieldDef;
 import com.circumgraph.model.InterfaceDef;
 import com.circumgraph.model.ListDef;
@@ -125,6 +126,8 @@ public class GraphQLGenerator
 			(DataFetchingEnvironment env) -> env.getContext()
 		);
 
+		var searchGenerator = new SearchQueryGenerator(registry, idCodec);
+
 		// Generate the query and mutation root objects
 		GraphQLObjectType.Builder queryBuilder = GraphQLObjectType.newObject()
 			.name("Query");
@@ -133,7 +136,7 @@ public class GraphQLGenerator
 
 		for(var collection : storage.getCollections())
 		{
-			generateQuery(collection, schema, registry, queryBuilder, mutationBuilder);
+			generateQuery(collection, schema, registry, searchGenerator, queryBuilder);
 			generateMutation(collection, schema, registry, mutationBuilder);
 		}
 
@@ -291,8 +294,8 @@ public class GraphQLGenerator
 		Collection entity,
 		GraphQLSchema.Builder schema,
 		GraphQLCodeRegistry.Builder registry,
-		GraphQLObjectType.Builder queryBuilder,
-		GraphQLObjectType.Builder mutationBuilder
+		SearchQueryGenerator searchQuery,
+		GraphQLObjectType.Builder queryBuilder
 	)
 	{
 		// TODO: Support for controlling the name of the field in query
@@ -301,7 +304,7 @@ public class GraphQLGenerator
 		String queryObjectName = entity.getDefinition().getName() + "Query";
 		String queryFieldName = entity.getDefinition().getName().toLowerCase();
 
-		GraphQLObjectType query = GraphQLObjectType.newObject()
+		GraphQLObjectType.Builder query = GraphQLObjectType.newObject()
 			.name(queryObjectName)
 			.field(GraphQLFieldDefinition.newFieldDefinition()
 				.name("get")
@@ -311,8 +314,9 @@ public class GraphQLGenerator
 					.type(GraphQLNonNull.nonNull(Scalars.GraphQLID))
 				)
 				.build()
-			)
-			.build();
+			);
+
+		searchQuery.generateSearchQuery(entity, queryObjectName, query);
 
 		registry.dataFetcher(
 			FieldCoordinates.coordinates(queryObjectName, "get"),

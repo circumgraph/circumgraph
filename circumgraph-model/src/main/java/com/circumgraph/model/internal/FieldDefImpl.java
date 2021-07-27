@@ -6,6 +6,7 @@ import java.util.Optional;
 import com.circumgraph.model.ArgumentDef;
 import com.circumgraph.model.DirectiveUse;
 import com.circumgraph.model.FieldDef;
+import com.circumgraph.model.MetadataKey;
 import com.circumgraph.model.OutputTypeDef;
 import com.circumgraph.model.TypeRef;
 import com.circumgraph.model.validation.ModelValidation;
@@ -30,6 +31,7 @@ public class FieldDefImpl
 	private final ImmutableList<ArgumentDef> arguments;
 	private final ImmutableList<DirectiveUse> directives;
 
+	private final MetadataHelper metadata;
 	private ModelDefs defs;
 
 	public FieldDefImpl(
@@ -47,6 +49,8 @@ public class FieldDefImpl
 		this.type = type;
 		this.arguments = arguments;
 		this.directives = directives;
+
+		this.metadata = new MetadataHelper();
 	}
 
 	@Override
@@ -103,6 +107,18 @@ public class FieldDefImpl
 	public ListIterable<DirectiveUse> getDirectives()
 	{
 		return directives;
+	}
+
+	@Override
+	public <V> Optional<V> getMetadata(MetadataKey<V> key)
+	{
+		return metadata.getMetadata(key);
+	}
+
+	@Override
+	public <V> void setMetadata(MetadataKey<V> key, V value)
+	{
+		metadata.setMetadata(key, value);
 	}
 
 	@Override

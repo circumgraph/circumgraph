@@ -17,6 +17,7 @@ import com.circumgraph.model.SimpleValueDef;
 import com.circumgraph.model.StructuredDef;
 import com.circumgraph.model.UnionDef;
 import com.circumgraph.storage.Storage;
+import com.circumgraph.storage.StorageModel;
 import com.circumgraph.storage.StorageSchema;
 import com.circumgraph.storage.StoredObjectValue;
 import com.circumgraph.storage.internal.mappers.EnumValueMapper;
@@ -226,19 +227,13 @@ public class ValueMappers
 
 	private StructuredValueMapper createDirect(StructuredDef def)
 	{
-		var isEntity = def.findImplements(StorageSchema.ENTITY_NAME);
 		return new StructuredValueMapper(
 			def,
 			def.getFields()
-				.select(f -> isStoredField(isEntity, f))
+				.select(f -> StorageModel.getFieldType(f) == StorageModel.FieldType.STORED)
 				.toMap(FieldDef::getName, f -> create(f.getType(), f)),
 			(ValueValidator<StructuredValue>) EMPTY_VALIDATOR
 		);
-	}
-
-	private boolean isStoredField(boolean isEntity, FieldDef field)
-	{
-		return field.getArguments().isEmpty();
 	}
 
 	@SuppressWarnings("unchecked")

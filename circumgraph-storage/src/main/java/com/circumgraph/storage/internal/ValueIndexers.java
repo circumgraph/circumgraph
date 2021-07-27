@@ -3,7 +3,6 @@ package com.circumgraph.storage.internal;
 import java.util.Optional;
 import java.util.function.Consumer;
 
-import com.circumgraph.model.ArgumentUse;
 import com.circumgraph.model.EnumDef;
 import com.circumgraph.model.FieldDef;
 import com.circumgraph.model.InterfaceDef;
@@ -13,9 +12,11 @@ import com.circumgraph.model.ScalarDef;
 import com.circumgraph.model.SimpleValueDef;
 import com.circumgraph.model.StructuredDef;
 import com.circumgraph.model.TypeDef;
+import com.circumgraph.storage.StorageModel;
 import com.circumgraph.storage.StorageSchema;
 import com.circumgraph.storage.StoredObjectRef;
 import com.circumgraph.storage.StoredObjectValue;
+import com.circumgraph.storage.internal.indexing.BooleanValueIndexer;
 import com.circumgraph.storage.internal.indexing.EnumValueIndexer;
 import com.circumgraph.storage.internal.indexing.FloatValueIndexer;
 import com.circumgraph.storage.internal.indexing.FullTextStringValueIndexer;
@@ -58,7 +59,8 @@ public class ValueIndexers
 			new TypeAheadStringValueIndexer(),
 			new FloatValueIndexer(),
 			new IntValueIndexer(),
-			new IdValueIndexer()
+			new IdValueIndexer(),
+			new BooleanValueIndexer()
 		);
 
 		MutableMap<String, ValueIndexer<?>> indexersByName = Maps.mutable.empty();
@@ -190,19 +192,14 @@ public class ValueIndexers
 		}
 		else if(def instanceof SimpleValueDef)
 		{
-			var index = field.getDirective("index");
-			var sortable = field.getDirective("sortable").isPresent();
-			var highlightable = field.getDirective("highlightable").isPresent();
+			var indexerType = StorageModel.getIndexerType(field);
+			var sortable = StorageModel.isSortable(field);
+			var highlightable = StorageModel.isHighlightable(field);
 
 			// Only handle this field if it is indexed
-			if(index.isEmpty()) return;
+			if(indexerType.isEmpty()) return;
 
-			var indexer = getIndexer(
-				index.get().getArgument("type")
-					.flatMap(ArgumentUse::getValueAsString)
-					.orElse(null),
-				(SimpleValueDef) def
-			);
+			var indexer = getIndexer(indexerType.get()).get();
 
 			if(multiple)
 			{

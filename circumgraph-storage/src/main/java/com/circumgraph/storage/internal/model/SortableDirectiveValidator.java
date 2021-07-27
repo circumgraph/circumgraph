@@ -6,6 +6,7 @@ import com.circumgraph.model.DirectiveUse;
 import com.circumgraph.model.FieldDef;
 import com.circumgraph.model.validation.DirectiveValidator;
 import com.circumgraph.model.validation.ValidationMessage;
+import com.circumgraph.storage.StorageModel;
 
 /**
  * Validator for the {@code sortable} directive.
@@ -32,13 +33,19 @@ public class SortableDirectiveValidator
 		Consumer<ValidationMessage> validationCollector
 	)
 	{
-		if(directive.getArguments().isEmpty()) return;
-
-		validationCollector.accept(ValidationMessage.error()
-			.withLocation(directive.getSourceLocation())
-			.withMessage("@sortable does not support arguments")
-			.withCode("storage:sortable-arguments-invalid")
-			.build()
-		);
+		if(directive.getArguments().isEmpty())
+		{
+			// Mark the field as sortable
+			StorageModel.setSortable(location, true);
+		}
+		else
+		{
+			validationCollector.accept(ValidationMessage.error()
+				.withLocation(directive.getSourceLocation())
+				.withMessage("@sortable does not support arguments")
+				.withCode("storage:sortable-arguments-invalid")
+				.build()
+			);
+		}
 	}
 }

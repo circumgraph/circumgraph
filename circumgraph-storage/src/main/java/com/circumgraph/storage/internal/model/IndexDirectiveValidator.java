@@ -11,6 +11,7 @@ import com.circumgraph.model.StructuredDef;
 import com.circumgraph.model.TypeDef;
 import com.circumgraph.model.validation.DirectiveValidator;
 import com.circumgraph.model.validation.ValidationMessage;
+import com.circumgraph.storage.StorageModel;
 import com.circumgraph.storage.StorageSchema;
 import com.circumgraph.storage.internal.ValueIndexers;
 
@@ -77,11 +78,14 @@ public class IndexDirectiveValidator
 		{
 			// No type argument, resolve via best
 			var indexer = indexing.guessBestIndexer(def);
-			if(indexer.isPresent()) return;
-
-			// No indexer, let's check if none available or many available
-			if(indexing.hasMultipleIndexers(def))
+			if(indexer.isPresent())
 			{
+				// Indexer found - update the metadata
+				StorageModel.setIndexerType(location, indexer.get().getName());
+			}
+			else if(indexing.hasMultipleIndexers(def))
+			{
+				// No indexer, let's check if none available or many available
 				validationCollector.accept(ValidationMessage.error()
 					.withLocation(directive.getSourceLocation())
 					.withMessage("The type %s has multiple indexers, need to specify type on @index", def.getName())
@@ -92,6 +96,7 @@ public class IndexDirectiveValidator
 			}
 			else
 			{
+				// Generic error that no indexer is available
 				error(location, directive, validationCollector);
 			}
 		}
@@ -109,6 +114,11 @@ public class IndexDirectiveValidator
 					.withArgument("indexType", type)
 					.build()
 				);
+			}
+			else
+			{
+				// Indexer found - update the metadata
+				StorageModel.setIndexerType(location, indexer.get().getName());
 			}
 		}
 	}

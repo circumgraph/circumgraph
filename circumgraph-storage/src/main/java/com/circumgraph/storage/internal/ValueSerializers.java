@@ -13,6 +13,7 @@ import com.circumgraph.model.OutputTypeDef;
 import com.circumgraph.model.ScalarDef;
 import com.circumgraph.model.StructuredDef;
 import com.circumgraph.model.UnionDef;
+import com.circumgraph.storage.StorageModel;
 import com.circumgraph.storage.StorageSchema;
 import com.circumgraph.storage.internal.serializers.BooleanValueSerializer;
 import com.circumgraph.storage.internal.serializers.FloatValueSerializer;
@@ -172,13 +173,8 @@ public class ValueSerializers
 		return new StructuredValueSerializer(
 			def,
 			def.getFields()
-				.select(this::isStoredField)
+				.select(f -> StorageModel.getFieldType(f) == StorageModel.FieldType.STORED)
 				.toMap(FieldDef::getName, f -> resolve(f.getType()))
 		);
-	}
-
-	private boolean isStoredField(FieldDef field)
-	{
-		return field.getArguments().isEmpty();
 	}
 }

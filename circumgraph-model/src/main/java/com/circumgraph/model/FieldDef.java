@@ -10,7 +10,7 @@ import org.eclipse.collections.api.list.ListIterable;
  * Field within an entity.
  */
 public interface FieldDef
-	extends HasDirectives, HasSourceLocation
+	extends HasDirectives, HasSourceLocation, HasMetadata
 {
 	/**
 	 * Get the name of this field.
