@@ -3,6 +3,7 @@ package com.circumgraph.graphql.internal.mutation;
 import java.util.Map;
 
 import com.circumgraph.graphql.MutationInputMapper;
+import com.circumgraph.graphql.internal.InputUnions;
 import com.circumgraph.model.OutputTypeDef;
 import com.circumgraph.model.StructuredDef;
 import com.circumgraph.storage.mutation.Mutation;
@@ -57,7 +58,7 @@ public class StoredObjectRefMutationMapper
 	@Override
 	public Mutation toMutation(Map<String, Object> value)
 	{
-		// TODO: This should validate that exactly one field has been provided
+		InputUnions.validate(graphQLType, value);
 
 		var id = value.get("id");
 		if(id == null)

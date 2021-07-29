@@ -2,6 +2,7 @@ package com.circumgraph.graphql.internal.search;
 
 import java.util.Map;
 
+import com.circumgraph.graphql.internal.InputUnions;
 import com.circumgraph.values.SimpleValue;
 
 import se.l4.silo.index.AnyMatcher;
@@ -23,6 +24,8 @@ public abstract class SimpleValueCriteria
 		String path
 	)
 	{
+		InputUnions.validate(getGraphQLType(), data);
+
 		// TODO: Check if more than one key is present
 		if(data.containsKey("any"))
 		{

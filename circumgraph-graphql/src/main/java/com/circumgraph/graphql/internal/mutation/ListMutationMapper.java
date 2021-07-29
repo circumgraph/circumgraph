@@ -3,6 +3,7 @@ package com.circumgraph.graphql.internal.mutation;
 import java.util.Map;
 
 import com.circumgraph.graphql.MutationInputMapper;
+import com.circumgraph.graphql.internal.InputUnions;
 import com.circumgraph.model.ListDef;
 import com.circumgraph.model.NonNullDef;
 import com.circumgraph.model.OutputTypeDef;
@@ -21,7 +22,7 @@ public class ListMutationMapper<V>
 	implements MutationInputMapper<Map<String, Object>>
 {
 	private final ListDef.Output modelDef;
-	private final GraphQLInputType graphQLType;
+	private final GraphQLInputObjectType graphQLType;
 	private final MutationInputMapper<V> itemMapper;
 
 	public ListMutationMapper(
@@ -72,7 +73,8 @@ public class ListMutationMapper<V>
 	@Override
 	public Mutation toMutation(Map<String, Object> value)
 	{
-		// TODO: Enforce that only item is available for the mutation
+		InputUnions.validate(graphQLType, value);
+
 		var set = value.get("set");
 		return ListSetMutation.create(
 			Lists.immutable.ofAll((Iterable<V>) set)

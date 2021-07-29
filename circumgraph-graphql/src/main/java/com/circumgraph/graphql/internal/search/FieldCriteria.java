@@ -2,6 +2,7 @@ package com.circumgraph.graphql.internal.search;
 
 import java.util.Map;
 
+import com.circumgraph.graphql.internal.InputUnions;
 import com.circumgraph.model.StructuredDef;
 
 import org.eclipse.collections.api.map.MapIterable;
@@ -58,7 +59,8 @@ public class FieldCriteria
 	@Override
 	public QueryClause toClause(Map<String, Object> data, String path)
 	{
-		// TODO: Validate only single field used
+		InputUnions.validate(graphQLType, data);
+
 		for(var entry : data.entrySet())
 		{
 			if(entry != null)

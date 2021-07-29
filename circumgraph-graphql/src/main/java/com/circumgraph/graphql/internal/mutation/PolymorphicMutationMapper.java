@@ -3,6 +3,7 @@ package com.circumgraph.graphql.internal.mutation;
 import java.util.Map;
 
 import com.circumgraph.graphql.MutationInputMapper;
+import com.circumgraph.graphql.internal.InputUnions;
 import com.circumgraph.model.OutputTypeDef;
 import com.circumgraph.storage.mutation.Mutation;
 
@@ -19,7 +20,7 @@ public class PolymorphicMutationMapper
 	implements MutationInputMapper<Map<String, Object>>
 {
 	private final OutputTypeDef modelDef;
-	private final GraphQLInputType graphQLType;
+	private final GraphQLInputObjectType graphQLType;
 	private final ImmutableMap<String, MutationInputMapper<?>> mappers;
 
 	public PolymorphicMutationMapper(
@@ -66,7 +67,7 @@ public class PolymorphicMutationMapper
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public Mutation toMutation(Map<String, Object> value)
 	{
-		// TODO: This should validate that exactly one field has been provided
+		InputUnions.validate(graphQLType, value);
 
 		for(var entry : value.entrySet())
 		{

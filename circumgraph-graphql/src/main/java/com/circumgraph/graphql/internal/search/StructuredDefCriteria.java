@@ -3,6 +3,7 @@ package com.circumgraph.graphql.internal.search;
 import java.util.List;
 import java.util.Map;
 
+import com.circumgraph.graphql.internal.InputUnions;
 import com.circumgraph.model.StructuredDef;
 
 import org.eclipse.collections.api.map.MapIterable;
@@ -122,6 +123,8 @@ public class StructuredDefCriteria
 		String path
 	)
 	{
+		InputUnions.validate(graphQLType, data);
+
 		if(data.containsKey("any"))
 		{
 			// TODO: Handle always true somehow
