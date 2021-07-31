@@ -111,8 +111,10 @@ public class SearchQueryGenerator
 		indexerToCriteria.put("BOOLEAN", new BooleanCriteria());
 
 		indexerToCriteria.put("TOKEN", new StringTokenCriteria());
-		indexerToCriteria.put("FULL_TEXT", new StringFullTextCriteria());
-		indexerToCriteria.put("TYPE_AHEAD", new StringTypeAheadCriteria());
+
+		var fullText = new StringFullTextCriteria();
+		indexerToCriteria.put("FULL_TEXT", fullText);
+		indexerToCriteria.put("TYPE_AHEAD", fullText);
 
 		this.pageInfoType = generatePageInfo();
 		this.pageCursorsType = generatePageCursors();

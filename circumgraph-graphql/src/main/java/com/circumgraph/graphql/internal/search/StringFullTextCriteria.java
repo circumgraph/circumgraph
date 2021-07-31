@@ -5,8 +5,9 @@ import java.util.Map;
 import graphql.Scalars;
 import graphql.schema.GraphQLInputObjectField;
 import graphql.schema.GraphQLInputObjectType;
+import graphql.schema.GraphQLNonNull;
 import se.l4.silo.index.Matcher;
-import se.l4.silo.index.search.query.UserQueryMatcher;
+import se.l4.silo.index.search.query.UserQuery;
 
 public class StringFullTextCriteria
 	extends SimpleValueCriteria
@@ -33,7 +34,20 @@ public class StringFullTextCriteria
 			.field(GraphQLInputObjectField.newInputObjectField()
 				.name("match")
 				.description("Match against full text of field")
-				.type(Scalars.GraphQLString)
+				.type(GraphQLInputObjectType.newInputObject()
+					.name("StringMatchCriteriaInput")
+					.field(GraphQLInputObjectField.newInputObjectField()
+						.name("query")
+						.description("The query to match against")
+						.type(GraphQLNonNull.nonNull(Scalars.GraphQLString))
+					)
+					.field(GraphQLInputObjectField.newInputObjectField()
+						.name("typeAhead")
+						.description("If this is a type-ahead query")
+						.type(Scalars.GraphQLBoolean)
+						.defaultValue(false)
+					)
+				)
 			)
 			.build();
 	}
@@ -49,8 +63,12 @@ public class StringFullTextCriteria
 	{
 		if(data.get("match") != null)
 		{
-			return UserQueryMatcher.standard(
-				(String) data.get("match")
+			var match = (Map<String, Object>) data.get("match");
+			return UserQuery.matcher(
+				(String) match.get("query"),
+				match.get("typeAhead") == Boolean.TRUE
+					? UserQuery.Context.TYPE_AHEAD
+					: UserQuery.Context.STANDARD
 			);
 		}
 

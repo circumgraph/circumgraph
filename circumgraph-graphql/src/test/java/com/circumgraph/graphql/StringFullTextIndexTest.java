@@ -68,7 +68,7 @@ public class StringFullTextIndexTest
 			query {
 				test {
 					search(criteria: [
-						{ field: { title: { match: \"na\" } } }
+						{ field: { title: { match: { query: \"na\" } } } }
 					]) {
 						totalCount,
 
@@ -120,7 +120,7 @@ public class StringFullTextIndexTest
 			query {
 				test {
 					search(criteria: [
-						{ field: { title: { match: \"Hello\" } } }
+						{ field: { title: { match: { query: \"Hello\" } } } }
 					]) {
 						totalCount,
 
@@ -175,7 +175,7 @@ public class StringFullTextIndexTest
 			query {
 				test {
 					search(criteria: [
-						{ field: { title: { match: \"Hello\" } } }
+						{ field: { title: { match: { query: \"Hello\" } } } }
 					]) {
 						totalCount,
 
@@ -230,7 +230,7 @@ public class StringFullTextIndexTest
 				test {
 					search(criteria: [
 						{ or: [
-							{ field: { title: { match: \"Hello\" } } }
+							{ field: { title: { match: { query: \"Hello\" } } } }
 						] }
 					]) {
 						totalCount,

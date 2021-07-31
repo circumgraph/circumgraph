@@ -68,7 +68,7 @@ public class StringTypeAheadIndexTest
 			query {
 				test {
 					search(criteria: [
-						{ field: { title: { match: \"na\" } } }
+						{ field: { title: { match: { query: \"na\", typeAhead: true } } } }
 					]) {
 						totalCount,
 
@@ -120,7 +120,7 @@ public class StringTypeAheadIndexTest
 			query {
 				test {
 					search(criteria: [
-						{ field: { title: { matchTypeAhead: \"Hel\" } } }
+						{ field: { title: { match: { query: \"Hel\", typeAhead: true } } } }
 					]) {
 						totalCount,
 
@@ -175,7 +175,7 @@ public class StringTypeAheadIndexTest
 			query {
 				test {
 					search(criteria: [
-						{ field: { title: { matchTypeAhead: \"Hello\" } } }
+						{ field: { title: { match: { query: \"Hello\", typeAhead: true } } } }
 					]) {
 						totalCount,
 
@@ -230,7 +230,7 @@ public class StringTypeAheadIndexTest
 				test {
 					search(criteria: [
 						{ or: [
-							{ field: { title: { matchTypeAhead: \"Hello\" } } }
+							{ field: { title: { match: { query: \"Hello\", typeAhead: true } } } }
 						] }
 					]) {
 						totalCount,
