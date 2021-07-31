@@ -78,7 +78,7 @@ public class FloatIndexTest
 		collection.store(mutation).block();
 
 		var results = collection.search(Query.create()
-			.addClause(FieldQuery.create("value", EqualsMatcher.create(10.2)))
+			.addClause(FieldQuery.create("_.value", EqualsMatcher.create(10.2)))
 		).block();
 
 		assertThat(results.getTotalCount(), is(1));
@@ -96,7 +96,7 @@ public class FloatIndexTest
 		collection.store(mutation).block();
 
 		var results = collection.search(Query.create()
-			.addClause(FieldQuery.create("value", RangeMatcher.isMoreThan(10.0)))
+			.addClause(FieldQuery.create("_.value", RangeMatcher.isMoreThan(10.0)))
 		).block();
 
 		assertThat(results.getTotalCount(), is(1));
@@ -114,7 +114,7 @@ public class FloatIndexTest
 		collection.store(mutation).block();
 
 		var results = collection.search(Query.create()
-			.addClause(FieldQuery.create("value", RangeMatcher.isMoreThan(11.0)))
+			.addClause(FieldQuery.create("_.value", RangeMatcher.isMoreThan(11.0)))
 		).block();
 
 		assertThat(results.getTotalCount(), is(0));

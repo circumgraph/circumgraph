@@ -106,7 +106,7 @@ public class StringIndexTest
 
 		var results = collection.search(
 			Query.create()
-				.addClause(FieldQuery.create("isbn", EqualsMatcher.create("a")))
+				.addClause(FieldQuery.create("_.isbn", EqualsMatcher.create("a")))
 		).block();
 
 		assertThat(results.getTotalCount(), is(0));
@@ -126,7 +126,7 @@ public class StringIndexTest
 
 		var results = collection.search(
 			Query.create()
-				.addClause(FieldQuery.create("isbn", EqualsMatcher.create("076790818X")))
+				.addClause(FieldQuery.create("_.isbn", EqualsMatcher.create("076790818X")))
 		).block();
 
 		assertThat(results.getTotalCount(), is(1));
@@ -145,7 +145,7 @@ public class StringIndexTest
 
 		var results = collection.search(
 			Query.create()
-				.addClause(FieldQuery.create("isbn", EqualsMatcher.create(null)))
+				.addClause(FieldQuery.create("_.isbn", EqualsMatcher.create(null)))
 		).block();
 
 		assertThat(results.getTotalCount(), is(1));

@@ -107,7 +107,7 @@ public class StoredObjectRefIndexTest
 
 		var results = books.search(
 			Query.create()
-				.addClause(FieldQuery.create("author", EqualsMatcher.create(authorId)))
+				.addClause(FieldQuery.create("_.author", EqualsMatcher.create(authorId)))
 		).block();
 
 		assertThat(results.getTotalCount(), is(1));

@@ -110,7 +110,7 @@ public class ListStringIndexTest
 
 		var results = collection.search(
 			Query.create()
-				.addClause(FieldQuery.create("tags", EqualsMatcher.create("na")))
+				.addClause(FieldQuery.create("_.tags", EqualsMatcher.create("na")))
 		).block();
 
 		assertThat(results.getTotalCount(), is(0));
@@ -132,7 +132,7 @@ public class ListStringIndexTest
 
 		var results = collection.search(
 			Query.create()
-				.addClause(FieldQuery.create("tags", EqualsMatcher.create("b")))
+				.addClause(FieldQuery.create("_.tags", EqualsMatcher.create("b")))
 		).block();
 
 		assertThat(results.getTotalCount(), is(1));

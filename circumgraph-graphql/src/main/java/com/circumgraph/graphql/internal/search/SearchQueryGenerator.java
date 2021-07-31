@@ -16,6 +16,7 @@ import com.circumgraph.storage.search.PageCursor;
 import com.circumgraph.storage.search.PageCursors;
 import com.circumgraph.storage.search.PageInfo;
 import com.circumgraph.storage.search.Query;
+import com.circumgraph.storage.search.QueryPath;
 import com.circumgraph.storage.search.SearchResult;
 
 import org.eclipse.collections.api.factory.Maps;
@@ -353,9 +354,10 @@ public class SearchQueryGenerator
 			if(env.containsArgument("criteria"))
 			{
 				List<Map<String, Object>> args = env.getArgument("criteria");
+				var path = QueryPath.root(def);
 				for(var e : args)
 				{
-					query = query.addClause(criteria.toClause(e, null));
+					query = query.addClause(criteria.toClause(e, path));
 				}
 			}
 
@@ -381,7 +383,7 @@ public class SearchQueryGenerator
 
 			// Check if scores are being fetched
 			query = query.withScoresNeeded(
-				env.getSelectionSet().contains("edges.score")
+				env.getSelectionSet().contains("edges/score")
 			);
 
 			StorageContext ctx = env.getContext();
@@ -430,7 +432,7 @@ public class SearchQueryGenerator
 			.collect(field -> GraphQLEnumValueDefinition.newEnumValueDefinition()
 				.name(field.getName().toString().toUpperCase()) // TODO should be upper snake case
 				.description("Sort by the field " + field.getName())
-				.value(field.getName())
+				.value("_." + field.getName())
 				.build()
 			)
 			.toList();

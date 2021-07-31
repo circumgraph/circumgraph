@@ -126,17 +126,6 @@ public class ValueIndexers
 		return indexersByType.get(def).size() > 1;
 	}
 
-	private ValueIndexer<?> getIndexer(String name, SimpleValueDef def)
-	{
-		var indexer = getIndexer(name);
-		if(indexer.isPresent())
-		{
-			return indexer.get();
-		}
-
-		return guessBestIndexer(def).get();
-	}
-
 	public SearchIndexDef<StoredObjectValue> generateDefinition(
 		StructuredDef def
 	)
@@ -258,8 +247,6 @@ public class ValueIndexers
 			}
 			else if(def instanceof InterfaceDef)
 			{
-				// TODO: Indexing of fields in interface implementations
-
 				// For interfaces we first make sure that __typename is available
 				var typenameField = SearchFieldDef.create(StoredObjectValue.class, join(path, "__typename"))
 					.withType(SearchFieldType.forString().token().build())
@@ -286,12 +273,14 @@ public class ValueIndexers
 					collectFields(
 						fieldDef,
 						fieldDef.getType(),
-						join(path, name),
+						join(join(path, "_"), name),
 						multiple,
 						fieldGenerator,
 						fieldReceiver
 					);
 				}
+
+				// TODO: Polymorphism
 			}
 			else
 			{
@@ -308,7 +297,7 @@ public class ValueIndexers
 					collectFields(
 						fieldDef,
 						fieldDef.getType(),
-						join(path, name),
+						join(join(path, "_"), name),
 						multiple,
 						fieldGenerator,
 						fieldReceiver

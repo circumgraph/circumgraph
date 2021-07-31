@@ -5,6 +5,7 @@ import java.util.Map;
 
 import com.circumgraph.graphql.internal.InputUnions;
 import com.circumgraph.model.StructuredDef;
+import com.circumgraph.storage.search.QueryPath;
 
 import org.eclipse.collections.api.map.MapIterable;
 
@@ -120,7 +121,7 @@ public class StructuredDefCriteria
 	@Override
 	public QueryClause toClause(
 		Map<String, Object> data,
-		String path
+		QueryPath path
 	)
 	{
 		InputUnions.validate(graphQLType, data);

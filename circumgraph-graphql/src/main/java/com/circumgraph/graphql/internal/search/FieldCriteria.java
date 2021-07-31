@@ -4,6 +4,7 @@ import java.util.Map;
 
 import com.circumgraph.graphql.internal.InputUnions;
 import com.circumgraph.model.StructuredDef;
+import com.circumgraph.storage.search.QueryPath;
 
 import org.eclipse.collections.api.map.MapIterable;
 
@@ -57,7 +58,7 @@ public class FieldCriteria
 	}
 
 	@Override
-	public QueryClause toClause(Map<String, Object> data, String path)
+	public QueryClause toClause(Map<String, Object> data, QueryPath path)
 	{
 		InputUnions.validate(graphQLType, data);
 
@@ -68,7 +69,7 @@ public class FieldCriteria
 				return fields.get(entry.getKey())
 					.toClause(
 						(Map<String, Object>) entry.getValue(),
-						path == null ? entry.getKey() : (path + '.' + entry.getKey())
+						((QueryPath.Branch) path).field(entry.getKey())
 					);
 			}
 		}

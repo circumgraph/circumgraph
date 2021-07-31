@@ -4,11 +4,12 @@ import java.util.function.Consumer;
 
 import com.circumgraph.model.DirectiveUse;
 import com.circumgraph.model.FieldDef;
+import com.circumgraph.model.ListDef;
 import com.circumgraph.model.NonNullDef;
+import com.circumgraph.model.OutputTypeDef;
 import com.circumgraph.model.ScalarDef;
 import com.circumgraph.model.SimpleValueDef;
 import com.circumgraph.model.StructuredDef;
-import com.circumgraph.model.TypeDef;
 import com.circumgraph.model.validation.DirectiveValidator;
 import com.circumgraph.model.validation.ValidationMessage;
 import com.circumgraph.storage.StorageModel;
@@ -49,30 +50,38 @@ public class IndexDirectiveValidator
 		Consumer<ValidationMessage> validationCollector
 	)
 	{
-		TypeDef fieldType = location.getType();
-		if(fieldType instanceof NonNullDef.Output)
+		OutputTypeDef fieldType = location.getType();
+		while(true)
 		{
-			fieldType = ((NonNullDef.Output) fieldType).getType();
+			if(fieldType instanceof NonNullDef.Output)
+			{
+				fieldType = ((NonNullDef.Output) fieldType).getType();
+			}
+
+			if(fieldType instanceof StructuredDef
+				&& ((StructuredDef) location.getType()).findImplements(StorageSchema.ENTITY_NAME))
+			{
+				// Link to another collection
+				fieldType = ScalarDef.ID;
+				break;
+			}
+			else if(fieldType instanceof SimpleValueDef)
+			{
+				// Simple edge value
+				break;
+			}
+			else if(fieldType instanceof ListDef.Output)
+			{
+				fieldType = ((ListDef.Output) fieldType).getItemType();
+			}
+			else
+			{
+				error(location, directive, validationCollector);
+				return;
+			}
 		}
 
-		SimpleValueDef def;
-		if(fieldType instanceof StructuredDef
-			&& ((StructuredDef) location.getType()).findImplements(StorageSchema.ENTITY_NAME))
-		{
-			// Link to another collection
-			def = ScalarDef.ID;
-		}
-		else if(fieldType instanceof SimpleValueDef)
-		{
-			// Simple edge value
-			def = (SimpleValueDef) fieldType;
-		}
-		else
-		{
-			error(location, directive, validationCollector);
-			return;
-		}
-
+		SimpleValueDef def = (SimpleValueDef) fieldType;
 		var type = directive.getArgument("type");
 		if(type.isEmpty())
 		{
