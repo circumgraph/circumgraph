@@ -13,6 +13,8 @@ import com.circumgraph.model.Model;
 import com.circumgraph.schema.graphql.GraphQLSchema;
 import com.circumgraph.storage.Storage;
 import com.circumgraph.storage.StorageSchema;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
@@ -20,6 +22,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import graphql.GraphQL;
+import graphql.execution.preparsed.PreparsedDocumentEntry;
+import graphql.execution.preparsed.PreparsedDocumentProvider;
 import io.quarkus.runtime.ShutdownEvent;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.BodyHandler;
@@ -28,6 +32,8 @@ import io.vertx.ext.web.handler.graphql.GraphQLHandler;
 
 /**
  * Logic that wires together all the modules into the public facing application.
+ *
+ * TODO: If either the config is invalid or data directory doesn't exist - hang / exit gracefully after a time out
  */
 @ApplicationScoped
 public class CircumgraphApp
@@ -46,13 +52,13 @@ public class CircumgraphApp
 
 	@Singleton
 	public Model model(
-		@ConfigProperty(name="schema.dir") Path dir
+		@ConfigProperty(name="config.dir") Path dir
 	)
 		throws IOException
 	{
 		var matching = Lists.mutable.<Path>empty();
 
-		logger.info("Loading schema from {}", dir.toAbsolutePath().normalize());
+		logger.info("Loading config from {}", dir.toAbsolutePath().normalize());
 
 		/**
 		 * Find all .gql and .graphql files in the schema directory and load
@@ -60,6 +66,7 @@ public class CircumgraphApp
 		 */
 		if(Files.isDirectory(dir))
 		{
+
 			Files.find(
 				dir,
 				Integer.MAX_VALUE,
@@ -69,6 +76,10 @@ public class CircumgraphApp
 						&& (name.endsWith(".gql") || name.endsWith(".graphql"));
 				}
 			).forEach(matching::add);
+		}
+		else
+		{
+			logger.warn("Config directory does not exist, no schema will be loaded");
 		}
 
 		var builder = Model.create()
@@ -114,6 +125,11 @@ public class CircumgraphApp
 	{
 		logger.info("Storing data in {}", dir.toAbsolutePath().normalize());
 
+		if(! Files.isDirectory(dir))
+		{
+			logger.warn("Data directory does not exist");
+		}
+
 		return Storage.open(model, dir)
 			.start()
 			.block();
@@ -142,6 +158,19 @@ public class CircumgraphApp
 		Storage storage
 	)
 	{
-		return new GraphQLGenerator(storage).generate();
+		// Setup caching of queries
+		Cache<String, PreparsedDocumentEntry> cache = Caffeine.newBuilder()
+			.maximumWeight(1024 * 10) // TODO: Configuration
+			.weigher((String key, PreparsedDocumentEntry value) -> key.length())
+			.build();
+
+		PreparsedDocumentProvider queryProvider = (in, compute) -> cache.get(in.getQuery(), k -> compute.apply(in));
+
+		// TODO: ApolloPersistedQuery support
+
+		return new GraphQLGenerator(storage)
+			.generate()
+			.preparsedDocumentProvider(queryProvider)
+			.build();
 	}
 }

@@ -59,7 +59,8 @@ public class GraphQLTest
 		// Create a GraphQL instance for the storage
 		var generator = new GraphQLGenerator(storage);
 		var generatedSchema = generator.generateSchema();
-		var ql = generator.generate(generatedSchema);
+		var ql = generator.generate(generatedSchema)
+			.build();
 
 		return new Context(storage, generatedSchema, ql);
 	}

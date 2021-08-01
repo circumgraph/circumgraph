@@ -86,17 +86,17 @@ public class GraphQLGenerator
 		mutationMappers = Maps.mutable.empty();
 	}
 
-	public GraphQL generate()
+	public GraphQL.Builder generate()
 	{
 		return generate(generateSchema());
 	}
 
-	public GraphQL generate(GraphQLSchema schema)
+	public GraphQL.Builder generate(GraphQLSchema schema)
 	{
+		// TODO: Error mapping
 		return GraphQL.newGraphQL(schema)
 			.doNotAddDefaultInstrumentations()
-			.instrumentation(new TransactionInstrumentation(storage))
-			.build();
+			.instrumentation(new TransactionInstrumentation(storage));
 	}
 
 	public GraphQLSchema generateSchema()
