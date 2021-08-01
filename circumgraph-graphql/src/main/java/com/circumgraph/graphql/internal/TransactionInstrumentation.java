@@ -52,7 +52,7 @@ public class TransactionInstrumentation
 			@Override
 			public void onCompleted(ExecutionResult result, Throwable t)
 			{
-				if(t != null)
+				if(t != null || ! result.getErrors().isEmpty())
 				{
 					log.debug("Error occurred, rolling back tx {}", tx);
 					tx.rollback().block();
