@@ -6,6 +6,7 @@ import com.circumgraph.values.SimpleValue;
 
 import graphql.Scalars;
 import graphql.schema.GraphQLScalarType;
+import se.l4.silo.Transaction;
 
 public class StringScalar
 	implements ScalarMapper<String>
@@ -29,7 +30,7 @@ public class StringScalar
 	}
 
 	@Override
-	public Object toOutput(SimpleValue value)
+	public Object toOutput(Transaction tx, SimpleValue value)
 	{
 		return value == null ? null : value.get();
 	}

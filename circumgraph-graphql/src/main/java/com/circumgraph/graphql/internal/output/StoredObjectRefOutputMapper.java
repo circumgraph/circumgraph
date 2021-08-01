@@ -1,5 +1,7 @@
 package com.circumgraph.graphql.internal.output;
 
+import java.util.concurrent.CompletableFuture;
+
 import com.circumgraph.graphql.OutputMapper;
 import com.circumgraph.storage.Collection;
 import com.circumgraph.storage.StoredObjectRef;
@@ -7,10 +9,10 @@ import com.circumgraph.storage.StoredObjectValue;
 
 import graphql.schema.GraphQLOutputType;
 import graphql.schema.GraphQLTypeReference;
-import reactor.core.publisher.Mono;
+import se.l4.silo.Transaction;
 
 public class StoredObjectRefOutputMapper
-	implements OutputMapper<StoredObjectRef, Mono<StoredObjectValue>>
+	implements OutputMapper<StoredObjectRef, CompletableFuture<StoredObjectValue>>
 {
 	private final Collection collection;
 	private final GraphQLTypeReference type;
@@ -30,8 +32,11 @@ public class StoredObjectRefOutputMapper
 	}
 
 	@Override
-	public Mono<StoredObjectValue> toOutput(StoredObjectRef in)
+	public CompletableFuture<StoredObjectValue> toOutput(
+		Transaction tx,
+		StoredObjectRef in
+	)
 	{
-		return collection.get(in.getId());
+		return tx.wrap(collection.get(in.getId())).toFuture();
 	}
 }

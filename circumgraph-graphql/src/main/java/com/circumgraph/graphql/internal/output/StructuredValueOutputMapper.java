@@ -7,6 +7,7 @@ import com.circumgraph.values.StructuredValue;
 
 import graphql.schema.GraphQLOutputType;
 import graphql.schema.GraphQLTypeReference;
+import se.l4.silo.Transaction;
 
 /**
  * Mapper for {@link StructuredDef} and {@link StructuredValue}. Simply
@@ -33,7 +34,7 @@ public class StructuredValueOutputMapper
 	}
 
 	@Override
-	public StructuredValue toOutput(StructuredValue in)
+	public StructuredValue toOutput(Transaction tx, StructuredValue in)
 	{
 		return in;
 	}

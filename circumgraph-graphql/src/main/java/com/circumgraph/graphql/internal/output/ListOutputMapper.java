@@ -7,6 +7,7 @@ import com.circumgraph.values.Value;
 
 import graphql.schema.GraphQLList;
 import graphql.schema.GraphQLOutputType;
+import se.l4.silo.Transaction;
 
 /**
  * {@link OutputMapper} for {@link ListValue}.
@@ -33,8 +34,8 @@ public class ListOutputMapper<I extends Value, O>
 	}
 
 	@Override
-	public Iterable<O> toOutput(ListValue<I> in)
+	public Iterable<O> toOutput(Transaction tx, ListValue<I> in)
 	{
-		return in.items().collect(item -> itemMapper.toOutput(item));
+		return in.items().collect(item -> itemMapper.toOutput(tx, item));
 	}
 }

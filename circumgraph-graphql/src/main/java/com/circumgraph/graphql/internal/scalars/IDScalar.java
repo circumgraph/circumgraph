@@ -6,6 +6,7 @@ import com.circumgraph.values.SimpleValue;
 
 import graphql.Scalars;
 import graphql.schema.GraphQLScalarType;
+import se.l4.silo.Transaction;
 import se.l4.ylem.ids.LongIdCodec;
 
 public class IDScalar
@@ -37,7 +38,7 @@ public class IDScalar
 	}
 
 	@Override
-	public Object toOutput(SimpleValue value)
+	public Object toOutput(Transaction tx, SimpleValue value)
 	{
 		return value == null ? null : idCodec.encode(value.asID());
 	}

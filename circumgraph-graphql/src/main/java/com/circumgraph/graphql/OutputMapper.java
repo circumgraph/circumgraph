@@ -3,6 +3,7 @@ package com.circumgraph.graphql;
 import com.circumgraph.values.Value;
 
 import graphql.schema.GraphQLOutputType;
+import se.l4.silo.Transaction;
 
 /**
  * Mapper for output.
@@ -22,5 +23,5 @@ public interface OutputMapper<I extends Value, O>
 	 * @param in
 	 * @return
 	 */
-	O toOutput(I in);
+	O toOutput(Transaction tx, I in);
 }

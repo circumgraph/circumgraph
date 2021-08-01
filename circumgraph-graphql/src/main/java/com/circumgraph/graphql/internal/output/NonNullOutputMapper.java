@@ -5,6 +5,7 @@ import com.circumgraph.values.Value;
 
 import graphql.schema.GraphQLNonNull;
 import graphql.schema.GraphQLOutputType;
+import se.l4.silo.Transaction;
 
 public class NonNullOutputMapper<I extends Value, O>
 	implements OutputMapper<I, O>
@@ -27,8 +28,8 @@ public class NonNullOutputMapper<I extends Value, O>
 	}
 
 	@Override
-	public O toOutput(I in)
+	public O toOutput(Transaction tx, I in)
 	{
-		return mapper.toOutput(in);
+		return mapper.toOutput(tx, in);
 	}
 }

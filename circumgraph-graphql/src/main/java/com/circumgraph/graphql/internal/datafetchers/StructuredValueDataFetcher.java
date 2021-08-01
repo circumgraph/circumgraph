@@ -1,5 +1,7 @@
 package com.circumgraph.graphql.internal.datafetchers;
 
+import java.util.concurrent.CompletableFuture;
+
 import com.circumgraph.graphql.OutputMapper;
 import com.circumgraph.graphql.internal.StorageContext;
 import com.circumgraph.values.StructuredValue;
@@ -7,7 +9,7 @@ import com.circumgraph.values.Value;
 
 import graphql.schema.DataFetcher;
 import graphql.schema.DataFetchingEnvironment;
-import reactor.core.publisher.Mono;
+import se.l4.silo.Transaction;
 
 public class StructuredValueDataFetcher<I extends Value, O>
 	implements DataFetcher<Object>
@@ -29,7 +31,20 @@ public class StructuredValueDataFetcher<I extends Value, O>
 	public Object get(DataFetchingEnvironment environment)
 		throws Exception
 	{
-		StructuredValue v = environment.getSource();
+		Object source = environment.getSource();
+		StorageContext ctx = environment.getContext();
+
+		if(source instanceof StructuredValue)
+		{
+			return getAndMap(ctx.getTx(), (StructuredValue) source);
+		}
+
+		return ((CompletableFuture) source)
+			.thenApply(v -> getAndMap(ctx.getTx(), (StructuredValue) v));
+	}
+
+	private Object getAndMap(Transaction tx, StructuredValue v)
+	{
 		var value = v.getField(key);
 		if(value.isEmpty())
 		{
@@ -37,17 +52,6 @@ public class StructuredValueDataFetcher<I extends Value, O>
 			return null;
 		}
 
-		var result = ((OutputMapper) mapper).toOutput(value.get());
-		if(result instanceof Mono)
-		{
-			StorageContext ctx = environment.getContext();
-			return ctx.getTx()
-				.wrap((Mono) result)
-				.toFuture();
-		}
-		else
-		{
-			return result;
-		}
+		return ((OutputMapper) mapper).toOutput(tx, value.get());
 	}
 }
