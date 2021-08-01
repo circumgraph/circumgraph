@@ -101,36 +101,22 @@
 	</build>
 	<profiles>
 		<profile>
-			<id>native</id>
+			<id>deploy</id>
 			<activation>
 				<property>
-					<name>native</name>
+					<name>deploy</name>
 				</property>
 			</activation>
-			<build>
-				<plugins>
-					<plugin>
-						<artifactId>maven-failsafe-plugin</artifactId>
-						<executions>
-							<execution>
-								<goals>
-									<goal>integration-test</goal>
-									<goal>verify</goal>
-								</goals>
-								<configuration>
-									<systemPropertyVariables>
-										<native.image.path>${project.build.directory}/${project.build.finalName}-runner</native.image.path>
-										<java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
-										<maven.home>${maven.home}</maven.home>
-									</systemPropertyVariables>
-								</configuration>
-							</execution>
-						</executions>
-					</plugin>
-				</plugins>
-			</build>
+			<dependencies>
+			    <dependency>
+					<groupId>io.quarkus</groupId>
+					<artifactId>quarkus-container-image-jib</artifactId>
+					</dependency>
+			</dependencies>
 			<properties>
-				<quarkus.package.type>native</quarkus.package.type>
+				<quarkus.container-image.push>true</quarkus.container-image.push>
+				<quarkus.container-image.image>ghcr.io/circumgraph/circumgraph</quarkus.container-image.image>
+				<quarkus.jib.base-jvm-image>adoptopenjdk/openjdk16:alpine-jre</quarkus.jib.base-jvm-image>
 			</properties>
 		</profile>
 	</profiles>
