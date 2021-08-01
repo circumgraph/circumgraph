@@ -194,13 +194,13 @@ public class ValueIndexers
 			{
 				var searchField = SearchFieldDef.create(StoredObjectValue.class, path)
 					.withType(indexer.getSearchFieldType())
+					.withHighlighting(highlightable)
 					.collection()
 					.withSupplier(value -> {
 						var list = Lists.mutable.empty();
 						generator.generate(value, v -> list.add(extractValue(v)));
 						return (Iterable) list;
 					})
-					.withHighlighting(highlightable)
 					.build();
 
 				fieldReceiver.accept(searchField);
