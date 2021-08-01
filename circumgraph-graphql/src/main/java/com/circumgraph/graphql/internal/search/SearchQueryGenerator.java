@@ -125,6 +125,7 @@ public class SearchQueryGenerator
 	{
 		var type = GraphQLObjectType.newObject()
 			.name("PageInfo")
+			.description("Information about the current page")
 			.field(GraphQLFieldDefinition.newFieldDefinition()
 				.name("hasNextPage")
 				.description("If there is a page available after this one")
@@ -230,6 +231,17 @@ public class SearchQueryGenerator
 
 		var type = GraphQLObjectType.newObject()
 			.name("PageCursors")
+			.description("""
+				Detailed information about page cursors, used to generate
+				pagination.
+
+				Can be used to fetch a cursor to the `previous` or `next` page.
+				Or to create a full pagination bar via the lists returned from
+				the `start`, `middle` and `end` fields.
+
+				Cursors in this object should be used given to search as the
+				`after` argument with the same `first` argument.
+			""")
 			.field(GraphQLFieldDefinition.newFieldDefinition()
 				.name("previous")
 				.description("Get the previous page if available")
