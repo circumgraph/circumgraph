@@ -6,13 +6,15 @@ Schema based object database with GraphQL-support and advanced search.
 * Auto-generated **GraphQL API**
 * **Polymorphic storage**, interfaces and unions are fully supported
 * **Querying and full text search**, configure indexing via directives
+* **Docker friendly**, config via environment, schema can be embedded in custom image
 
 ## Status
 
 ⚠️ This branch contains an early version that is in development. 
 
 The code is provided as a proof of concept and isn't ready for production use 
-yet.
+yet. For testing Docker images of the main branch are published automatically
+to Github Packages.
 
 Missing features:
 
@@ -198,4 +200,37 @@ type ProductsPage implements Page {
 type BlogPost implements Page {
   body: String!
 }
+```
+
+## Running via Docker
+
+For experimenting the easiest way is probably to use Docker Compose:
+
+```yaml
+version: "3.9"
+
+services:
+  cicrcumgraph:
+    image: ghcr.io/circumgraph/circumgraph:latest
+    ports:
+      - 8080:8080
+    volumes:
+      - ./config:/config
+      - ./data:/data
+```
+
+This will look load `.gql` files in the local directory `config` and store data
+in `data`.
+
+## Embedding config in Docker image
+
+The Docker image will look for configuration in the `/config` directory. A good
+way to distribute and deploy a certain schema is to create a custom Docker image
+with the config embedded:
+
+```dockerfile
+FROM ghcr.io/circumgraph/circumgraph:latest
+
+# Copy configuration to the /config directory
+COPY ./config /config
 ```
