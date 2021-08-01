@@ -1,12 +1,14 @@
-package com.circumgraph.graphql;
+package com.circumgraph.graphql.search;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
+import com.circumgraph.graphql.SingleSchemaGraphQLTest;
+
 import org.eclipse.collections.api.factory.Maps;
 import org.junit.jupiter.api.Test;
 
-public class StringTokenSortTest
+public class StringTypeAheadIndexTest
 	extends SingleSchemaGraphQLTest
 {
 	@Override
@@ -14,7 +16,7 @@ public class StringTokenSortTest
 	{
 		return """
 			type Test implements Entity {
-				code: String! @index(type: TOKEN) @sortable
+				title: String! @index(type: TYPE_AHEAD)
 			}
 		""";
 	}
@@ -34,7 +36,7 @@ public class StringTokenSortTest
 			mutation,
 			Maps.immutable.of(
 				"m", Maps.immutable.of(
-					"code", "A"
+					"title", "Hello"
 				)
 			)
 		);
@@ -43,7 +45,7 @@ public class StringTokenSortTest
 	}
 
 	@Test
-	public void testSortDefaultOrder()
+	public void testQuerySingleNoMatch()
 	{
 		var mutation = """
 			mutation($m: TestMutationInput!) {
@@ -57,18 +59,7 @@ public class StringTokenSortTest
 			mutation,
 			Maps.immutable.of(
 				"m", Maps.immutable.of(
-					"code", "B"
-				)
-			)
-		);
-
-		result.assertNoErrors();
-
-		result = execute(
-			mutation,
-			Maps.immutable.of(
-				"m", Maps.immutable.of(
-					"code", "A"
+					"title", "Hello"
 				)
 			)
 		);
@@ -78,14 +69,18 @@ public class StringTokenSortTest
 		result = execute("""
 			query {
 				test {
-					search(sort: [
-						{ field: CODE }
+					search(criteria: [
+						{ field: { title: { match: { query: \"na\", typeAhead: true } } } }
 					]) {
 						totalCount,
 
+						pageInfo {
+							hasNextPage
+							hasPreviousPage
+						}
+
 						nodes {
-							id,
-							code
+							id
 						}
 					}
 				}
@@ -94,13 +89,13 @@ public class StringTokenSortTest
 
 		result.assertNoErrors();
 
-		assertThat(result.pick("test", "search", "totalCount"), is(2));
-		assertThat(result.pick("test", "search", "nodes", "0", "code"), is("A"));
-		assertThat(result.pick("test", "search", "nodes", "1", "code"), is("B"));
+		assertThat(result.pick("test", "search", "totalCount"), is(0));
+		assertThat(result.pick("test", "search", "pageInfo", "hasNextPage"), is(false));
+		assertThat(result.pick("test", "search", "pageInfo", "hasPreviousPage"), is(false));
 	}
 
 	@Test
-	public void testSortAscendingOrder()
+	public void testQuerySingleMatch()
 	{
 		var mutation = """
 			mutation($m: TestMutationInput!) {
@@ -114,35 +109,25 @@ public class StringTokenSortTest
 			mutation,
 			Maps.immutable.of(
 				"m", Maps.immutable.of(
-					"code", "B"
+					"title", "Hello"
 				)
 			)
 		);
 
 		result.assertNoErrors();
 
-		result = execute(
-			mutation,
-			Maps.immutable.of(
-				"m", Maps.immutable.of(
-					"code", "A"
-				)
-			)
-		);
-
-		result.assertNoErrors();
+		var id = result.pick("storeTest", "id");
 
 		result = execute("""
 			query {
 				test {
-					search(sort: [
-						{ field: CODE, ascending: true }
+					search(criteria: [
+						{ field: { title: { match: { query: \"Hel\", typeAhead: true } } } }
 					]) {
 						totalCount,
 
 						nodes {
-							id,
-							code
+							id
 						}
 					}
 				}
@@ -151,13 +136,12 @@ public class StringTokenSortTest
 
 		result.assertNoErrors();
 
-		assertThat(result.pick("test", "search", "totalCount"), is(2));
-		assertThat(result.pick("test", "search", "nodes", "0", "code"), is("A"));
-		assertThat(result.pick("test", "search", "nodes", "1", "code"), is("B"));
+		assertThat(result.pick("test", "search", "totalCount"), is(1));
+		assertThat(result.pick("test", "search", "nodes", "0", "id"), is(id));
 	}
 
 	@Test
-	public void testSortDescendingOrder()
+	public void testQueryMultipleOneMatch()
 	{
 		var mutation = """
 			mutation($m: TestMutationInput!) {
@@ -171,7 +155,7 @@ public class StringTokenSortTest
 			mutation,
 			Maps.immutable.of(
 				"m", Maps.immutable.of(
-					"code", "B"
+					"title", "Hello"
 				)
 			)
 		);
@@ -182,7 +166,7 @@ public class StringTokenSortTest
 			mutation,
 			Maps.immutable.of(
 				"m", Maps.immutable.of(
-					"code", "A"
+					"title", "World"
 				)
 			)
 		);
@@ -192,14 +176,69 @@ public class StringTokenSortTest
 		result = execute("""
 			query {
 				test {
-					search(sort: [
-						{ field: CODE, ascending: false }
+					search(criteria: [
+						{ field: { title: { match: { query: \"Hello\", typeAhead: true } } } }
 					]) {
 						totalCount,
 
 						nodes {
-							id,
-							code
+							id
+						}
+					}
+				}
+			}
+		""");
+
+		result.assertNoErrors();
+
+		assertThat(result.pick("test", "search", "totalCount"), is(1));
+	}
+
+	@Test
+	public void testQueryMultipleTwoMatches()
+	{
+		var mutation = """
+			mutation($m: TestMutationInput!) {
+				storeTest(mutation: $m) {
+					id
+				}
+			}
+		""";
+
+		var result = execute(
+			mutation,
+			Maps.immutable.of(
+				"m", Maps.immutable.of(
+					"title", "Hello"
+				)
+			)
+		);
+
+		result.assertNoErrors();
+
+		result = execute(
+			mutation,
+			Maps.immutable.of(
+				"m", Maps.immutable.of(
+					"title", "Helloworld"
+				)
+			)
+		);
+
+		result.assertNoErrors();
+
+		result = execute("""
+			query {
+				test {
+					search(criteria: [
+						{ or: [
+							{ field: { title: { match: { query: \"Hello\", typeAhead: true } } } }
+						] }
+					]) {
+						totalCount,
+
+						nodes {
+							id
 						}
 					}
 				}
@@ -209,7 +248,5 @@ public class StringTokenSortTest
 		result.assertNoErrors();
 
 		assertThat(result.pick("test", "search", "totalCount"), is(2));
-		assertThat(result.pick("test", "search", "nodes", "0", "code"), is("B"));
-		assertThat(result.pick("test", "search", "nodes", "1", "code"), is("A"));
 	}
 }
