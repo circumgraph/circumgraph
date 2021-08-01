@@ -59,7 +59,7 @@ public class IndexDirectiveValidator
 			}
 
 			if(fieldType instanceof StructuredDef
-				&& ((StructuredDef) location.getType()).findImplements(StorageSchema.ENTITY_NAME))
+				&& ((StructuredDef) fieldType).findImplements(StorageSchema.ENTITY_NAME))
 			{
 				// Link to another collection
 				fieldType = ScalarDef.ID;
