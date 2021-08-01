@@ -325,6 +325,21 @@
 		</profile>
 	</profiles>
 
+	<repositories>
+		<!-- To support pulling snapshots from Sonatype -->
+		<repository>
+			<id>maven-snapshots</id>
+			<url>http://oss.sonatype.org/content/repositories/snapshots</url>
+			<layout>default</layout>
+			<releases>
+				<enabled>false</enabled>
+			</releases>
+			<snapshots>
+				<enabled>true</enabled>
+			</snapshots>
+		</repository>
+	</repositories>
+
 	<scm>
 		<connection>scm:git:git@github.com:circumgraph/circumgraph.git</connection>
 		<url>git@github.com:circumgraph/circumgraph.git</url>
