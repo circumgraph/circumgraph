@@ -1,5 +1,36 @@
-.project
+# Eclipse / VS Code
 .classpath
-.settings
-target
+.project
+.settings/
+.factorypath
+.apt_generated/
+.apt_generated_test/
+
+# Intellij
+.idea/
+*.iml
+*.iws
+
+# Maven
+target/
+pom.xml.tag
+pom.xml.releaseBackup
 pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+
+# Node
+node_modules
+package-lock.json
+yarn.lock
+
+# Mac
+.DS_Store
+
+# JVM crash logs
+hs_err_pid*
+
+# VS Code
+.vscode
