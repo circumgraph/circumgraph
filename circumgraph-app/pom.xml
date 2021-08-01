@@ -115,7 +115,9 @@
 			</dependencies>
 			<properties>
 				<quarkus.container-image.push>true</quarkus.container-image.push>
-				<quarkus.container-image.image>ghcr.io/circumgraph/circumgraph</quarkus.container-image.image>
+				<quarkus.container-image.registry>ghcr.io</quarkus.container-image.registry>
+				<quarkus.container-image.group>circumgraph</quarkus.container-image.group>
+				<quarkus.container-image.name>circumgraph</quarkus.container-image.name>
 				<quarkus.jib.base-jvm-image>adoptopenjdk/openjdk16:alpine-jre</quarkus.jib.base-jvm-image>
 			</properties>
 		</profile>
