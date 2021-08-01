@@ -118,6 +118,8 @@
 				<quarkus.container-image.registry>ghcr.io</quarkus.container-image.registry>
 				<quarkus.container-image.group>circumgraph</quarkus.container-image.group>
 				<quarkus.container-image.name>circumgraph</quarkus.container-image.name>
+				<quarkus.jib.environment-variables.CONFIG_DIR>/config</quarkus.jib.environment-variables.CONFIG_DIR>
+				<quarkus.jib.environment-variables.DATA_DIR>/data</quarkus.jib.environment-variables.DATA_DIR>
 				<quarkus.jib.base-jvm-image>adoptopenjdk/openjdk16:alpine-jre</quarkus.jib.base-jvm-image>
 			</properties>
 		</profile>
