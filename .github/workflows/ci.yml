@@ -24,8 +24,8 @@ jobs:
           ${{ runner.os }}-maven-
 
     - name: Build
-      run: mvn compile --file pom.xml
+      run: mvn compile -B --file pom.xml
     - name: Test
-      run: mvn test --file pom.xml
+      run: mvn test -B --file pom.xml
     - name: Package
-      run: mvn -Prelease -DskipTests package --file pom.xml
+      run: mvn -Prelease -DskipTests package -B --file pom.xml
