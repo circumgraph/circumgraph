@@ -4,6 +4,11 @@ on:
   push:
     branches:
       - 'main'
+    paths:
+      - '.github/workflows/publish.yml'
+      - 'pom.xml'
+      - '**/pom.xml'
+      - '**/src/**'
 
 jobs:
   build:
