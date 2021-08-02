@@ -109,6 +109,11 @@ public class ListValueMapper<V extends Value, M extends Mutation>
 		ListValue<V> value
 	)
 	{
+		if(value == null)
+		{
+			return validator.validate(location, value);
+		}
+
 		return Flux.fromIterable(value.items())
 			.flatMap(v -> itemMapper.validate(location, v))
 			.thenMany(validator.validate(location, value));

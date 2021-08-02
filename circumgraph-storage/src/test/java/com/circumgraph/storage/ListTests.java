@@ -2,7 +2,10 @@ package com.circumgraph.storage;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+
+import java.util.Optional;
 
 import com.circumgraph.model.FieldDef;
 import com.circumgraph.model.ListDef;
@@ -189,6 +192,66 @@ public class ListTests
 				))
 				.build()
 			).block();
+		});
+	}
+
+	@Test
+	public void testListSetDefault()
+	{
+		var storage = open(Model.create()
+			.addSchema(StorageSchema.INSTANCE)
+			.addType(ObjectDef.create("Test")
+				.addImplements(StorageSchema.ENTITY_NAME)
+				.addField(FieldDef.create("titles")
+					.withType(ListDef.output(NonNullDef.output(ScalarDef.STRING)))
+					.build()
+				)
+				.build()
+			)
+			.build()
+		);
+
+		var collection = storage.get("Test");
+
+		var mutation = collection.newMutation()
+			.build();
+
+		var stored = collection.store(mutation).block();
+
+		var titles1 = stored.getField("titles", ListValue.class);
+		assertThat(titles1, is(Optional.empty()));
+
+		var id = stored.getId();
+
+		var fetched = collection.get(id).block();
+
+		var titles2 = fetched.getField("titles", ListValue.class);
+		assertThat(titles2, is(Optional.empty()));
+	}
+
+	@Test
+	public void testListSetDefaultNonNull()
+	{
+		var storage = open(Model.create()
+			.addSchema(StorageSchema.INSTANCE)
+			.addType(ObjectDef.create("Test")
+				.addImplements(StorageSchema.ENTITY_NAME)
+				.addField(FieldDef.create("titles")
+					.withType(NonNullDef.output(ListDef.output(NonNullDef.output(ScalarDef.STRING))))
+					.build()
+				)
+				.build()
+			)
+			.build()
+		);
+
+		var collection = storage.get("Test");
+
+		var mutation = collection.newMutation()
+			.build();
+
+		assertThrows(StorageValidationException.class, () -> {
+			collection.store(mutation).block();
 		});
 	}
 }
