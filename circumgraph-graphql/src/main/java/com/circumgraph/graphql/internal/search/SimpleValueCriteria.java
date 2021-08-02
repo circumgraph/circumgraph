@@ -27,15 +27,9 @@ public abstract class SimpleValueCriteria
 		InputUnions.validate(getGraphQLType(), data);
 
 		var field = (QueryPath.Leaf) path;
-		if(data.containsKey("any"))
+		if(data.get("any") != null)
 		{
-			// TODO: If any = true should always match
 			var value = (Boolean) data.get("any");
-			if(value == null)
-			{
-				// TODO: Proper error
-			}
-
 			return field.toQuery(value ? AnyMatcher.create() : NullMatcher.create());
 		}
 
