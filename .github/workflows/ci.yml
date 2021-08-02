@@ -20,6 +20,9 @@ jobs:
         java-version: 15
         distribution: 'adopt'
 
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v1
+
     - name: Cache local Maven repository
       uses: actions/cache@v2
       with:
@@ -32,7 +35,9 @@ jobs:
       run: mvn compile -B --file pom.xml
     - name: Test
       run: mvn test -B --file pom.xml
-    - name: Send to Codecov
-      run: bash <(curl -s https://codecov.io/bash)
+
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v1
+
     - name: Upload to Codecov
-      uses: codecov/codecov-action@v2.0.2
+      uses: codecov/codecov-action@v2

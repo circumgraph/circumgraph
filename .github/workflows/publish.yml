@@ -30,6 +30,10 @@ jobs:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
         logout: true
+
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v1
+
     - name: Cache local Maven repository
       uses: actions/cache@v2
       with:
@@ -37,11 +41,16 @@ jobs:
         key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
         restore-keys: |
           ${{ runner.os }}-maven-
+
     - name: Build
       run: mvn compile -B --file pom.xml
     - name: Test
       run: mvn test -B --file pom.xml
     - name: Package
       run: mvn package -B -Ddeploy -DskipTests -Dquarkus.container-image.tag=latest '-Dquarkus.jib.labels."org.opencontainers.image.revision"='$GITHUB_SHA --file pom.xml
+
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v1
+
     - name: Upload to Codecov
-      uses: codecov/codecov-action@v2.0.2
+      uses: codecov/codecov-action@v2
