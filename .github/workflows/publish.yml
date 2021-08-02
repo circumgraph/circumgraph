@@ -43,3 +43,5 @@ jobs:
       run: mvn test -B --file pom.xml
     - name: Package
       run: mvn package -B -Ddeploy -DskipTests -Dquarkus.container-image.tag=latest '-Dquarkus.jib.labels."org.opencontainers.image.revision"='$GITHUB_SHA --file pom.xml
+    - name: Upload to Codecov
+      uses: codecov/codecov-action@v2.0.2

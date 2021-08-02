@@ -32,3 +32,7 @@ jobs:
       run: mvn compile -B --file pom.xml
     - name: Test
       run: mvn test -B --file pom.xml
+    - name: Send to Codecov
+      run: bash <(curl -s https://codecov.io/bash)
+    - name: Upload to Codecov
+      uses: codecov/codecov-action@v2.0.2
