@@ -4,11 +4,11 @@ import com.circumgraph.model.OutputTypeDef;
 import com.circumgraph.model.UnionDef;
 import com.circumgraph.model.validation.ValidationMessage;
 import com.circumgraph.storage.StoredObjectRef;
+import com.circumgraph.storage.StructuredValue;
+import com.circumgraph.storage.Value;
 import com.circumgraph.storage.mutation.Mutation;
 import com.circumgraph.storage.mutation.StoredObjectRefMutation;
 import com.circumgraph.storage.mutation.StructuredMutation;
-import com.circumgraph.values.StructuredValue;
-import com.circumgraph.values.Value;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;

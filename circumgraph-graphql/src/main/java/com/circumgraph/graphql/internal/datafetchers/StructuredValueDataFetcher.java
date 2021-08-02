@@ -4,8 +4,8 @@ import java.util.concurrent.CompletableFuture;
 
 import com.circumgraph.graphql.OutputMapper;
 import com.circumgraph.graphql.internal.StorageContext;
-import com.circumgraph.values.StructuredValue;
-import com.circumgraph.values.Value;
+import com.circumgraph.storage.StructuredValue;
+import com.circumgraph.storage.Value;
 
 import graphql.schema.DataFetcher;
 import graphql.schema.DataFetchingEnvironment;

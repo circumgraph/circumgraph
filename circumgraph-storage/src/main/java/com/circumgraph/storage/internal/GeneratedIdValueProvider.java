@@ -2,8 +2,8 @@ package com.circumgraph.storage.internal;
 
 import com.circumgraph.model.ScalarDef;
 import com.circumgraph.model.SimpleValueDef;
+import com.circumgraph.storage.SimpleValue;
 import com.circumgraph.storage.types.ValueProvider;
-import com.circumgraph.values.SimpleValue;
 
 import reactor.core.publisher.Mono;
 import se.l4.ylem.ids.LongIdGenerator;

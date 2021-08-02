@@ -1,11 +1,10 @@
 package com.circumgraph.storage;
 
-import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 
 import com.circumgraph.model.Model;
 import com.circumgraph.model.ObjectDef;
-import com.circumgraph.values.SimpleValue;
 
 import org.junit.jupiter.api.Test;
 

@@ -3,8 +3,8 @@ package com.circumgraph.graphql.internal.search;
 import java.util.Map;
 
 import com.circumgraph.graphql.internal.InputUnions;
+import com.circumgraph.storage.SimpleValue;
 import com.circumgraph.storage.search.QueryPath;
-import com.circumgraph.values.SimpleValue;
 
 import se.l4.silo.index.AnyMatcher;
 import se.l4.silo.index.Matcher;

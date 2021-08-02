@@ -5,8 +5,8 @@ import java.io.IOException;
 import com.circumgraph.model.ObjectDef;
 import com.circumgraph.model.OutputTypeDef;
 import com.circumgraph.model.TypeDef;
+import com.circumgraph.storage.Value;
 import com.circumgraph.storage.types.ValueSerializer;
-import com.circumgraph.values.Value;
 
 import org.eclipse.collections.api.map.MapIterable;
 

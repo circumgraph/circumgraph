@@ -1,8 +1,8 @@
-package com.circumgraph.values;
+package com.circumgraph.storage;
 
 import com.circumgraph.model.ScalarDef;
 import com.circumgraph.model.SimpleValueDef;
-import com.circumgraph.values.internal.SimpleValueImpl;
+import com.circumgraph.storage.internal.SimpleValueImpl;
 
 public interface SimpleValue
 	extends Value

@@ -1,9 +1,9 @@
-package com.circumgraph.values.internal;
+package com.circumgraph.storage.internal;
 
 import java.util.Objects;
 
 import com.circumgraph.model.SimpleValueDef;
-import com.circumgraph.values.SimpleValue;
+import com.circumgraph.storage.SimpleValue;
 
 /**
  * Implementation of {@link SimpleValue}.

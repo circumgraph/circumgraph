@@ -16,8 +16,6 @@ import com.circumgraph.model.ScalarDef;
 import com.circumgraph.storage.mutation.ListSetMutation;
 import com.circumgraph.storage.mutation.NullMutation;
 import com.circumgraph.storage.mutation.ScalarValueMutation;
-import com.circumgraph.values.ListValue;
-import com.circumgraph.values.SimpleValue;
 
 import org.junit.jupiter.api.Test;
 

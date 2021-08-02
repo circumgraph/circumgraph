@@ -4,7 +4,6 @@ import com.circumgraph.model.StructuredDef;
 import com.circumgraph.storage.mutation.StructuredMutation;
 import com.circumgraph.storage.search.Query;
 import com.circumgraph.storage.search.SearchResult;
-import com.circumgraph.values.StructuredValue;
 
 import reactor.core.publisher.Mono;
 

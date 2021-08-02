@@ -20,6 +20,8 @@ import com.circumgraph.storage.Storage;
 import com.circumgraph.storage.StorageModel;
 import com.circumgraph.storage.StorageSchema;
 import com.circumgraph.storage.StoredObjectValue;
+import com.circumgraph.storage.StructuredValue;
+import com.circumgraph.storage.Value;
 import com.circumgraph.storage.internal.mappers.EnumValueMapper;
 import com.circumgraph.storage.internal.mappers.ListValueMapper;
 import com.circumgraph.storage.internal.mappers.PolymorphicValueMapper;
@@ -33,8 +35,6 @@ import com.circumgraph.storage.internal.validators.NonNullValueValidator;
 import com.circumgraph.storage.mutation.StructuredMutation;
 import com.circumgraph.storage.types.ValueProvider;
 import com.circumgraph.storage.types.ValueValidator;
-import com.circumgraph.values.StructuredValue;
-import com.circumgraph.values.Value;
 
 import org.eclipse.collections.api.RichIterable;
 import org.eclipse.collections.api.factory.Lists;

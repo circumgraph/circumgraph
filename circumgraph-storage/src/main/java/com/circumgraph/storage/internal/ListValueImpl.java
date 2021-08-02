@@ -1,11 +1,11 @@
-package com.circumgraph.values.internal;
+package com.circumgraph.storage.internal;
 
 import java.util.Objects;
 
 import com.circumgraph.model.ListDef;
 import com.circumgraph.model.TypeDef;
-import com.circumgraph.values.ListValue;
-import com.circumgraph.values.Value;
+import com.circumgraph.storage.ListValue;
+import com.circumgraph.storage.Value;
 
 import org.eclipse.collections.api.list.ListIterable;
 

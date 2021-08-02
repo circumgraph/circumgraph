@@ -1,6 +1,6 @@
 package com.circumgraph.graphql.internal;
 
-import com.circumgraph.values.StructuredValue;
+import com.circumgraph.storage.StructuredValue;
 
 import graphql.TypeResolutionEnvironment;
 import graphql.schema.GraphQLObjectType;

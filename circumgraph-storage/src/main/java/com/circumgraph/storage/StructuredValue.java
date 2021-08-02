@@ -1,11 +1,11 @@
-package com.circumgraph.values;
+package com.circumgraph.storage;
 
 import java.util.Optional;
 
 import com.circumgraph.model.InterfaceDef;
 import com.circumgraph.model.ObjectDef;
 import com.circumgraph.model.StructuredDef;
-import com.circumgraph.values.internal.StructuredValueImpl;
+import com.circumgraph.storage.internal.StructuredValueImpl;
 
 import org.eclipse.collections.api.map.MapIterable;
 

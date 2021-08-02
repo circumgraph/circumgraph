@@ -1,6 +1,6 @@
 package com.circumgraph.graphql;
 
-import com.circumgraph.values.Value;
+import com.circumgraph.storage.Value;
 
 import graphql.schema.GraphQLOutputType;
 import se.l4.silo.Transaction;

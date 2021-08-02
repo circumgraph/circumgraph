@@ -1,15 +1,15 @@
 package com.circumgraph.storage.internal.serializers;
 
-import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 
 import java.io.IOException;
 
 import com.circumgraph.model.FieldDef;
 import com.circumgraph.model.ObjectDef;
 import com.circumgraph.model.ScalarDef;
-import com.circumgraph.values.SimpleValue;
-import com.circumgraph.values.StructuredValue;
+import com.circumgraph.storage.SimpleValue;
+import com.circumgraph.storage.StructuredValue;
 
 import org.eclipse.collections.api.factory.Maps;
 import org.junit.jupiter.api.Test;

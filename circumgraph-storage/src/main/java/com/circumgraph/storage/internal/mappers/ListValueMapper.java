@@ -3,13 +3,13 @@ package com.circumgraph.storage.internal.mappers;
 import com.circumgraph.model.ListDef;
 import com.circumgraph.model.OutputTypeDef;
 import com.circumgraph.model.validation.ValidationMessage;
+import com.circumgraph.storage.ListValue;
+import com.circumgraph.storage.Value;
 import com.circumgraph.storage.mutation.ListMutation;
 import com.circumgraph.storage.mutation.ListSetMutation;
 import com.circumgraph.storage.mutation.Mutation;
 import com.circumgraph.storage.mutation.NullMutation;
 import com.circumgraph.storage.types.ValueValidator;
-import com.circumgraph.values.ListValue;
-import com.circumgraph.values.Value;
 
 import org.eclipse.collections.impl.collector.Collectors2;
 

@@ -4,9 +4,9 @@ import java.io.IOException;
 
 import com.circumgraph.model.ListDef;
 import com.circumgraph.model.TypeDef;
+import com.circumgraph.storage.ListValue;
+import com.circumgraph.storage.Value;
 import com.circumgraph.storage.types.ValueSerializer;
-import com.circumgraph.values.ListValue;
-import com.circumgraph.values.Value;
 
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ListIterable;

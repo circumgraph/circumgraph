@@ -30,8 +30,6 @@
 		<module>circumgraph-model</module>
 		<module>circumgraph-schema-graphql</module>
 
-		<module>circumgraph-values</module>
-
 		<module>circumgraph-storage</module>
 
 		<module>circumgraph-graphql</module>

@@ -1,7 +1,7 @@
 package com.circumgraph.storage.types;
 
 import com.circumgraph.model.SimpleValueDef;
-import com.circumgraph.values.Value;
+import com.circumgraph.storage.Value;
 
 import reactor.core.publisher.Mono;
 

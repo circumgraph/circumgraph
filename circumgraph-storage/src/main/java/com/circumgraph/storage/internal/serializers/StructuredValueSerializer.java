@@ -4,9 +4,9 @@ import java.io.IOException;
 
 import com.circumgraph.model.StructuredDef;
 import com.circumgraph.model.TypeDef;
+import com.circumgraph.storage.StructuredValue;
+import com.circumgraph.storage.Value;
 import com.circumgraph.storage.types.ValueSerializer;
-import com.circumgraph.values.StructuredValue;
-import com.circumgraph.values.Value;
 
 import org.eclipse.collections.api.factory.Maps;
 import org.eclipse.collections.api.map.MapIterable;

@@ -2,7 +2,7 @@ package com.circumgraph.storage.types;
 
 import com.circumgraph.model.validation.SourceLocation;
 import com.circumgraph.model.validation.ValidationMessage;
-import com.circumgraph.values.Value;
+import com.circumgraph.storage.Value;
 
 import reactor.core.publisher.Flux;
 

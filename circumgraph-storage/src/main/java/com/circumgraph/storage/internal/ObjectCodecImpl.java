@@ -5,8 +5,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 import com.circumgraph.storage.StoredObjectValue;
+import com.circumgraph.storage.StructuredValue;
 import com.circumgraph.storage.internal.serializers.PolymorphicValueSerializer;
-import com.circumgraph.values.StructuredValue;
 
 import se.l4.exobytes.streaming.StreamingFormat;
 import se.l4.exobytes.streaming.StreamingInput;

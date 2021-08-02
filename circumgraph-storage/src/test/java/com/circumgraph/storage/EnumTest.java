@@ -9,7 +9,6 @@ import com.circumgraph.model.FieldDef;
 import com.circumgraph.model.Model;
 import com.circumgraph.model.ObjectDef;
 import com.circumgraph.storage.mutation.SetEnumValueMutation;
-import com.circumgraph.values.SimpleValue;
 
 import org.junit.jupiter.api.Test;
 

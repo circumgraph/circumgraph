@@ -1,7 +1,7 @@
 package com.circumgraph.graphql.internal.output;
 
 import com.circumgraph.graphql.OutputMapper;
-import com.circumgraph.values.Value;
+import com.circumgraph.storage.Value;
 
 import graphql.schema.GraphQLNonNull;
 import graphql.schema.GraphQLOutputType;

@@ -3,9 +3,9 @@ package com.circumgraph.storage.internal.mappers;
 import com.circumgraph.model.OutputTypeDef;
 import com.circumgraph.model.validation.ValidationMessage;
 import com.circumgraph.storage.StoredObjectValue;
+import com.circumgraph.storage.StructuredValue;
 import com.circumgraph.storage.internal.StoredObjectValueImpl;
 import com.circumgraph.storage.mutation.StructuredMutation;
-import com.circumgraph.values.StructuredValue;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;

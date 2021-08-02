@@ -4,8 +4,8 @@ import java.io.IOException;
 
 import com.circumgraph.model.ScalarDef;
 import com.circumgraph.model.TypeDef;
+import com.circumgraph.storage.SimpleValue;
 import com.circumgraph.storage.types.ValueSerializer;
-import com.circumgraph.values.SimpleValue;
 
 import se.l4.exobytes.streaming.StreamingInput;
 import se.l4.exobytes.streaming.StreamingOutput;

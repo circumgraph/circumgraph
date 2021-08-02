@@ -1,8 +1,8 @@
 package com.circumgraph.graphql;
 
 import com.circumgraph.model.ScalarDef;
+import com.circumgraph.storage.SimpleValue;
 import com.circumgraph.storage.mutation.ScalarValueMutation;
-import com.circumgraph.values.SimpleValue;
 
 import graphql.schema.GraphQLScalarType;
 

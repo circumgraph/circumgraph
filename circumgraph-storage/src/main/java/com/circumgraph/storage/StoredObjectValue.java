@@ -1,7 +1,5 @@
 package com.circumgraph.storage;
 
-import com.circumgraph.values.StructuredValue;
-
 /**
  * Extension to {@link StructuredValue} that represents a stored object. Used
  * as a thin layer to provide access to {@link #getId() ids} in an easy way.

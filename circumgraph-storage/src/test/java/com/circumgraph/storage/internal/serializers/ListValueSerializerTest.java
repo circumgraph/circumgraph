@@ -1,14 +1,14 @@
 package com.circumgraph.storage.internal.serializers;
 
-import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 
 import java.io.IOException;
 
 import com.circumgraph.model.ListDef;
 import com.circumgraph.model.ScalarDef;
-import com.circumgraph.values.ListValue;
-import com.circumgraph.values.SimpleValue;
+import com.circumgraph.storage.ListValue;
+import com.circumgraph.storage.SimpleValue;
 
 import org.eclipse.collections.api.factory.Lists;
 import org.junit.jupiter.api.Test;

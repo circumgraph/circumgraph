@@ -4,7 +4,7 @@ import java.util.concurrent.CompletableFuture;
 
 import com.circumgraph.graphql.internal.StorageContext;
 import com.circumgraph.storage.Collection;
-import com.circumgraph.values.StructuredValue;
+import com.circumgraph.storage.StructuredValue;
 
 import graphql.schema.DataFetcher;
 import graphql.schema.DataFetchingEnvironment;

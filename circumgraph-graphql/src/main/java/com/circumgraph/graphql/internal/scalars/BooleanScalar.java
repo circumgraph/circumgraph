@@ -2,7 +2,7 @@ package com.circumgraph.graphql.internal.scalars;
 
 import com.circumgraph.graphql.ScalarMapper;
 import com.circumgraph.model.ScalarDef;
-import com.circumgraph.values.SimpleValue;
+import com.circumgraph.storage.SimpleValue;
 
 import graphql.Scalars;
 import graphql.schema.GraphQLScalarType;

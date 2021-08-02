@@ -1,8 +1,8 @@
-package com.circumgraph.values;
+package com.circumgraph.storage;
 
 import com.circumgraph.model.ListDef;
 import com.circumgraph.model.TypeDef;
-import com.circumgraph.values.internal.ListValueImpl;
+import com.circumgraph.storage.internal.ListValueImpl;
 
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ListIterable;

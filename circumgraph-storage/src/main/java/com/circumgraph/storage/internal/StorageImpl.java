@@ -5,11 +5,11 @@ import java.nio.file.Path;
 import com.circumgraph.model.Model;
 import com.circumgraph.model.StructuredDef;
 import com.circumgraph.storage.Collection;
+import com.circumgraph.storage.SimpleValue;
 import com.circumgraph.storage.Storage;
 import com.circumgraph.storage.StorageSchema;
 import com.circumgraph.storage.StoredObjectValue;
-import com.circumgraph.values.SimpleValue;
-import com.circumgraph.values.StructuredValue;
+import com.circumgraph.storage.StructuredValue;
 
 import org.eclipse.collections.api.RichIterable;
 import org.eclipse.collections.api.factory.Lists;

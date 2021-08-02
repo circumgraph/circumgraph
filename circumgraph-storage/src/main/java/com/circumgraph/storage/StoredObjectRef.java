@@ -1,7 +1,5 @@
 package com.circumgraph.storage;
 
-import com.circumgraph.values.Value;
-
 /**
  * Reference to another stored object.
  */

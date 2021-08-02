@@ -4,12 +4,12 @@ import com.circumgraph.model.OutputTypeDef;
 import com.circumgraph.model.TypeDef;
 import com.circumgraph.model.validation.ValidationMessage;
 import com.circumgraph.storage.StoredObjectRef;
+import com.circumgraph.storage.StructuredValue;
+import com.circumgraph.storage.Value;
 import com.circumgraph.storage.mutation.StoredObjectRefMutation;
 import com.circumgraph.storage.mutation.StructuredMutation;
 import com.circumgraph.storage.mutation.TypedMutation;
 import com.circumgraph.storage.types.ValueValidator;
-import com.circumgraph.values.StructuredValue;
-import com.circumgraph.values.Value;
 
 import org.eclipse.collections.api.map.MapIterable;
 

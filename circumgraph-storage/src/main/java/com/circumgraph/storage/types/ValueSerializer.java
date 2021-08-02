@@ -3,7 +3,7 @@ package com.circumgraph.storage.types;
 import java.io.IOException;
 
 import com.circumgraph.model.TypeDef;
-import com.circumgraph.values.Value;
+import com.circumgraph.storage.Value;
 
 import se.l4.exobytes.Serializer;
 import se.l4.exobytes.streaming.StreamingInput;

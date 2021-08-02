@@ -2,8 +2,8 @@ package com.circumgraph.graphql.internal.output;
 
 import com.circumgraph.graphql.OutputMapper;
 import com.circumgraph.model.ListDef;
-import com.circumgraph.values.ListValue;
-import com.circumgraph.values.Value;
+import com.circumgraph.storage.ListValue;
+import com.circumgraph.storage.Value;
 
 import graphql.schema.GraphQLList;
 import graphql.schema.GraphQLOutputType;

@@ -3,7 +3,7 @@ package com.circumgraph.graphql.internal.output;
 import com.circumgraph.graphql.OutputMapper;
 import com.circumgraph.model.OutputTypeDef;
 import com.circumgraph.model.StructuredDef;
-import com.circumgraph.values.StructuredValue;
+import com.circumgraph.storage.StructuredValue;
 
 import graphql.schema.GraphQLOutputType;
 import graphql.schema.GraphQLTypeReference;

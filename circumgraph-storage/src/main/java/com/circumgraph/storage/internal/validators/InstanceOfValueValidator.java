@@ -2,8 +2,8 @@ package com.circumgraph.storage.internal.validators;
 
 import com.circumgraph.model.validation.SourceLocation;
 import com.circumgraph.model.validation.ValidationMessage;
+import com.circumgraph.storage.SimpleValue;
 import com.circumgraph.storage.types.ValueValidator;
-import com.circumgraph.values.SimpleValue;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;

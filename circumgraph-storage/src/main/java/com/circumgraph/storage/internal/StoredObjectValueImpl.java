@@ -5,10 +5,10 @@ import java.util.Optional;
 import java.util.function.Supplier;
 
 import com.circumgraph.model.StructuredDef;
+import com.circumgraph.storage.SimpleValue;
 import com.circumgraph.storage.StoredObjectValue;
-import com.circumgraph.values.SimpleValue;
-import com.circumgraph.values.StructuredValue;
-import com.circumgraph.values.Value;
+import com.circumgraph.storage.StructuredValue;
+import com.circumgraph.storage.Value;
 
 import org.eclipse.collections.api.map.MapIterable;
 

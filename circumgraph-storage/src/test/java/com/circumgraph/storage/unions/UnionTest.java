@@ -13,12 +13,12 @@ import com.circumgraph.model.ScalarDef;
 import com.circumgraph.model.StructuredDef;
 import com.circumgraph.model.TypeRef;
 import com.circumgraph.model.UnionDef;
+import com.circumgraph.storage.SimpleValue;
 import com.circumgraph.storage.SingleModelTest;
 import com.circumgraph.storage.StorageSchema;
+import com.circumgraph.storage.StructuredValue;
 import com.circumgraph.storage.mutation.ScalarValueMutation;
 import com.circumgraph.storage.mutation.StructuredMutation;
-import com.circumgraph.values.SimpleValue;
-import com.circumgraph.values.StructuredValue;
 
 import org.junit.jupiter.api.Test;
 

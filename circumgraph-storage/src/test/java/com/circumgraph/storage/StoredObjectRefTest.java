@@ -13,7 +13,6 @@ import com.circumgraph.model.ScalarDef;
 import com.circumgraph.storage.mutation.ListSetMutation;
 import com.circumgraph.storage.mutation.ScalarValueMutation;
 import com.circumgraph.storage.mutation.StoredObjectRefMutation;
-import com.circumgraph.values.ListValue;
 
 import org.junit.jupiter.api.Test;
 

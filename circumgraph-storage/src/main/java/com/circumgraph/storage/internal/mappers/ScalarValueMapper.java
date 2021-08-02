@@ -3,10 +3,10 @@ package com.circumgraph.storage.internal.mappers;
 import com.circumgraph.model.OutputTypeDef;
 import com.circumgraph.model.ScalarDef;
 import com.circumgraph.model.validation.ValidationMessage;
+import com.circumgraph.storage.SimpleValue;
 import com.circumgraph.storage.mutation.ScalarValueMutation;
 import com.circumgraph.storage.types.ValueProvider;
 import com.circumgraph.storage.types.ValueValidator;
-import com.circumgraph.values.SimpleValue;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;

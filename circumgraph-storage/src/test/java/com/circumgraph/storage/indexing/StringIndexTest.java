@@ -9,11 +9,11 @@ import com.circumgraph.model.Model;
 import com.circumgraph.model.NonNullDef;
 import com.circumgraph.model.ObjectDef;
 import com.circumgraph.model.ScalarDef;
+import com.circumgraph.storage.SimpleValue;
 import com.circumgraph.storage.SingleModelTest;
 import com.circumgraph.storage.StorageSchema;
 import com.circumgraph.storage.mutation.ScalarValueMutation;
 import com.circumgraph.storage.search.Query;
-import com.circumgraph.values.SimpleValue;
 
 import org.junit.jupiter.api.Test;
 
