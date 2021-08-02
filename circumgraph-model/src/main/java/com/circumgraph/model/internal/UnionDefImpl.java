@@ -86,6 +86,25 @@ public class UnionDefImpl
 		return defs != null;
 	}
 
+	@Override
+	public boolean isAssignableFrom(TypeDef other)
+	{
+		if(other instanceof UnionDef)
+		{
+			return this == other;
+		}
+
+		for(var type : types)
+		{
+			if(type.isAssignableFrom(other))
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
 	public static Builder create(String name)
 	{
 		return new BuilderImpl(

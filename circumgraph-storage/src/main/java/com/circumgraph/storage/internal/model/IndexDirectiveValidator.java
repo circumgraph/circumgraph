@@ -12,6 +12,7 @@ import com.circumgraph.model.SimpleValueDef;
 import com.circumgraph.model.StructuredDef;
 import com.circumgraph.model.validation.DirectiveValidator;
 import com.circumgraph.model.validation.ValidationMessage;
+import com.circumgraph.model.validation.ValidationMessageType;
 import com.circumgraph.storage.StorageModel;
 import com.circumgraph.storage.StorageSchema;
 import com.circumgraph.storage.internal.ValueIndexers;
@@ -22,6 +23,37 @@ import com.circumgraph.storage.internal.ValueIndexers;
 public class IndexDirectiveValidator
 	implements DirectiveValidator<FieldDef>
 {
+	private static final ValidationMessageType INVALID_ARGUMENTS = ValidationMessageType.error()
+		.withCode("storage:@index:invalid-arguments")
+		.withMessage("@index only supports an optional type argument")
+		.build();
+
+	private static final ValidationMessageType TYPE_UNSUPPORTED = ValidationMessageType.error()
+		.withCode("storage:@index:unsupported-type")
+		.withArgument("fieldType")
+		.withMessage("No indexers are available for {{fieldType}}")
+		.build();
+
+	private static final ValidationMessageType MULTIPLE_INDEXERS = ValidationMessageType.error()
+		.withCode("storage:@index:multiple-indexers")
+		.withArgument("fieldType")
+		.withArgument("supported")
+		.withMessage("{{fieldType}} supports multiple indexers, specify type on @index to select one of {{supported}}")
+		.build();
+
+	private static final ValidationMessageType INVALID_INDEXER = ValidationMessageType.error()
+		.withCode("storage:@index:invalid-indexer")
+		.withArgument("name")
+		.withMessage("The indexer {{indexer}} does not exist")
+		.build();
+
+	private static final ValidationMessageType INDEXER_TYPE_UNSUPPORTED = ValidationMessageType.error()
+		.withCode("storage:@index:indexer-unsupported-type")
+		.withArgument("name")
+		.withArgument("fieldType")
+		.withMessage("The indexer {{indexer}} does not support {{fieldType}}")
+		.build();
+
 	private final ValueIndexers indexing;
 
 	public IndexDirectiveValidator(
@@ -81,6 +113,15 @@ public class IndexDirectiveValidator
 			}
 		}
 
+		if(directive.getArguments().isEmpty() && ! DirectiveValidator.checkOnlyArguments(directive, "types"))
+		{
+			validationCollector.accept(INVALID_ARGUMENTS.toMessage()
+				.withLocation(directive.getSourceLocation())
+				.build()
+			);
+			return;
+		}
+
 		SimpleValueDef def = (SimpleValueDef) fieldType;
 		var type = directive.getArgument("type");
 		if(type.isEmpty())
@@ -94,12 +135,11 @@ public class IndexDirectiveValidator
 			}
 			else if(indexing.hasMultipleIndexers(def))
 			{
-				// No indexer, let's check if none available or many available
-				validationCollector.accept(ValidationMessage.error()
+				// Multiple indexers, report error and give the user the ones that can be used
+				validationCollector.accept(MULTIPLE_INDEXERS.toMessage()
 					.withLocation(directive.getSourceLocation())
-					.withMessage("The type %s has multiple indexers, need to specify type on @index", def.getName())
-					.withCode("storage:index-type-multiple")
-					.withArgument("type", def.getName())
+					.withArgument("fieldType", def.getName())
+					.withArgument("supported", indexing.getSupportedIndexers(def))
 					.build()
 				);
 			}
@@ -113,14 +153,20 @@ public class IndexDirectiveValidator
 		{
 			var typeName = (String) type.get().getValue();
 			var indexer = indexing.getIndexer(typeName);
-			if(indexer.isEmpty() || indexer.get().getType() != def)
+			if(indexer.isEmpty())
 			{
-				validationCollector.accept(ValidationMessage.error()
+				validationCollector.accept(INVALID_INDEXER.toMessage()
 					.withLocation(directive.getSourceLocation())
-					.withMessage("The type %s does not support @index with %s", def.getName(), type)
-					.withCode("storage:index-type-unsupported")
-					.withArgument("type", location.getType().getName())
-					.withArgument("indexType", type)
+					.withArgument("indexer", typeName)
+					.build()
+				);
+			}
+			else if(indexer.get().getType() != def)
+			{
+				validationCollector.accept(INDEXER_TYPE_UNSUPPORTED.toMessage()
+					.withLocation(directive.getSourceLocation())
+					.withArgument("indexer", typeName)
+					.withArgument("fieldType", location.getType().getName())
 					.build()
 				);
 			}
@@ -138,11 +184,9 @@ public class IndexDirectiveValidator
 		Consumer<ValidationMessage> validationCollector
 	)
 	{
-		validationCollector.accept(ValidationMessage.error()
+		validationCollector.accept(TYPE_UNSUPPORTED.toMessage()
 			.withLocation(directive.getSourceLocation())
-			.withMessage("The type %s does not support @index", location.getType().getName())
-			.withCode("storage:index-type-unsupported")
-			.withArgument("type", location.getType().getName())
+			.withArgument("fieldType", location.getType().getName())
 			.build()
 		);
 	}

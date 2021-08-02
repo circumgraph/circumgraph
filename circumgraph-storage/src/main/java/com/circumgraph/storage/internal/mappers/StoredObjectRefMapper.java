@@ -5,6 +5,7 @@ import java.util.function.Supplier;
 import com.circumgraph.model.OutputTypeDef;
 import com.circumgraph.model.StructuredDef;
 import com.circumgraph.model.validation.ValidationMessage;
+import com.circumgraph.model.validation.ValidationMessageType;
 import com.circumgraph.storage.Collection;
 import com.circumgraph.storage.StoredObjectRef;
 import com.circumgraph.storage.internal.StoredObjectRefImpl;
@@ -16,6 +17,13 @@ import reactor.core.publisher.Mono;
 public class StoredObjectRefMapper
 	implements ValueMapper<StoredObjectRef, StoredObjectRefMutation>
 {
+	private static final ValidationMessageType INVALID_REFERENCE = ValidationMessageType.error()
+		.withCode("storage:mutation:invalid-reference")
+		.withMessage("Invalid reference to {{type}}, object with given {{id}} does not exist")
+		.withArgument("type")
+		.withArgument("id")
+		.build();
+
 	private final StructuredDef def;
 	private final Supplier<Collection> collection;
 
@@ -72,13 +80,11 @@ public class StoredObjectRefMapper
 				}
 				else
 				{
-					return Flux.just(
-						ValidationMessage.error()
-							.withCode("storage:invalid-reference")
-							.withMessage("Invalid reference to `%s`, object with id `%s` does not exist", def.getName(), value.getId())
-							.withArgument("type", def.getName())
-							.withArgument("id", value.getId())
-							.build()
+					return Flux.just(INVALID_REFERENCE.toMessage()
+						.withLocation(location)
+						.withArgument("type", def.getName())
+						.withArgument("id", value.getId())
+						.build()
 					);
 				}
 			});

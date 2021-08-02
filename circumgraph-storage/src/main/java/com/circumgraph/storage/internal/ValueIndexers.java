@@ -30,6 +30,7 @@ import com.circumgraph.storage.internal.indexing.TokenStringValueIndexer;
 import com.circumgraph.storage.internal.indexing.TypeAheadStringValueIndexer;
 import com.circumgraph.storage.types.ValueIndexer;
 
+import org.eclipse.collections.api.RichIterable;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.factory.Maps;
 import org.eclipse.collections.api.factory.Sets;
@@ -124,6 +125,11 @@ public class ValueIndexers
 	public boolean hasMultipleIndexers(SimpleValueDef def)
 	{
 		return indexersByType.get(def).size() > 1;
+	}
+
+	public RichIterable<String> getSupportedIndexers(SimpleValueDef def)
+	{
+		return indexersByType.get(def).collect(d -> d.getName());
 	}
 
 	public SearchIndexDef<StoredObjectValue> generateDefinition(

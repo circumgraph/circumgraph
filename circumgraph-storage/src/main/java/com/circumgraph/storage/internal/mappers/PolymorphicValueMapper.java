@@ -3,6 +3,7 @@ package com.circumgraph.storage.internal.mappers;
 import com.circumgraph.model.OutputTypeDef;
 import com.circumgraph.model.TypeDef;
 import com.circumgraph.model.validation.ValidationMessage;
+import com.circumgraph.model.validation.ValidationMessageType;
 import com.circumgraph.storage.StoredObjectRef;
 import com.circumgraph.storage.StructuredValue;
 import com.circumgraph.storage.Value;
@@ -24,6 +25,13 @@ import reactor.core.publisher.Mono;
 public class PolymorphicValueMapper
 	implements ValueMapper<Value, TypedMutation>
 {
+	private static final ValidationMessageType TYPE_ERROR = ValidationMessageType.error()
+		.withCode("storage:mutation:invalid-polymorphic-type")
+		.withArgument("expectedType")
+		.withArgument("givenType")
+		.withMessage("Expected sub-type of {{expectedType}} but got {{givenType}")
+		.build();
+
 	private final OutputTypeDef type;
 	private final MapIterable<String, ValueMapper<?, ?>> subTypes;
 	private final ValueValidator<Value> validator;
@@ -111,10 +119,8 @@ public class PolymorphicValueMapper
 		TypeDef receivedType
 	)
 	{
-		return ValidationMessage.error()
+		return TYPE_ERROR.toMessage()
 			.withLocation(location)
-			.withMessage("Unable to mutate, expected sub-type of %s but got %s", type.getName(), receivedType.getName())
-			.withCode("storage:mutation:invalid-type")
 			.withArgument("expectedType", type.getName())
 			.withArgument("givenType", receivedType.getName())
 			.build();

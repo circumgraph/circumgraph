@@ -62,6 +62,12 @@ public abstract class ListDefImpl
 	}
 
 	@Override
+	public boolean isAssignableFrom(TypeDef other)
+	{
+		return other instanceof ListDef && this.getItemType().isAssignableFrom(((ListDef) other).getItemType());
+	}
+
+	@Override
 	public boolean equals(Object obj)
 	{
 		if(this == obj) return true;

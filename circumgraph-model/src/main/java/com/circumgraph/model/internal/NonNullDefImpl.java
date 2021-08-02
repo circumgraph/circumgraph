@@ -52,6 +52,17 @@ public abstract class NonNullDefImpl
 	}
 
 	@Override
+	public boolean isAssignableFrom(TypeDef other)
+	{
+		if(other instanceof NonNullDef)
+		{
+			return this.getType().isAssignableFrom(((NonNullDef) other).getType());
+		}
+
+		return this.getType().isAssignableFrom(other);
+	}
+
+	@Override
 	public int hashCode()
 	{
 		return Objects.hash(type.getName());

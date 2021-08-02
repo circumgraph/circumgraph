@@ -2,7 +2,7 @@ package com.circumgraph.storage.internal.mappers;
 
 import com.circumgraph.model.OutputTypeDef;
 import com.circumgraph.model.validation.ValidationMessage;
-import com.circumgraph.model.validation.ValidationMessageLevel;
+import com.circumgraph.model.validation.ValidationMessageType;
 import com.circumgraph.storage.Value;
 import com.circumgraph.storage.mutation.Mutation;
 
@@ -16,6 +16,11 @@ import reactor.core.publisher.Mono;
 public class ReadOnlyMapper<V extends Value, M extends Mutation>
 	implements ValueMapper<V, M>
 {
+	private static final ValidationMessageType WRITE_ERROR = ValidationMessageType.error()
+		.withCode("storage:mutation:read-only")
+		.withMessage("Field is read-only")
+		.build();
+
 	private final ValueMapper<V, M> mapper;
 
 	public ReadOnlyMapper(ValueMapper<V, M> mapper)
@@ -46,10 +51,8 @@ public class ReadOnlyMapper<V extends Value, M extends Mutation>
 		return Mono.defer(() -> {
 			if(previousValue != null)
 			{
-				encounter.reportError(ValidationMessage.create(ValidationMessageLevel.ERROR)
+				encounter.reportError(WRITE_ERROR.toMessage()
 					.withLocation(location)
-					.withCode("storage:read-only")
-					.withMessage("Field is read-only")
 					.build()
 				);
 

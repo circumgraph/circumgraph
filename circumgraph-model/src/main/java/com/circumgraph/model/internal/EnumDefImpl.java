@@ -5,6 +5,7 @@ import java.util.Optional;
 import com.circumgraph.model.DirectiveUse;
 import com.circumgraph.model.EnumDef;
 import com.circumgraph.model.EnumValueDef;
+import com.circumgraph.model.TypeDef;
 import com.circumgraph.model.validation.SourceLocation;
 
 import org.eclipse.collections.api.factory.Lists;
@@ -63,6 +64,12 @@ public class EnumDefImpl
 	public ListIterable<DirectiveUse> getDirectives()
 	{
 		return directives;
+	}
+
+	@Override
+	public boolean isAssignableFrom(TypeDef other)
+	{
+		return this == other;
 	}
 
 	public static Builder create(String name)

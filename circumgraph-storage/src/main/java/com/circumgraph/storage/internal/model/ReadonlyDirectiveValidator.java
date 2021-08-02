@@ -6,6 +6,7 @@ import com.circumgraph.model.DirectiveUse;
 import com.circumgraph.model.FieldDef;
 import com.circumgraph.model.validation.DirectiveValidator;
 import com.circumgraph.model.validation.ValidationMessage;
+import com.circumgraph.model.validation.ValidationMessageType;
 
 /**
  * Validator for the {@code readonly} directive which disables mutations for
@@ -14,6 +15,11 @@ import com.circumgraph.model.validation.ValidationMessage;
 public class ReadonlyDirectiveValidator
 	implements DirectiveValidator<FieldDef>
 {
+	private static final ValidationMessageType INVALID_ARGUMENTS = ValidationMessageType.error()
+		.withCode("storage:@readonly:invalid-arguments")
+		.withMessage("@readonly does not support arguments")
+		.build();
+
 	@Override
 	public String getName()
 	{
@@ -35,10 +41,8 @@ public class ReadonlyDirectiveValidator
 	{
 		if(directive.getArguments().isEmpty()) return;
 
-		validationCollector.accept(ValidationMessage.error()
+		validationCollector.accept(INVALID_ARGUMENTS.toMessage()
 			.withLocation(directive.getSourceLocation())
-			.withMessage("@readonly does not support arguments")
-			.withCode("storage:readonly-arguments-invalid")
 			.build()
 		);
 	}

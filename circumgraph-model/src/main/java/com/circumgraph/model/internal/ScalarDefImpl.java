@@ -4,6 +4,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 import com.circumgraph.model.ScalarDef;
+import com.circumgraph.model.TypeDef;
 
 /**
  * Implementation of {@link ScalarDef}.
@@ -33,6 +34,12 @@ public class ScalarDefImpl
 	public Optional<String> getDescription()
 	{
 		return Optional.ofNullable(description);
+	}
+
+	@Override
+	public boolean isAssignableFrom(TypeDef other)
+	{
+		return this == other;
 	}
 
 	@Override

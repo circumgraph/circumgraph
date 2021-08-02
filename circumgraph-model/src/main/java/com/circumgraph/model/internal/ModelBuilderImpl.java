@@ -22,8 +22,10 @@ import com.circumgraph.model.Schema;
 import com.circumgraph.model.StructuredDef;
 import com.circumgraph.model.TypeDef;
 import com.circumgraph.model.validation.DirectiveValidator;
+import com.circumgraph.model.validation.SourceLocation;
 import com.circumgraph.model.validation.ValidationMessage;
 import com.circumgraph.model.validation.ValidationMessageLevel;
+import com.circumgraph.model.validation.ValidationMessageType;
 
 import org.eclipse.collections.api.RichIterable;
 import org.eclipse.collections.api.block.predicate.Predicate;
@@ -45,6 +47,68 @@ import org.eclipse.collections.impl.factory.Multimaps;
 public class ModelBuilderImpl
 	implements Model.Builder
 {
+	private static final ValidationMessageType INVALID_DIRECTIVE =
+		ValidationMessageType.error()
+			.withCode("model:invalid-directive")
+			.withArgument("directive")
+			.withMessage("Directive @{{directive}} can not be used at this location")
+			.build();
+
+	private static final ValidationMessageType INCOMPATIBLE_TYPES =
+		ValidationMessageType.error()
+			.withCode("model:incompatible-type")
+			.withArgument("type")
+			.withArgument("originalLocation")
+			.withMessage("Could not merge: {{type}} has a different type than previously defined at {{originalLocation}}")
+			.build();
+
+	private static final ValidationMessageType INCOMPATIBLE_FIELD_TYPE =
+		ValidationMessageType.error()
+			.withCode("model:incompatible-field-type")
+			.withArgument("type")
+			.withArgument("field")
+			.withArgument("originalLocation")
+			.withMessage("Could not merge: Field {{field}} in {{type}} has a different type than previously defined at {{originalLocation}}")
+			.build();
+
+	private static final ValidationMessageType INCOMPATIBLE_ARGUMENT_TYPE =
+		ValidationMessageType.error()
+			.withCode("model:incompatible-argument-type")
+			.withArgument("type")
+			.withArgument("field")
+			.withArgument("argument")
+			.withArgument("location")
+			.withArgument("originalLocation")
+			.withMessage("Could not merge: Argument {{argument}} in {{type}}.{{field}} has a different type than previously defined at {{originalLocation}}")
+			.build();
+
+	private static final ValidationMessageType INVALID_IMPLEMENTS =
+		ValidationMessageType.error()
+			.withCode("model:invalid-implements")
+			.withArgument("type")
+			.withArgument("implements")
+			.withMessage("{{type}} can not implement {{implements}}, type is not an interface")
+			.build();
+
+	private static final ValidationMessageType INVALID_IMPLEMENTS_LOOP =
+		ValidationMessageType.error()
+			.withCode("model:invalid-implements-loop")
+			.withArgument("type")
+			.withArgument("implements")
+			.withMessage("{{type}} can not implement {{implements}}, as {{implements}} already implements {{type}} creating a loop")
+			.build();
+
+	private static final ValidationMessageType INCOMPATIBLE_INTERFACE_FIELD_TYPE =
+		ValidationMessageType.error()
+			.withCode("model:incompatible-interface-field-type")
+			.withArgument("type")
+			.withArgument("field")
+			.withArgument("fieldType")
+			.withArgument("interface")
+			.withArgument("interfaceFieldType")
+			.withMessage("Field {{field}} in {{type}} is {{fieldType}} but was declared as {{interfaceFieldType}} in the implemented interface {{interface}}")
+			.build();
+
 	private final ImmutableSet<TypeDef> types;
 	private final ImmutableSet<DirectiveValidator<?>> directiveValidators;
 
@@ -187,10 +251,8 @@ public class ModelBuilderImpl
 
 				if(! didValidate)
 				{
-					validation.accept(ValidationMessage.error()
+					validation.accept(INVALID_DIRECTIVE.toMessage()
 						.withLocation(d.getSourceLocation())
-						.withMessage("Directive @%s can not be used at this location", d.getName())
-						.withCode("model:invalid-directive")
 						.withArgument("directive", d.getName())
 						.build()
 					);
@@ -239,16 +301,14 @@ public class ModelBuilderImpl
 		}
 
 		// Report not being able to merge
-		validationCollector.accept(ValidationMessage.error()
-			.withLocation(current instanceof HasSourceLocation ? ((HasSourceLocation) current).getSourceLocation() : null)
-			.withMessage(
-				"Could not merge: %s (at %s) has a different type than previously defined at %s",
-				extension.getName(),
-				toLocation(extension),
-				toLocation(current)
+		validationCollector.accept(INCOMPATIBLE_TYPES.toMessage()
+			.withLocation(
+				current instanceof HasSourceLocation
+					? ((HasSourceLocation) current).getSourceLocation()
+					: SourceLocation.unknown()
 			)
-			.withCode("model:incompatible-types")
-			.withArgument("name", current.getName())
+			.withArgument("type", current.getName())
+			.withArgument("originalLocation", toLocation(current))
 			.build()
 		);
 
@@ -342,18 +402,11 @@ public class ModelBuilderImpl
 	{
 		if(! Objects.equals(f1.getTypeName(), f2.getTypeName()))
 		{
-			validationCollector.accept(ValidationMessage.error()
+			validationCollector.accept(INCOMPATIBLE_FIELD_TYPE.toMessage()
 				.withLocation(f2.getSourceLocation())
-				.withMessage(
-					"Could not merge: %s in %s (at %s) has a different type than previously defined at %s",
-					f2.getName(),
-					type.getName(),
-					toLocation(f2),
-					toLocation(f1)
-				)
-				.withCode("model:incompatible-field-type")
 				.withArgument("type", type.getName())
 				.withArgument("field", f2.getName())
+				.withArgument("originalLocation", toLocation(f1))
 				.build()
 			);
 
@@ -411,19 +464,12 @@ public class ModelBuilderImpl
 	{
 		if(! Objects.equals(a1.getTypeName(), a2.getTypeName()))
 		{
-			validationCollector.accept(ValidationMessage.error()
-				.withLocation(a1.getSourceLocation())
-				.withMessage(
-					"Could not merge: %s in %s (at %s) has a different type than previously defined at %s",
-					a1.getName(),
-					type.getName(),
-					toLocation(a2),
-					toLocation(a1)
-				)
-				.withCode("model:incompatible-field-type")
+			validationCollector.accept(INCOMPATIBLE_ARGUMENT_TYPE.toMessage()
+				.withLocation(a2.getSourceLocation())
 				.withArgument("type", type.getName())
 				.withArgument("field", field.getName())
 				.withArgument("argument", a1.getName())
+				.withArgument("originalLocation", toLocation(a1))
 				.build()
 			);
 
@@ -487,7 +533,7 @@ public class ModelBuilderImpl
 	{
 		if(current instanceof HasSourceLocation)
 		{
-			return ((HasSourceLocation) current).getSourceLocation().toString();
+			return ((HasSourceLocation) current).getSourceLocation().describe();
 		}
 		else
 		{
@@ -530,10 +576,8 @@ public class ModelBuilderImpl
 			var asType = types.get(name);
 			if(! (asType instanceof InterfaceDef))
 			{
-				validationCollector.accept(ValidationMessage.error()
+				validationCollector.accept(INVALID_IMPLEMENTS.toMessage()
 					.withLocation(type)
-					.withMessage("%s can not implement %s, type is not an interface", type.getName(), name)
-					.withCode("model:invalid-implements")
 					.withArgument("type", type.getName())
 					.withArgument("implements", name)
 					.build()
@@ -561,19 +605,13 @@ public class ModelBuilderImpl
 					if(! checkIfCompatible(types, ownField.getTypeName(), otherField.getTypeName()))
 					{
 						// Type of fields are not compatible
-						validationCollector.accept(ValidationMessage.error()
+						validationCollector.accept(INCOMPATIBLE_INTERFACE_FIELD_TYPE.toMessage()
 							.withLocation(ownField)
-							.withMessage(
-								"Field %s in implemented interface %s has type %s, but field was re-declared as %s",
-								ownField.getName(),
-								interfaceDef.getName(),
-								otherField.getTypeName(),
-								ownField.getTypeName()
-							)
-							.withCode("model:incompatible-field-type")
 							.withArgument("type", type.getName())
-							.withArgument("implements", name)
 							.withArgument("field", ownField.getName())
+							.withArgument("fieldType", ownField.getTypeName())
+							.withArgument("interface", interfaceDef.getName())
+							.withArgument("interfaceFieldType", otherField.getTypeName())
 							.build()
 						);
 					}
@@ -602,16 +640,8 @@ public class ModelBuilderImpl
 				if(name.equals(type.getName()))
 				{
 					// This interface implements us, but we also implement it
-					validationCollector.accept(ValidationMessage.error()
+					validationCollector.accept(INVALID_IMPLEMENTS_LOOP.toMessage()
 						.withLocation((InterfaceDef) implementedAsType)
-						.withMessage(
-							"%s can not implement %s, %s already directly or indirectly implements %s",
-							name,
-							type.getName(),
-							type.getName(),
-							name
-						)
-						.withCode("model:invalid-implements-loop")
 						.withArgument("type", name)
 						.withArgument("implements", type.getName())
 						.build()

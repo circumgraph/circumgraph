@@ -2,6 +2,7 @@ package com.circumgraph.storage.internal.validators;
 
 import com.circumgraph.model.validation.SourceLocation;
 import com.circumgraph.model.validation.ValidationMessage;
+import com.circumgraph.model.validation.ValidationMessageType;
 import com.circumgraph.storage.Value;
 import com.circumgraph.storage.types.ValueValidator;
 
@@ -15,6 +16,11 @@ public class NonNullValueValidator
 	implements ValueValidator<Value>
 {
 	private static NonNullValueValidator INSTANCE = new NonNullValueValidator();
+
+	private static ValidationMessageType ERROR = ValidationMessageType.error()
+		.withCode("storage:validation:null")
+		.withMessage("Value can not be null")
+		.build();
 
 	@SuppressWarnings("unchecked")
 	public static <V extends Value> ValueValidator<V> instance()
@@ -31,10 +37,8 @@ public class NonNullValueValidator
 		return Mono.fromSupplier(() -> {
 			if(value == null)
 			{
-				return ValidationMessage.error()
+				return ERROR.toMessage()
 					.withLocation(location)
-					.withCode("storage:non-null-value")
-					.withMessage("Value can not be null")
 					.build();
 			}
 

@@ -46,45 +46,14 @@ public interface ValidationMessage
 	MapIterable<String, Object> getArguments();
 
 	/**
-	 * Start building a new validation message with the given level.
+	 * Start building a new validation message.
 	 *
-	 * @param level
+	 * @param type
 	 * @return
 	 */
-	static Builder create(ValidationMessageLevel level)
+	static Builder create(ValidationMessageType type)
 	{
-		return ValidationMessageImpl.create(level);
-	}
-
-	/**
-	 * Start building a new {@link ValidationMessageLevel#INFO info} message.
-	 *
-	 * @return
-	 */
-	static Builder info()
-	{
-		return create(ValidationMessageLevel.INFO);
-	}
-
-	/**
-	 * Start building a new {@link ValidationMessageLevel#WARNING warning}
-	 * message.
-	 *
-	 * @return
-	 */
-	static Builder warn()
-	{
-		return create(ValidationMessageLevel.WARNING);
-	}
-
-	/**
-	 * Start building a new {@link ValidationMessageLevel#ERROR error} message.
-	 *
-	 * @return
-	 */
-	static Builder error()
-	{
-		return create(ValidationMessageLevel.ERROR);
+		return ValidationMessageImpl.create(type);
 	}
 
 	interface Builder
@@ -104,23 +73,6 @@ public interface ValidationMessage
 		 * @return
 		 */
 		Builder withLocation(HasSourceLocation object);
-
-		/**
-		 * Set a the human-readable message.
-		 *
-		 * @param message
-		 * @param args
-		 * @return
-		 */
-		Builder withMessage(String message, Object... args);
-
-		/**
-		 * Set the code of the message.
-		 *
-		 * @param code
-		 * @return
-		 */
-		Builder withCode(String code);
 
 		/**
 		 * Add an argument to the message.

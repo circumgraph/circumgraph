@@ -7,6 +7,7 @@ import com.circumgraph.model.DirectiveUse;
 import com.circumgraph.model.FieldDef;
 import com.circumgraph.model.validation.DirectiveValidator;
 import com.circumgraph.model.validation.ValidationMessage;
+import com.circumgraph.model.validation.ValidationMessageType;
 import com.circumgraph.storage.internal.ValueProviders;
 
 /**
@@ -21,6 +22,24 @@ import com.circumgraph.storage.internal.ValueProviders;
 public class DefaultDirectiveValidator
 	implements DirectiveValidator<FieldDef>
 {
+	private static final ValidationMessageType INVALID_ARGUMENTS = ValidationMessageType.error()
+		.withCode("storage:@default:invalid-arguments")
+		.withMessage("@default requires either provider or value to be provided")
+		.build();
+
+	private static final ValidationMessageType UNKNOWN_PROVIDER = ValidationMessageType.error()
+		.withCode("storage:@default:unknown-provider")
+		.withMessage("The provider {{provider}} is not available")
+		.withArgument("provider")
+		.build();
+
+	private static final ValidationMessageType INVALID_PROVIDER = ValidationMessageType.error()
+		.withCode("storage:@default:invalid-provider")
+		.withMessage("{{provider}} does not support the type {{fieldType}}")
+		.withArgument("provider")
+		.withArgument("fieldType")
+		.build();
+
 	private final ValueProviders valueProviders;
 
 	public DefaultDirectiveValidator(ValueProviders valueProviders)
@@ -50,10 +69,9 @@ public class DefaultDirectiveValidator
 		if(directive.getArguments().isEmpty()
 			|| ! DirectiveValidator.checkOnlyArguments(directive, "provider", "value"))
 		{
-			validationCollector.accept(ValidationMessage.error()
+			validationCollector.accept(INVALID_ARGUMENTS
+				.toMessage()
 				.withLocation(directive.getSourceLocation())
-				.withMessage("@default can only be used with one argument, please use either `provider` or `value`, but not both")
-				.withCode("storage:default-arguments-invalid")
 				.build()
 			);
 
@@ -72,12 +90,24 @@ public class DefaultDirectiveValidator
 			var actualProvider = valueProviders.get(provider.get());
 			if(! actualProvider.isPresent())
 			{
-				validationCollector.accept(ValidationMessage.error()
+				validationCollector.accept(UNKNOWN_PROVIDER.toMessage()
 					.withLocation(directive.getSourceLocation())
-					.withMessage("The provider `%s` is not available for @default", provider.get())
-					.withCode("storage:default-provider-unknown")
+					.withArgument("provider", provider.get())
 					.build()
 				);
+			}
+			else
+			{
+				var instance = actualProvider.get();
+				if(location.getType().isAssignableFrom(instance.getType()))
+				{
+					validationCollector.accept(INVALID_PROVIDER.toMessage()
+						.withLocation(directive.getSourceLocation())
+						.withArgument("provider", provider.get())
+						.withArgument("fieldType", location.getTypeName())
+						.build()
+					);
+				}
 			}
 		}
 		else if(value.isPresent())
@@ -86,10 +116,8 @@ public class DefaultDirectiveValidator
 		}
 		else
 		{
-			validationCollector.accept(ValidationMessage.error()
+			validationCollector.accept(INVALID_ARGUMENTS.toMessage()
 				.withLocation(directive.getSourceLocation())
-				.withMessage("@default should be used with either `provider` or `value`")
-				.withCode("storage:default-arguments-invalid")
 				.build()
 			);
 		}

@@ -33,6 +33,12 @@ public class ObjectDefImpl
 	}
 
 	@Override
+	public boolean isAssignableFrom(TypeDef other)
+	{
+		return this == other;
+	}
+
+	@Override
 	public String toString()
 	{
 		return "ObjectDef{name=" + name + "}";

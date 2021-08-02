@@ -3,6 +3,7 @@ package com.circumgraph.model.internal;
 import com.circumgraph.model.DirectiveUse;
 import com.circumgraph.model.FieldDef;
 import com.circumgraph.model.InterfaceDef;
+import com.circumgraph.model.StructuredDef;
 import com.circumgraph.model.TypeDef;
 import com.circumgraph.model.validation.SourceLocation;
 
@@ -30,6 +31,28 @@ public class InterfaceDefImpl
 			directives,
 			fields
 		);
+	}
+
+	@Override
+	public boolean isAssignableFrom(TypeDef other)
+	{
+		if(this == other)
+		{
+			return true;
+		}
+
+		if(other instanceof StructuredDef)
+		{
+			for(var i : ((StructuredDef) other).getAllImplements())
+			{
+				if(i == this)
+				{
+					return true;
+				}
+			}
+		}
+
+		return false;
 	}
 
 	@Override

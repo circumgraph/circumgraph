@@ -23,4 +23,16 @@ public interface TypeDef
 	 *   optional containing the description of the type
 	 */
 	Optional<String> getDescription();
+
+	/**
+	 * Get if the other type is assignable to something that is declared as
+	 * this type.
+	 *
+	 * @param other
+	 *   other type to check
+	 * @return
+	 *   {@code true} if something declared as this type can be assigned the
+	 *   other type
+	 */
+	boolean isAssignableFrom(TypeDef other);
 }

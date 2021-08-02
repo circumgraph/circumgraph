@@ -3,6 +3,7 @@ package com.circumgraph.model.internal;
 import java.util.Objects;
 import java.util.Optional;
 
+import com.circumgraph.model.TypeDef;
 import com.circumgraph.model.TypeRef;
 
 public class TypeRefImpl
@@ -27,6 +28,12 @@ public class TypeRefImpl
 	public Optional<String> getDescription()
 	{
 		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public boolean isAssignableFrom(TypeDef other)
+	{
+		return id.equals(other.getName());
 	}
 
 	@Override
