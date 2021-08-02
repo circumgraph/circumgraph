@@ -1,5 +1,9 @@
 package com.circumgraph.storage;
 
+/**
+ * Exception thrown when issues occur in the storage, thrown both during
+ * mutation and fetching.
+ */
 public class StorageException
 	extends RuntimeException
 {
