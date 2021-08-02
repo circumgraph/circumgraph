@@ -12,6 +12,11 @@ import reactor.core.publisher.Flux;
 public interface ValueValidator<V extends Value>
 {
 	/**
+	 * Empty value validator.
+	 */
+	static ValueValidator<?> EMPTY = (location, v) -> Flux.empty();
+
+	/**
 	 * Validate this value.
 	 *
 	 * @param value
@@ -21,4 +26,16 @@ public interface ValueValidator<V extends Value>
 		SourceLocation location,
 		V value
 	);
+
+	/**
+	 * Get an empty validator.
+	 *
+	 * @param <V>
+	 * @return
+	 */
+	@SuppressWarnings("unchecked")
+	static <V extends Value> ValueValidator<V> empty()
+	{
+		return (ValueValidator<V>) EMPTY;
+	}
 }

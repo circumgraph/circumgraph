@@ -1,4 +1,4 @@
-package com.circumgraph.storage.internal;
+package com.circumgraph.storage.internal.providers;
 
 import com.circumgraph.model.ScalarDef;
 import com.circumgraph.model.SimpleValueDef;

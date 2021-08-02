@@ -1,7 +1,8 @@
 package com.circumgraph.storage.types;
 
-import com.circumgraph.model.SimpleValueDef;
+import com.circumgraph.model.OutputTypeDef;
 import com.circumgraph.storage.Value;
+import com.circumgraph.storage.internal.providers.StaticValueProvider;
 
 import reactor.core.publisher.Mono;
 
@@ -15,7 +16,7 @@ public interface ValueProvider<V extends Value>
 	 *
 	 * @return
 	 */
-	SimpleValueDef getType();
+	OutputTypeDef getType();
 
 	/**
 	 * Create the value.
@@ -23,4 +24,16 @@ public interface ValueProvider<V extends Value>
 	 * @return
 	 */
 	Mono<V> create();
+
+	/**
+	 * Create a provider for a static value.
+	 *
+	 * @param def
+	 * @param value
+	 * @return
+	 */
+	static <V extends Value> ValueProvider<V> createStatic(V value)
+	{
+		return new StaticValueProvider<>(value);
+	}
 }

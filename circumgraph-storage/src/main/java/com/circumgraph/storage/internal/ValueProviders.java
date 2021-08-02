@@ -2,6 +2,7 @@ package com.circumgraph.storage.internal;
 
 import java.util.Optional;
 
+import com.circumgraph.storage.internal.providers.GeneratedIdValueProvider;
 import com.circumgraph.storage.types.ValueProvider;
 
 import org.eclipse.collections.api.factory.Maps;
