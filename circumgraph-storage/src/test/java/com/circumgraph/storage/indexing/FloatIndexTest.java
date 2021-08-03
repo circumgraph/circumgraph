@@ -13,12 +13,12 @@ import com.circumgraph.storage.SingleSchemaTest;
 import com.circumgraph.storage.StorageSchema;
 import com.circumgraph.storage.mutation.ScalarValueMutation;
 import com.circumgraph.storage.search.Query;
+import com.circumgraph.storage.search.QueryPath;
 
 import org.junit.jupiter.api.Test;
 
 import se.l4.silo.index.EqualsMatcher;
 import se.l4.silo.index.RangeMatcher;
-import se.l4.silo.index.search.query.FieldQuery;
 
 public class FloatIndexTest
 	extends SingleSchemaTest
@@ -76,8 +76,9 @@ public class FloatIndexTest
 
 		collection.store(mutation).block();
 
+		var root = QueryPath.root(collection.getDefinition());
 		var results = collection.search(Query.create()
-			.addClause(FieldQuery.create("_.value", EqualsMatcher.create(10.2)))
+			.addClause(root.field("value").toQuery(EqualsMatcher.create(10.2)))
 		).block();
 
 		assertThat(results.getTotalCount(), is(1));
@@ -94,8 +95,9 @@ public class FloatIndexTest
 
 		collection.store(mutation).block();
 
+		var root = QueryPath.root(collection.getDefinition());
 		var results = collection.search(Query.create()
-			.addClause(FieldQuery.create("_.value", RangeMatcher.isMoreThan(10.0)))
+			.addClause(root.field("value").toQuery(RangeMatcher.isMoreThan(10.0)))
 		).block();
 
 		assertThat(results.getTotalCount(), is(1));
@@ -112,8 +114,9 @@ public class FloatIndexTest
 
 		collection.store(mutation).block();
 
+		var root = QueryPath.root(collection.getDefinition());
 		var results = collection.search(Query.create()
-			.addClause(FieldQuery.create("_.value", RangeMatcher.isMoreThan(11.0)))
+			.addClause(root.field("value").toQuery(RangeMatcher.isMoreThan(11.0)))
 		).block();
 
 		assertThat(results.getTotalCount(), is(0));

@@ -26,14 +26,13 @@ public abstract class SimpleValueCriteria
 	{
 		InputUnions.validate(getGraphQLType(), data);
 
-		var field = (QueryPath.Leaf) path;
 		if(data.get("any") != null)
 		{
 			var value = (Boolean) data.get("any");
-			return field.toQuery(value ? AnyMatcher.create() : NullMatcher.create());
+			return path.toQuery(value ? AnyMatcher.create() : NullMatcher.create());
 		}
 
-		return field.toQuery(createMatcher(data));
+		return path.toQuery(createMatcher(data));
 	}
 
 	protected abstract Matcher<?> createMatcher(Map<String, Object> data);

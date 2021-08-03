@@ -8,6 +8,7 @@ import com.circumgraph.model.DirectiveUse;
 import com.circumgraph.model.FieldDef;
 import com.circumgraph.model.MetadataKey;
 import com.circumgraph.model.OutputTypeDef;
+import com.circumgraph.model.StructuredDef;
 import com.circumgraph.model.TypeRef;
 import com.circumgraph.model.validation.ModelValidation;
 import com.circumgraph.model.validation.SourceLocation;
@@ -32,7 +33,9 @@ public class FieldDefImpl
 	private final ImmutableList<DirectiveUse> directives;
 
 	private final MetadataHelper metadata;
+
 	private ModelDefs defs;
+	private StructuredDef declaringType;
 
 	public FieldDefImpl(
 		SourceLocation sourceLocation,
@@ -87,6 +90,17 @@ public class FieldDefImpl
 	public ListIterable<ArgumentDef> getArguments()
 	{
 		return arguments;
+	}
+
+	@Override
+	public StructuredDef getDeclaringType()
+	{
+		return declaringType;
+	}
+
+	public void setDeclaringType(StructuredDef declaringType)
+	{
+		this.declaringType = declaringType;
 	}
 
 	@Override

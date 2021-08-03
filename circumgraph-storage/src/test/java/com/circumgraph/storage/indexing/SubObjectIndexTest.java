@@ -5,7 +5,6 @@ import static org.hamcrest.Matchers.is;
 
 import com.circumgraph.model.DirectiveUse;
 import com.circumgraph.model.FieldDef;
-import com.circumgraph.model.Model;
 import com.circumgraph.model.NonNullDef;
 import com.circumgraph.model.ObjectDef;
 import com.circumgraph.model.ScalarDef;
@@ -16,11 +15,11 @@ import com.circumgraph.storage.StorageSchema;
 import com.circumgraph.storage.mutation.ScalarValueMutation;
 import com.circumgraph.storage.mutation.StructuredMutation;
 import com.circumgraph.storage.search.Query;
+import com.circumgraph.storage.search.QueryPath;
 
 import org.junit.jupiter.api.Test;
 
 import se.l4.silo.index.EqualsMatcher;
-import se.l4.silo.index.search.query.FieldQuery;
 
 public class SubObjectIndexTest
 	extends SingleSchemaTest
@@ -103,9 +102,10 @@ public class SubObjectIndexTest
 
 		collection.store(mutation).block();
 
+		var root = QueryPath.root(collection.getDefinition());
 		var results = collection.search(
 			Query.create()
-				.addClause(FieldQuery.create("_.sub._.value", EqualsMatcher.create("b1")))
+				.addClause(root.field("sub").field("value").toQuery(EqualsMatcher.create("b1")))
 		).block();
 
 		assertThat(results.getTotalCount(), is(0));
@@ -125,9 +125,10 @@ public class SubObjectIndexTest
 
 		collection.store(mutation).block();
 
+		var root = QueryPath.root(collection.getDefinition());
 		var results = collection.search(
 			Query.create()
-				.addClause(FieldQuery.create("_.sub._.value", EqualsMatcher.create("a1")))
+				.addClause(root.field("sub").field("value").toQuery(EqualsMatcher.create("a1")))
 		).block();
 
 		assertThat(results.getTotalCount(), is(1));

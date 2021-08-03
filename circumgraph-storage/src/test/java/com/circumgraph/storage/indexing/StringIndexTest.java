@@ -14,11 +14,11 @@ import com.circumgraph.storage.SingleSchemaTest;
 import com.circumgraph.storage.StorageSchema;
 import com.circumgraph.storage.mutation.ScalarValueMutation;
 import com.circumgraph.storage.search.Query;
+import com.circumgraph.storage.search.QueryPath;
 
 import org.junit.jupiter.api.Test;
 
 import se.l4.silo.index.EqualsMatcher;
-import se.l4.silo.index.search.query.FieldQuery;
 
 public class StringIndexTest
 	extends SingleSchemaTest
@@ -103,9 +103,10 @@ public class StringIndexTest
 
 		collection.store(mutation).block();
 
+		var root = QueryPath.root(collection.getDefinition());
 		var results = collection.search(
 			Query.create()
-				.addClause(FieldQuery.create("_.isbn", EqualsMatcher.create("a")))
+				.addClause(root.field("isbn").toQuery(EqualsMatcher.create("a")))
 		).block();
 
 		assertThat(results.getTotalCount(), is(0));
@@ -123,9 +124,10 @@ public class StringIndexTest
 
 		collection.store(mutation).block();
 
+		var root = QueryPath.root(collection.getDefinition());
 		var results = collection.search(
 			Query.create()
-				.addClause(FieldQuery.create("_.isbn", EqualsMatcher.create("076790818X")))
+				.addClause(root.field("isbn").toQuery(EqualsMatcher.create("076790818X")))
 		).block();
 
 		assertThat(results.getTotalCount(), is(1));
@@ -142,9 +144,10 @@ public class StringIndexTest
 
 		collection.store(mutation).block();
 
+		var root = QueryPath.root(collection.getDefinition());
 		var results = collection.search(
 			Query.create()
-				.addClause(FieldQuery.create("_.isbn", EqualsMatcher.create(null)))
+				.addClause(root.field("isbn").toQuery(EqualsMatcher.create(null)))
 		).block();
 
 		assertThat(results.getTotalCount(), is(1));

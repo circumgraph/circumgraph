@@ -381,7 +381,7 @@ public class SearchQueryGenerator
 					for(var s : sort)
 					{
 						query = query.addSort(FieldSort.create(
-							(String) s.get("field"),
+							((QueryPath) s.get("field")).toIndexName(),
 							(Boolean) s.get("ascending")
 						));
 					}
@@ -439,12 +439,14 @@ public class SearchQueryGenerator
 		StructuredDef def
 	)
 	{
+		var rootPath = QueryPath.root(def);
+
 		var values = def.getFields()
 			.select(f -> StorageModel.isSortable(f))
 			.collect(field -> GraphQLEnumValueDefinition.newEnumValueDefinition()
-				.name(field.getName().toString().toUpperCase()) // TODO should be upper snake case
+				.name(field.getName().toUpperCase()) // TODO should be upper snake case
 				.description("Sort by the field " + field.getName())
-				.value("_." + field.getName())
+				.value(rootPath.field(field.getName()))
 				.build()
 			)
 			.toList();

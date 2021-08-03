@@ -48,6 +48,13 @@ public interface FieldDef
 	ListIterable<ArgumentDef> getArguments();
 
 	/**
+	 * Get the type that original declared this type.
+	 *
+	 * @return
+	 */
+	StructuredDef getDeclaringType();
+
+	/**
 	 * Start building a new field.
 	 *
 	 * @param name

@@ -12,6 +12,10 @@ import graphql.schema.GraphQLInputObjectField;
 import graphql.schema.GraphQLInputObjectType;
 import se.l4.silo.index.search.QueryClause;
 
+/**
+ * Criteria that combines {@link Criteria} instances for all the fields in
+ * a {@link StructuredDef}.
+ */
 public class FieldCriteria
 	implements Criteria
 {
@@ -69,7 +73,7 @@ public class FieldCriteria
 				return fields.get(entry.getKey())
 					.toClause(
 						(Map<String, Object>) entry.getValue(),
-						((QueryPath.Branch) path).field(entry.getKey())
+						path.field(entry.getKey())
 					);
 			}
 		}

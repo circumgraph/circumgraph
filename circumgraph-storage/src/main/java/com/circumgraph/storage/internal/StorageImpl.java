@@ -22,10 +22,13 @@ import com.circumgraph.storage.StoredObjectRef;
 import com.circumgraph.storage.StoredObjectValue;
 import com.circumgraph.storage.StructuredValue;
 import com.circumgraph.storage.Value;
+import com.circumgraph.storage.search.QueryPath;
 
 import org.eclipse.collections.api.RichIterable;
 import org.eclipse.collections.api.factory.Lists;
+import org.eclipse.collections.api.factory.Sets;
 import org.eclipse.collections.api.map.ImmutableMap;
+import org.eclipse.collections.api.set.MutableSet;
 
 import reactor.core.publisher.Mono;
 import se.l4.silo.CollectionRef;
@@ -109,7 +112,7 @@ public class StorageImpl
 				return CollectionDef.create(StoredObjectValue.class, "collection:" + def.getName())
 					.withId(Long.class, StorageImpl::getID)
 					.withCodec(codec)
-					.addIndex(generateIndexDef(def))
+					.addIndex(generateIndexDef(model, def))
 					.build();
 			});
 	}
@@ -166,6 +169,7 @@ public class StorageImpl
 	 * @return
 	 */
 	public static SearchIndexDef<StoredObjectValue> generateIndexDef(
+		Model model,
 		StructuredDef def
 	)
 	{
@@ -173,11 +177,14 @@ public class StorageImpl
 
 		ValueGenerator gen = (root, consumer) -> consumer.accept(root);
 		collectIndexedFields(
+			model,
+
 			null,
 			def,
-			null,
+			QueryPath.root(def),
 			false,
 			gen,
+
 			fields::add
 		);
 
@@ -189,6 +196,7 @@ public class StorageImpl
 	/**
 	 * Collect indexed fields by recursively visiting types and fields.
 	 *
+	 * @param model
 	 * @param field
 	 * @param def
 	 * @param path
@@ -197,9 +205,11 @@ public class StorageImpl
 	 * @param fieldReceiver
 	 */
 	private static void collectIndexedFields(
+		Model model,
+
 		FieldDef field,
 		TypeDef def,
-		String path,
+		QueryPath path,
 		boolean multiple,
 		ValueGenerator generator,
 
@@ -215,6 +225,8 @@ public class StorageImpl
 		{
 			var listDef = (ListDef) def;
 			collectIndexedFields(
+				model,
+
 				field,
 				listDef.getItemType(),
 				path,
@@ -239,7 +251,7 @@ public class StorageImpl
 
 			if(multiple)
 			{
-				var searchField = SearchFieldDef.create(StoredObjectValue.class, path)
+				var searchField = SearchFieldDef.create(StoredObjectValue.class, path.toIndexName())
 					.withType(indexer.get().getSearchFieldType())
 					.withHighlighting(highlightable)
 					.collection()
@@ -254,7 +266,7 @@ public class StorageImpl
 			}
 			else
 			{
-				var searchField = SearchFieldDef.create(StoredObjectValue.class, path)
+				var searchField = SearchFieldDef.create(StoredObjectValue.class, path.toIndexName())
 					.withType((SearchFieldType<Object>) indexer.get().getSearchFieldType())
 					.withHighlighting(highlightable)
 					.withSupplier(value -> {
@@ -279,10 +291,12 @@ public class StorageImpl
 			 */
 			var structuredDef = (StructuredDef) def;
 
-			if(path != null && structuredDef.findImplements(StorageSchema.ENTITY_NAME))
+			if(! path.isRoot() && structuredDef.findImplements(StorageSchema.ENTITY_NAME))
 			{
 				// Not root entity and implements entity - index as an ID
 				collectIndexedFields(
+					model,
+
 					field,
 					ScalarDef.ID,
 					path,
@@ -295,7 +309,7 @@ public class StorageImpl
 			else if(def instanceof InterfaceDef)
 			{
 				// For interfaces we first make sure that __typename is available
-				var typenameField = SearchFieldDef.create(StoredObjectValue.class, join(path, "__typename"))
+				var typenameField = SearchFieldDef.create(StoredObjectValue.class, path.typename().toIndexName())
 					.withType(SearchFieldType.forString().token().build())
 					.withSupplier(value -> {
 						var list = Lists.mutable.<String>empty();
@@ -306,28 +320,42 @@ public class StorageImpl
 
 				fieldReceiver.accept(typenameField);
 
-				// Index all of the shared fields
-				for(var fieldDef : structuredDef.getFields())
+				/*
+				 * Go through all the implementations of this interface and
+				 * index all the fields in it.
+				 */
+				MutableSet<String> fields = Sets.mutable.empty();
+				for(var subDef : model.findImplements(def.getName()))
 				{
-					var name = fieldDef.getName();
-					ValueGenerator fieldGenerator = (root, consumer) -> generator.generate(
-						root,
-						v -> {
-							consumer.accept(((StructuredValue) v).getFields().get(name));
-						}
-					);
+					for(var fieldDef : subDef.getFields())
+					{
+						var name = fieldDef.getName();
+						var fieldPath = path
+							.polymorphic(fieldDef.getDeclaringType())
+							.field(name);
 
-					collectIndexedFields(
-						fieldDef,
-						fieldDef.getType(),
-						join(join(path, "_"), name),
-						multiple,
-						fieldGenerator,
-						fieldReceiver
-					);
+						if(! fields.add(fieldPath.toIndexName())) continue;
+
+						ValueGenerator fieldGenerator = (root, consumer) -> generator.generate(
+							root,
+							v -> {
+								consumer.accept(((StructuredValue) v).getFields().get(name));
+							}
+						);
+
+						collectIndexedFields(
+							model,
+
+							fieldDef,
+							fieldDef.getType(),
+							fieldPath,
+							multiple,
+							fieldGenerator,
+
+							fieldReceiver
+						);
+					}
 				}
-
-				// TODO: Polymorphism
 			}
 			else
 			{
@@ -342,21 +370,19 @@ public class StorageImpl
 					);
 
 					collectIndexedFields(
+						model,
+
 						fieldDef,
 						fieldDef.getType(),
-						join(join(path, "_"), name),
+						path.field(name),
 						multiple,
 						fieldGenerator,
+
 						fieldReceiver
 					);
 				}
 			}
 		}
-	}
-
-	private static String join(String path, String next)
-	{
-		return path == null || path.isEmpty() ? next : path + '.' + next;
 	}
 
 	private static Object extractValue(Value v)

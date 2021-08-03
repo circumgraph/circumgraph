@@ -18,11 +18,11 @@ import com.circumgraph.storage.mutation.ListSetMutation;
 import com.circumgraph.storage.mutation.ScalarValueMutation;
 import com.circumgraph.storage.mutation.StoredObjectRefMutation;
 import com.circumgraph.storage.search.Query;
+import com.circumgraph.storage.search.QueryPath;
 
 import org.junit.jupiter.api.Test;
 
 import se.l4.silo.index.EqualsMatcher;
-import se.l4.silo.index.search.query.FieldQuery;
 
 public class StoredObjectRefListIndexTest
 	extends SingleSchemaTest
@@ -108,9 +108,10 @@ public class StoredObjectRefListIndexTest
 			.build()
 		).block();
 
+		var root = QueryPath.root(books.getDefinition());
 		var results = books.search(
 			Query.create()
-				.addClause(FieldQuery.create("_.authors", EqualsMatcher.create(authorId)))
+				.addClause(root.field("authors").toQuery(EqualsMatcher.create(authorId)))
 		).block();
 
 		assertThat(results.getTotalCount(), is(1));

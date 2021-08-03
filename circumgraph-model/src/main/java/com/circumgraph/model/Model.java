@@ -27,6 +27,16 @@ public interface Model
 	Optional<TypeDef> get(String id);
 
 	/**
+	 * Get a type by its name and type.
+	 *
+	 * @param <T>
+	 * @param id
+	 * @param type
+	 * @return
+	 */
+	<T extends TypeDef> Optional<T> get(String id, Class<T> type);
+
+	/**
 	 * Get all the types in the model.
 	 *
 	 * @return

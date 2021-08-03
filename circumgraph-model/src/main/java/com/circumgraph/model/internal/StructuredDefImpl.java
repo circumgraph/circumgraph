@@ -165,7 +165,6 @@ public abstract class StructuredDefImpl
 	@Override
 	public RichIterable<FieldDef> getFields()
 	{
-		ensureFields();
 		return fields;
 	}
 
@@ -178,7 +177,6 @@ public abstract class StructuredDefImpl
 	@Override
 	public Optional<FieldDef> getField(String name)
 	{
-		ensureFields();
 		return Optional.ofNullable(fields.get(name));
 	}
 
@@ -197,6 +195,8 @@ public abstract class StructuredDefImpl
 		{
 			HasPreparation.maybePrepare(field, defs);
 		}
+
+		ensureFields();
 	}
 
 	@Override
@@ -208,6 +208,11 @@ public abstract class StructuredDefImpl
 	private void ensureFields()
 	{
 		if(fields != null) return;
+
+		for(var field : directFields)
+		{
+			((FieldDefImpl) field).setDeclaringType(this);
+		}
 
 		MutableMap<String, FieldDef> fields = directFields.toMap(FieldDef::getName, v -> v);
 		getImplements().forEach(def -> {

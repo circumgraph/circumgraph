@@ -18,11 +18,11 @@ import com.circumgraph.storage.StorageSchema;
 import com.circumgraph.storage.mutation.ListSetMutation;
 import com.circumgraph.storage.mutation.ScalarValueMutation;
 import com.circumgraph.storage.search.Query;
+import com.circumgraph.storage.search.QueryPath;
 
 import org.junit.jupiter.api.Test;
 
 import se.l4.silo.index.EqualsMatcher;
-import se.l4.silo.index.search.query.FieldQuery;
 
 public class ListStringIndexTest
 	extends SingleSchemaTest
@@ -107,9 +107,10 @@ public class ListStringIndexTest
 
 		collection.store(mutation).block();
 
+		var root = QueryPath.root(collection.getDefinition());
 		var results = collection.search(
 			Query.create()
-				.addClause(FieldQuery.create("_.tags", EqualsMatcher.create("na")))
+				.addClause(root.field("tags").toQuery(EqualsMatcher.create("na")))
 		).block();
 
 		assertThat(results.getTotalCount(), is(0));
@@ -129,9 +130,10 @@ public class ListStringIndexTest
 
 		collection.store(mutation).block();
 
+		var root = QueryPath.root(collection.getDefinition());
 		var results = collection.search(
 			Query.create()
-				.addClause(FieldQuery.create("_.tags", EqualsMatcher.create("b")))
+				.addClause(root.field("tags").toQuery(EqualsMatcher.create("b")))
 		).block();
 
 		assertThat(results.getTotalCount(), is(1));
