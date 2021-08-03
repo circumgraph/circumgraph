@@ -10,9 +10,13 @@ import com.circumgraph.model.ListDef;
 import com.circumgraph.model.Model;
 import com.circumgraph.model.ObjectDef;
 import com.circumgraph.model.ScalarDef;
+import com.circumgraph.model.StructuredDef;
+import com.circumgraph.model.TypeRef;
+import com.circumgraph.model.UnionDef;
 import com.circumgraph.storage.mutation.ListSetMutation;
 import com.circumgraph.storage.mutation.ScalarValueMutation;
 import com.circumgraph.storage.mutation.StoredObjectRefMutation;
+import com.circumgraph.storage.mutation.StructuredMutation;
 
 import org.junit.jupiter.api.Test;
 
@@ -104,7 +108,7 @@ public class StoredObjectRefTest
 		var books = storage.get("Book");
 		var authors = storage.get("Author");
 
-		assertThrows(StorageException.class, () -> {
+		assertThrows(StorageValidationException.class, () -> {
 			books.store(books.newMutation()
 				.updateField("title", ScalarValueMutation.createString("A short history of nearly everything"))
 				.updateField("author", StoredObjectRefMutation.create(authors.getDefinition(), 1l))
@@ -170,6 +174,135 @@ public class StoredObjectRefTest
 		var fetchedAuthorRef = fetchedAuthorsRef.items().getFirst();
 		assertThat(fetchedAuthorRef.getDefinition(), is(author.getDefinition()));
 		assertThat(fetchedAuthorRef.getId(), is(authorId));
+	}
+
+	@Test
+	public void testStoreUnion()
+	{
+		var storage = open(Model.create()
+			.addSchema(StorageSchema.INSTANCE)
+			.addType(ObjectDef.create("Book")
+				.addImplements(StorageSchema.ENTITY_NAME)
+				.addField(FieldDef.create("title")
+					.withType(ScalarDef.STRING)
+					.build()
+				)
+				.addField(FieldDef.create("creator")
+					.withType("Creator")
+					.build()
+				)
+				.build()
+			)
+			.addType(UnionDef.create("Creator")
+				.addType(TypeRef.create("Author"))
+				.addType(TypeRef.create("FakeAuthor"))
+				.build()
+			)
+			.addType(ObjectDef.create("FakeAuthor")
+				.addField(FieldDef.create("name")
+					.withType(ScalarDef.STRING)
+					.build()
+				)
+				.build()
+			)
+			.addType(ObjectDef.create("Author")
+				.addImplements(StorageSchema.ENTITY_NAME)
+				.addField(FieldDef.create("name")
+					.withType(ScalarDef.STRING)
+					.build()
+				)
+				.build()
+			)
+			.build());
+
+		var authors = storage.get("Author");
+
+		var author = authors.store(authors.newMutation()
+			.updateField("name", ScalarValueMutation.createString("Example Author"))
+			.build()
+		).block();
+
+		var authorId = author.getId();
+
+		var books = storage.get("Book");
+
+		var book = books.store(books.newMutation()
+			.updateField("title", ScalarValueMutation.createString("A short history of nearly everything"))
+			.updateField("creator", StoredObjectRefMutation.create(authors.getDefinition(), authorId))
+			.build()
+		).block();
+
+		var creatorRef = book.getField("creator", StoredObjectRef.class).get();
+		assertThat(creatorRef.getDefinition(), is(author.getDefinition()));
+		assertThat(creatorRef.getId(), is(authorId));
+
+		var fetchedBook = books.get(book.getId()).block();
+
+		var fetchedCreatorRef = fetchedBook.getField("creator", StoredObjectRef.class).get();
+		assertThat(fetchedCreatorRef.getDefinition(), is(author.getDefinition()));
+		assertThat(fetchedCreatorRef.getId(), is(authorId));
+	}
+
+	@Test
+	public void testStoreUnionNonRef()
+	{
+		var storage = open(Model.create()
+			.addSchema(StorageSchema.INSTANCE)
+			.addType(ObjectDef.create("Book")
+				.addImplements(StorageSchema.ENTITY_NAME)
+				.addField(FieldDef.create("title")
+					.withType(ScalarDef.STRING)
+					.build()
+				)
+				.addField(FieldDef.create("creator")
+					.withType("Creator")
+					.build()
+				)
+				.build()
+			)
+			.addType(UnionDef.create("Creator")
+				.addType(TypeRef.create("Author"))
+				.addType(TypeRef.create("FakeAuthor"))
+				.build()
+			)
+			.addType(ObjectDef.create("FakeAuthor")
+				.addField(FieldDef.create("name")
+					.withType(ScalarDef.STRING)
+					.build()
+				)
+				.build()
+			)
+			.addType(ObjectDef.create("Author")
+				.addImplements(StorageSchema.ENTITY_NAME)
+				.addField(FieldDef.create("name")
+					.withType(ScalarDef.STRING)
+					.build()
+				)
+				.build()
+			)
+			.build());
+
+		var fakeAuthor = (StructuredDef) storage.getModel().get("FakeAuthor").get();
+		var books = storage.get("Book");
+
+		var book = books.store(books.newMutation()
+			.updateField("title", ScalarValueMutation.createString("A short history of nearly everything"))
+			.updateField("creator", StructuredMutation.create(fakeAuthor)
+				.updateField("name", ScalarValueMutation.createString("Example Author"))
+				.build()
+			)
+			.build()
+		).block();
+
+		var creator = book.getField("creator", StructuredValue.class).get();
+		assertThat(creator.getDefinition(), is(fakeAuthor));
+		assertThat(creator.getField("name", SimpleValue.class).get(), is(SimpleValue.createString("Example Author")));
+
+		var fetchedBook = books.get(book.getId()).block();
+
+		var fetchedCreator = fetchedBook.getField("creator", StructuredValue.class).get();
+		assertThat(fetchedCreator.getDefinition(), is(fakeAuthor));
+		assertThat(fetchedCreator.getField("name", SimpleValue.class).get(), is(SimpleValue.createString("Example Author")));
 	}
 
 	@Test
