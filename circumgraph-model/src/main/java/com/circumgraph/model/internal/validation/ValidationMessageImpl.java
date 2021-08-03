@@ -20,23 +20,23 @@ public class ValidationMessageImpl
 {
 	private final SourceLocation sourceLocation;
 	private final ValidationMessageLevel level;
-	private final String message;
 	private final String code;
 	private final MapIterable<String, Object> arguments;
+	private final String message;
 
 	public ValidationMessageImpl(
 		SourceLocation sourceLocation,
 		ValidationMessageLevel level,
-		String message,
 		String code,
-		MapIterable<String, Object> arguments
+		MapIterable<String, Object> arguments,
+		String message
 	)
 	{
 		this.sourceLocation = sourceLocation;
 		this.level = level;
-		this.message = message;
 		this.code = code;
 		this.arguments = arguments;
+		this.message = message;
 	}
 
 	@Override
@@ -175,8 +175,8 @@ public class ValidationMessageImpl
 				location,
 				type.getLevel(),
 				type.getCode(),
-				type.format(arguments),
-				arguments.toImmutable()
+				arguments.toImmutable(),
+				type.format(arguments)
 			);
 		}
 	}
