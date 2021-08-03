@@ -131,7 +131,7 @@ public class IndexDirectiveProcessor
 			if(indexer.isPresent())
 			{
 				// Indexer found - update the metadata
-				StorageModel.setIndexerType(location, indexer.get().getName());
+				StorageModel.setIndexer(location, indexer.get());
 			}
 			else if(indexing.hasMultipleIndexers(def))
 			{
@@ -173,7 +173,7 @@ public class IndexDirectiveProcessor
 			else
 			{
 				// Indexer found - update the metadata
-				StorageModel.setIndexerType(location, indexer.get().getName());
+				StorageModel.setIndexer(location, indexer.get());
 			}
 		}
 	}

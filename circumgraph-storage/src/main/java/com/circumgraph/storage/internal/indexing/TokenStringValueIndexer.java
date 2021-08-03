@@ -10,7 +10,7 @@ import se.l4.silo.engine.index.search.types.SearchFieldType;
  * Indexer for token values.
  */
 public class TokenStringValueIndexer
-	implements ValueIndexer<String>
+	implements ValueIndexer
 {
 	@Override
 	public String getName()

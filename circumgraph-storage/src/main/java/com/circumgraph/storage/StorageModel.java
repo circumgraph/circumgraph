@@ -5,6 +5,7 @@ import java.util.Optional;
 import com.circumgraph.model.FieldDef;
 import com.circumgraph.model.MetadataKey;
 import com.circumgraph.model.Model;
+import com.circumgraph.storage.types.ValueIndexer;
 
 /**
  * Utilities for accessing storage specific enhancements to a {@link Model}
@@ -27,7 +28,7 @@ public class StorageModel
 	}
 
 	private static MetadataKey<FieldType> FIELD_TYPE = MetadataKey.create("storage:field-type", FieldType.class);
-	private static MetadataKey<String> FIELD_INDEXER = MetadataKey.create("storage:field-indexer", String.class);
+	private static MetadataKey<ValueIndexer> FIELD_INDEXER = MetadataKey.create("storage:field-indexer", ValueIndexer.class);
 	private static MetadataKey<Boolean> FIELD_SORTABLE = MetadataKey.create("storage:field-sortable", Boolean.class);
 	private static MetadataKey<Boolean> FIELD_HIGHLIGHTABLE = MetadataKey.create("storage:field-highlightable", Boolean.class);
 
@@ -74,7 +75,7 @@ public class StorageModel
 	 *   optional containing the indexer if the field is indexed, empty optional
 	 *   otherwise
 	 */
-	public static Optional<String> getIndexerType(FieldDef field)
+	public static Optional<ValueIndexer> getIndexer(FieldDef field)
 	{
 		return field.getMetadata(FIELD_INDEXER);
 	}
@@ -85,7 +86,7 @@ public class StorageModel
 	 * @param field
 	 * @param type
 	 */
-	public static void setIndexerType(FieldDef field, String type)
+	public static void setIndexer(FieldDef field, ValueIndexer type)
 	{
 		field.setMetadata(FIELD_INDEXER, type);
 	}

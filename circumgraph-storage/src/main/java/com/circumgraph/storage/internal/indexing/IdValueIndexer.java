@@ -12,7 +12,7 @@ import se.l4.silo.engine.index.search.types.SearchFieldType;
  * range queries.
  */
 public class IdValueIndexer
-	implements ValueIndexer<Long>
+	implements ValueIndexer
 {
 	private static final SearchFieldType<Long> FIELD_TYPE = SearchFieldType.forBinary()
 		.map(IdValueIndexer::deserializeId, IdValueIndexer::serializeId)

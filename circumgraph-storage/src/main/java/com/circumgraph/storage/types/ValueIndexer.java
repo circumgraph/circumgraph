@@ -8,7 +8,7 @@ import se.l4.silo.engine.index.search.types.SearchFieldType;
  * Interface used to provide indexing support for simple values. Indexers are
  * named and tied to a specific {@link SimpleValueDef}.
  */
-public interface ValueIndexer<V>
+public interface ValueIndexer
 {
 	/**
 	 * Get the name of this indexer.
@@ -28,5 +28,5 @@ public interface ValueIndexer<V>
 	 *
 	 * @return
 	 */
-	SearchFieldType<V> getSearchFieldType();
+	SearchFieldType<?> getSearchFieldType();
 }

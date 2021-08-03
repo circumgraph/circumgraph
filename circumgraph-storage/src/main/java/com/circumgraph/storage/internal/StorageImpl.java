@@ -95,7 +95,6 @@ public class StorageImpl
 		Model model
 	)
 	{
-		ValueIndexers indexing = new ValueIndexers();
 		ValueSerializers serializers = new ValueSerializers(model);
 		return model.getImplements(StorageSchema.ENTITY_NAME)
 			.collect(def -> {
@@ -110,7 +109,7 @@ public class StorageImpl
 				return CollectionDef.create(StoredObjectValue.class, "collection:" + def.getName())
 					.withId(Long.class, StorageImpl::getID)
 					.withCodec(codec)
-					.addIndex(generateIndexDef(indexing, def))
+					.addIndex(generateIndexDef(def))
 					.build();
 			});
 	}
@@ -167,8 +166,6 @@ public class StorageImpl
 	 * @return
 	 */
 	public static SearchIndexDef<StoredObjectValue> generateIndexDef(
-		ValueIndexers indexers,
-
 		StructuredDef def
 	)
 	{
@@ -176,8 +173,6 @@ public class StorageImpl
 
 		ValueGenerator gen = (root, consumer) -> consumer.accept(root);
 		collectIndexedFields(
-			indexers,
-
 			null,
 			def,
 			null,
@@ -194,7 +189,6 @@ public class StorageImpl
 	/**
 	 * Collect indexed fields by recursively visiting types and fields.
 	 *
-	 * @param indexers
 	 * @param field
 	 * @param def
 	 * @param path
@@ -203,8 +197,6 @@ public class StorageImpl
 	 * @param fieldReceiver
 	 */
 	private static void collectIndexedFields(
-		ValueIndexers indexers,
-
 		FieldDef field,
 		TypeDef def,
 		String path,
@@ -223,8 +215,6 @@ public class StorageImpl
 		{
 			var listDef = (ListDef) def;
 			collectIndexedFields(
-				indexers,
-
 				field,
 				listDef.getItemType(),
 				path,
@@ -240,19 +230,17 @@ public class StorageImpl
 		}
 		else if(def instanceof SimpleValueDef)
 		{
-			var indexerType = StorageModel.getIndexerType(field);
+			var indexer = StorageModel.getIndexer(field);
 			var sortable = StorageModel.isSortable(field);
 			var highlightable = StorageModel.isHighlightable(field);
 
 			// Only handle this field if it is indexed
-			if(indexerType.isEmpty()) return;
-
-			var indexer = indexers.getIndexer(indexerType.get()).get();
+			if(indexer.isEmpty()) return;
 
 			if(multiple)
 			{
 				var searchField = SearchFieldDef.create(StoredObjectValue.class, path)
-					.withType(indexer.getSearchFieldType())
+					.withType(indexer.get().getSearchFieldType())
 					.withHighlighting(highlightable)
 					.collection()
 					.withSupplier(value -> {
@@ -267,7 +255,7 @@ public class StorageImpl
 			else
 			{
 				var searchField = SearchFieldDef.create(StoredObjectValue.class, path)
-					.withType((SearchFieldType<Object>) indexer.getSearchFieldType())
+					.withType((SearchFieldType<Object>) indexer.get().getSearchFieldType())
 					.withHighlighting(highlightable)
 					.withSupplier(value -> {
 						var list = Lists.mutable.empty();
@@ -295,8 +283,6 @@ public class StorageImpl
 			{
 				// Not root entity and implements entity - index as an ID
 				collectIndexedFields(
-					indexers,
-
 					field,
 					ScalarDef.ID,
 					path,
@@ -332,8 +318,6 @@ public class StorageImpl
 					);
 
 					collectIndexedFields(
-						indexers,
-
 						fieldDef,
 						fieldDef.getType(),
 						join(join(path, "_"), name),
@@ -358,8 +342,6 @@ public class StorageImpl
 					);
 
 					collectIndexedFields(
-						indexers,
-
 						fieldDef,
 						fieldDef.getType(),
 						join(join(path, "_"), name),

@@ -7,7 +7,7 @@ import com.circumgraph.storage.types.ValueIndexer;
 import se.l4.silo.engine.index.search.types.SearchFieldType;
 
 public class BooleanValueIndexer
-	implements ValueIndexer<Boolean>
+	implements ValueIndexer
 {
 	@Override
 	public String getName()

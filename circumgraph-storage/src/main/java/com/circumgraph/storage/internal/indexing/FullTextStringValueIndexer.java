@@ -10,7 +10,7 @@ import se.l4.silo.engine.index.search.types.SearchFieldType;
  * Indexer for full-text string values.
  */
 public class FullTextStringValueIndexer
-	implements ValueIndexer<String>
+	implements ValueIndexer
 {
 	@Override
 	public String getName()

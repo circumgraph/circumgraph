@@ -10,7 +10,7 @@ import se.l4.silo.engine.index.search.types.SearchFieldType;
  * Indexer for full text with type ahead search.
  */
 public class TypeAheadStringValueIndexer
-	implements ValueIndexer<String>
+	implements ValueIndexer
 {
 	@Override
 	public String getName()

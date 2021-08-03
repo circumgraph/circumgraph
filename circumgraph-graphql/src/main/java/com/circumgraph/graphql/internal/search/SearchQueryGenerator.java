@@ -425,10 +425,10 @@ public class SearchQueryGenerator
 	private FieldCriteria resolveFieldCriteria(StructuredDef def)
 	{
 		var fields = def.getFields()
-			.select(f -> StorageModel.getIndexerType(f).isPresent())
+			.select(f -> StorageModel.getIndexer(f).isPresent())
 			.toMap(FieldDef::getName, f -> {
-				var indexer = StorageModel.getIndexerType(f);
-				return indexerToCriteria.get(indexer.get());
+				var indexer = StorageModel.getIndexer(f);
+				return indexerToCriteria.get(indexer.get().getName());
 			})
 			.toImmutable();
 

@@ -10,7 +10,7 @@ import se.l4.silo.engine.index.search.types.SearchFieldType;
  * {@link ValueIndexer} for {@link EnumDef enums}.
  */
 public class EnumValueIndexer
-	implements ValueIndexer<String>
+	implements ValueIndexer
 {
 	private final EnumDef def;
 

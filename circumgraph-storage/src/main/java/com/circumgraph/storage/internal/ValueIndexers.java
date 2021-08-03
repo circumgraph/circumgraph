@@ -28,12 +28,12 @@ import org.eclipse.collections.impl.factory.Multimaps;
  */
 public class ValueIndexers
 {
-	private final ImmutableMap<String, ValueIndexer<?>> indexersByName;
-	private final ImmutableMultimap<SimpleValueDef, ValueIndexer<?>> indexersByType;
+	private final ImmutableMap<String, ValueIndexer> indexersByName;
+	private final ImmutableMultimap<SimpleValueDef, ValueIndexer> indexersByType;
 
 	public ValueIndexers()
 	{
-		var indexers = Sets.mutable.<ValueIndexer<?>>of(
+		var indexers = Sets.mutable.<ValueIndexer>of(
 			new TokenStringValueIndexer(),
 			new FullTextStringValueIndexer(),
 			new TypeAheadStringValueIndexer(),
@@ -43,8 +43,8 @@ public class ValueIndexers
 			new BooleanValueIndexer()
 		);
 
-		MutableMap<String, ValueIndexer<?>> indexersByName = Maps.mutable.empty();
-		MutableMultimap<SimpleValueDef, ValueIndexer<?>> indexersByType = Multimaps.mutable.set.empty();
+		MutableMap<String, ValueIndexer> indexersByName = Maps.mutable.empty();
+		MutableMultimap<SimpleValueDef, ValueIndexer> indexersByType = Multimaps.mutable.set.empty();
 
 		for(var indexer : indexers)
 		{
@@ -62,7 +62,7 @@ public class ValueIndexers
 	 * @param def
 	 * @return
 	 */
-	public Optional<ValueIndexer<?>> getIndexer(String name)
+	public Optional<ValueIndexer> getIndexer(String name)
 	{
 		return Optional.ofNullable(indexersByName.get(name));
 	}
@@ -75,7 +75,7 @@ public class ValueIndexers
 	 * @param value
 	 * @return
 	 */
-	public Optional<ValueIndexer<?>> guessBestIndexer(SimpleValueDef value)
+	public Optional<ValueIndexer> guessBestIndexer(SimpleValueDef value)
 	{
 		switch(value.getName())
 		{
