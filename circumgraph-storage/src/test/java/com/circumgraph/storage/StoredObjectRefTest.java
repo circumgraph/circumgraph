@@ -7,9 +7,9 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import com.circumgraph.model.FieldDef;
 import com.circumgraph.model.InterfaceDef;
 import com.circumgraph.model.ListDef;
-import com.circumgraph.model.Model;
 import com.circumgraph.model.ObjectDef;
 import com.circumgraph.model.ScalarDef;
+import com.circumgraph.model.Schema;
 import com.circumgraph.model.StructuredDef;
 import com.circumgraph.model.TypeRef;
 import com.circumgraph.model.UnionDef;
@@ -26,8 +26,7 @@ public class StoredObjectRefTest
 	@Test
 	public void testStoreSimple()
 	{
-		var storage = open(Model.create()
-			.addSchema(StorageSchema.INSTANCE)
+		var storage = open(Schema.create()
 			.addType(ObjectDef.create("Book")
 				.addImplements(StorageSchema.ENTITY_NAME)
 				.addField(FieldDef.create("title")
@@ -81,8 +80,7 @@ public class StoredObjectRefTest
 	@Test
 	public void testStoreNonExistent()
 	{
-		var storage = open(Model.create()
-			.addSchema(StorageSchema.INSTANCE)
+		var storage = open(Schema.create()
 			.addType(ObjectDef.create("Book")
 				.addImplements(StorageSchema.ENTITY_NAME)
 				.addField(FieldDef.create("title")
@@ -120,8 +118,7 @@ public class StoredObjectRefTest
 	@Test
 	public void testStoreList()
 	{
-		var storage = open(Model.create()
-			.addSchema(StorageSchema.INSTANCE)
+		var storage = open(Schema.create()
 			.addType(ObjectDef.create("Book")
 				.addImplements(StorageSchema.ENTITY_NAME)
 				.addField(FieldDef.create("title")
@@ -179,8 +176,7 @@ public class StoredObjectRefTest
 	@Test
 	public void testStoreUnion()
 	{
-		var storage = open(Model.create()
-			.addSchema(StorageSchema.INSTANCE)
+		var storage = open(Schema.create()
 			.addType(ObjectDef.create("Book")
 				.addImplements(StorageSchema.ENTITY_NAME)
 				.addField(FieldDef.create("title")
@@ -246,8 +242,7 @@ public class StoredObjectRefTest
 	@Test
 	public void testStoreUnionNonRef()
 	{
-		var storage = open(Model.create()
-			.addSchema(StorageSchema.INSTANCE)
+		var storage = open(Schema.create()
 			.addType(ObjectDef.create("Book")
 				.addImplements(StorageSchema.ENTITY_NAME)
 				.addField(FieldDef.create("title")
@@ -308,8 +303,7 @@ public class StoredObjectRefTest
 	@Test
 	public void testStorePolymorphic()
 	{
-		var storage = open(Model.create()
-			.addSchema(StorageSchema.INSTANCE)
+		var storage = open(Schema.create()
 			.addType(ObjectDef.create("Review")
 				.addImplements(StorageSchema.ENTITY_NAME)
 				.addField(FieldDef.create("reviewBody")
@@ -367,8 +361,7 @@ public class StoredObjectRefTest
 	@Test
 	public void testStorePolymorphicSpecific()
 	{
-		var storage = open(Model.create()
-			.addSchema(StorageSchema.INSTANCE)
+		var storage = open(Schema.create()
 			.addType(ObjectDef.create("Review")
 				.addImplements(StorageSchema.ENTITY_NAME)
 				.addField(FieldDef.create("reviewBody")
@@ -426,8 +419,7 @@ public class StoredObjectRefTest
 	@Test
 	public void testDirectSelfReference()
 	{
-		var storage = open(Model.create()
-			.addSchema(StorageSchema.INSTANCE)
+		var storage = open(Schema.create()
 			.addType(ObjectDef.create("Node")
 				.addImplements(StorageSchema.ENTITY_NAME)
 				.addField(FieldDef.create("parent")

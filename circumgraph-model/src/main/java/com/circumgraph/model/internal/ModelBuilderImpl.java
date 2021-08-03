@@ -122,24 +122,6 @@ public class ModelBuilderImpl
 	}
 
 	@Override
-	public Builder addDirectiveUseProcessor(DirectiveUseProcessor<?> validator)
-	{
-		return new ModelBuilderImpl(
-			types,
-			directiveUseProcessors.newWith(validator)
-		);
-	}
-
-	@Override
-	public Model.Builder addType(TypeDef type)
-	{
-		return new ModelBuilderImpl(
-			types.newWith(type),
-			directiveUseProcessors
-		);
-	}
-
-	@Override
 	public Builder addSchema(Schema schema)
 	{
 		return new ModelBuilderImpl(

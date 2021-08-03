@@ -20,6 +20,7 @@ import com.circumgraph.model.ModelException;
 import com.circumgraph.model.NonNullDef;
 import com.circumgraph.model.ObjectDef;
 import com.circumgraph.model.ScalarDef;
+import com.circumgraph.model.Schema;
 import com.circumgraph.model.StructuredDef;
 import com.circumgraph.model.TypeDef;
 import com.circumgraph.model.TypeRef;
@@ -34,7 +35,10 @@ public class GraphQLSchemaTest
 	private static Model parse(String in)
 	{
 		return Model.create()
-			.addDirectiveUseProcessor(new TestDirectiveProcessor())
+			.addSchema(Schema.create()
+				.addDirectiveUseProcessor(new TestDirectiveProcessor())
+				.build()
+			)
 			.addSchema(GraphQLSchema.create(in))
 			.build();
 	}

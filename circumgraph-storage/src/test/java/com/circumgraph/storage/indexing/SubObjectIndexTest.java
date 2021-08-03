@@ -9,8 +9,9 @@ import com.circumgraph.model.Model;
 import com.circumgraph.model.NonNullDef;
 import com.circumgraph.model.ObjectDef;
 import com.circumgraph.model.ScalarDef;
+import com.circumgraph.model.Schema;
 import com.circumgraph.model.StructuredDef;
-import com.circumgraph.storage.SingleModelTest;
+import com.circumgraph.storage.SingleSchemaTest;
 import com.circumgraph.storage.StorageSchema;
 import com.circumgraph.storage.mutation.ScalarValueMutation;
 import com.circumgraph.storage.mutation.StructuredMutation;
@@ -22,13 +23,12 @@ import se.l4.silo.index.EqualsMatcher;
 import se.l4.silo.index.search.query.FieldQuery;
 
 public class SubObjectIndexTest
-	extends SingleModelTest
+	extends SingleSchemaTest
 {
 	@Override
-	protected Model createModel()
+	protected Schema createSchema()
 	{
-		return Model.create()
-			.addSchema(StorageSchema.INSTANCE)
+		return Schema.create()
 			.addType(ObjectDef.create("Test")
 				.addImplements(StorageSchema.ENTITY_NAME)
 				.addField(FieldDef.create("sub")

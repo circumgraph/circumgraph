@@ -65,23 +65,7 @@ public interface Model
 	interface Builder
 	{
 		/**
-		 * Add a validator for a certain type of directive.
-		 *
-		 * @param validator
-		 * @return
-		 */
-		Builder addDirectiveUseProcessor(DirectiveUseProcessor<?> validator);
-
-		/**
-		 * Add a type to this builder.
-		 *
-		 * @param type
-		 * @return
-		 */
-		Builder addType(TypeDef type);
-
-		/**
-		 * Add types using a schema.
+		 * Add a schema.
 		 *
 		 * @param builder
 		 * @return

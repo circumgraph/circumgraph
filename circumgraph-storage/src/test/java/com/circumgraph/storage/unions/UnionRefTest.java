@@ -4,15 +4,15 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
 import com.circumgraph.model.FieldDef;
-import com.circumgraph.model.Model;
 import com.circumgraph.model.NonNullDef;
 import com.circumgraph.model.ObjectDef;
 import com.circumgraph.model.ScalarDef;
+import com.circumgraph.model.Schema;
 import com.circumgraph.model.StructuredDef;
 import com.circumgraph.model.TypeRef;
 import com.circumgraph.model.UnionDef;
 import com.circumgraph.storage.SimpleValue;
-import com.circumgraph.storage.SingleModelTest;
+import com.circumgraph.storage.SingleSchemaTest;
 import com.circumgraph.storage.StorageSchema;
 import com.circumgraph.storage.StoredObjectRef;
 import com.circumgraph.storage.StructuredValue;
@@ -27,13 +27,12 @@ import org.junit.jupiter.api.Test;
  * referenced instead of stored.
  */
 public class UnionRefTest
-	extends SingleModelTest
+	extends SingleSchemaTest
 {
 	@Override
-	protected Model createModel()
+	protected Schema createSchema()
 	{
-		return Model.create()
-			.addSchema(StorageSchema.INSTANCE)
+		return Schema.create()
 			.addType(ObjectDef.create("Test")
 				.addImplements(StorageSchema.ENTITY_NAME)
 				.addField(FieldDef.create("value")

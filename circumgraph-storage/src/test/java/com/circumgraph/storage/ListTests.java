@@ -9,10 +9,10 @@ import java.util.Optional;
 
 import com.circumgraph.model.FieldDef;
 import com.circumgraph.model.ListDef;
-import com.circumgraph.model.Model;
 import com.circumgraph.model.NonNullDef;
 import com.circumgraph.model.ObjectDef;
 import com.circumgraph.model.ScalarDef;
+import com.circumgraph.model.Schema;
 import com.circumgraph.storage.mutation.ListSetMutation;
 import com.circumgraph.storage.mutation.NullMutation;
 import com.circumgraph.storage.mutation.ScalarValueMutation;
@@ -26,8 +26,7 @@ public class ListTests
 	@SuppressWarnings("unchecked")
 	public void testListSetString()
 	{
-		var storage = open(Model.create()
-			.addSchema(StorageSchema.INSTANCE)
+		var storage = open(Schema.create()
 			.addType(ObjectDef.create("Test")
 				.addImplements(StorageSchema.ENTITY_NAME)
 				.addField(FieldDef.create("titles")
@@ -71,8 +70,7 @@ public class ListTests
 	@SuppressWarnings("unchecked")
 	public void testListSetStringUpdate()
 	{
-		var storage = open(Model.create()
-			.addSchema(StorageSchema.INSTANCE)
+		var storage = open(Schema.create()
 			.addType(ObjectDef.create("Test")
 				.addImplements(StorageSchema.ENTITY_NAME)
 				.addField(FieldDef.create("titles")
@@ -123,8 +121,7 @@ public class ListTests
 	@SuppressWarnings("unchecked")
 	public void testListSetNull()
 	{
-		var storage = open(Model.create()
-			.addSchema(StorageSchema.INSTANCE)
+		var storage = open(Schema.create()
 			.addType(ObjectDef.create("Test")
 				.addImplements(StorageSchema.ENTITY_NAME)
 				.addField(FieldDef.create("titles")
@@ -167,8 +164,7 @@ public class ListTests
 	@Test
 	public void testListSetNonNullFails()
 	{
-		var storage = open(Model.create()
-			.addSchema(StorageSchema.INSTANCE)
+		var storage = open(Schema.create()
 			.addType(ObjectDef.create("Test")
 				.addImplements(StorageSchema.ENTITY_NAME)
 				.addField(FieldDef.create("titles")
@@ -196,8 +192,7 @@ public class ListTests
 	@Test
 	public void testListSetDefault()
 	{
-		var storage = open(Model.create()
-			.addSchema(StorageSchema.INSTANCE)
+		var storage = open(Schema.create()
 			.addType(ObjectDef.create("Test")
 				.addImplements(StorageSchema.ENTITY_NAME)
 				.addField(FieldDef.create("titles")
@@ -230,8 +225,7 @@ public class ListTests
 	@Test
 	public void testListSetDefaultNonNull()
 	{
-		var storage = open(Model.create()
-			.addSchema(StorageSchema.INSTANCE)
+		var storage = open(Schema.create()
 			.addType(ObjectDef.create("Test")
 				.addImplements(StorageSchema.ENTITY_NAME)
 				.addField(FieldDef.create("titles")

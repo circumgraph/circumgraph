@@ -6,22 +6,21 @@ import static org.hamcrest.Matchers.is;
 import java.util.Optional;
 
 import com.circumgraph.model.FieldDef;
-import com.circumgraph.model.Model;
 import com.circumgraph.model.ObjectDef;
 import com.circumgraph.model.ScalarDef;
+import com.circumgraph.model.Schema;
 import com.circumgraph.storage.mutation.NullMutation;
 import com.circumgraph.storage.mutation.ScalarValueMutation;
 
 import org.junit.jupiter.api.Test;
 
 public class NullableTest
-	extends SingleModelTest
+	extends SingleSchemaTest
 {
 	@Override
-	protected Model createModel()
+	protected Schema createSchema()
 	{
-		return Model.create()
-			.addSchema(StorageSchema.INSTANCE)
+		return Schema.create()
 			.addType(ObjectDef.create("Test")
 				.addImplements(StorageSchema.ENTITY_NAME)
 				.addField(FieldDef.create("nullableScalar")

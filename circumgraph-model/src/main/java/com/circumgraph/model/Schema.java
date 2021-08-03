@@ -1,9 +1,7 @@
 package com.circumgraph.model;
 
-import java.util.function.Consumer;
-
+import com.circumgraph.model.internal.SchemaImpl;
 import com.circumgraph.model.processing.DirectiveUseProcessor;
-import com.circumgraph.model.validation.ValidationMessage;
 
 import org.eclipse.collections.api.factory.Lists;
 
@@ -23,7 +21,7 @@ public interface Schema
 	}
 
 	/**
-	 * Get validators for directives.
+	 * Get processors for directives.
 	 *
 	 * @return
 	 */
@@ -33,12 +31,57 @@ public interface Schema
 	}
 
 	/**
-	 * Validate the given type.
+	 * Start building a schema.
 	 *
-	 * @param type
-	 * @param validationCollector
+	 * @return
 	 */
-	default void validate(TypeDef type, Consumer<ValidationMessage> validationCollector)
+	static Builder create()
 	{
+		return SchemaImpl.create();
+	}
+
+	/**
+	 * Builder for instances of {@link Schema}.
+	 */
+	interface Builder
+	{
+		/**
+		 * Add a processor for a certain type of directive.
+		 *
+		 * @param processor
+		 * @return
+		 */
+		Builder addDirectiveUseProcessor(DirectiveUseProcessor<?> processor);
+
+		/**
+		 * Add several processors for directives.
+		 *
+		 * @param processors
+		 * @return
+		 */
+		Builder addDirectiveUseProcessors(Iterable<? extends DirectiveUseProcessor<?>> processors);
+
+		/**
+		 * Add a type to the schema.
+		 *
+		 * @param type
+		 * @return
+		 */
+		Builder addType(TypeDef type);
+
+		/**
+		 * Add several types to the schema.
+		 *
+		 * @param types
+		 * @return
+		 */
+		Builder addTypes(Iterable<? extends TypeDef> types);
+
+		/**
+		 * Return the schema.
+		 *
+		 * @return
+		 */
+		Schema build();
 	}
 }

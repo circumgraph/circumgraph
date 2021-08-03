@@ -3,19 +3,18 @@ package com.circumgraph.storage;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
-import com.circumgraph.model.Model;
 import com.circumgraph.model.ObjectDef;
+import com.circumgraph.model.Schema;
 
 import org.junit.jupiter.api.Test;
 
 public class BlankObjectTest
-	extends SingleModelTest
+	extends SingleSchemaTest
 {
 	@Override
-	protected Model createModel()
+	protected Schema createSchema()
 	{
-		return Model.create()
-			.addSchema(StorageSchema.INSTANCE)
+		return Schema.create()
 			.addType(ObjectDef.create("Test")
 				.addImplements(StorageSchema.ENTITY_NAME)
 				.build()

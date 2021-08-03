@@ -19,7 +19,7 @@ public class ModelBuildingTest
 	@Test
 	public void testEmpty()
 	{
-		Model model = Model.create()
+		var model = Model.create()
 			.build();
 
 		assertThat(model.get("Boolean").get(), is(ScalarDef.BOOLEAN));
@@ -31,13 +31,17 @@ public class ModelBuildingTest
 	@Test
 	public void testEmptyObject()
 	{
-		Model model = Model.create()
+		var schema = Schema.create()
 			.addType(ObjectDef.create("Test")
 				.build()
 			)
 			.build();
 
-		TypeDef t = model.get("Test").get();
+		var model = Model.create()
+			.addSchema(schema)
+			.build();
+
+		var t = model.get("Test").get();
 		assertThat(t, instanceOf(StructuredDef.class));
 		assertThat(t, instanceOf(ObjectDef.class));
 		assertThat(t.getName(), is("Test"));
@@ -46,13 +50,17 @@ public class ModelBuildingTest
 	@Test
 	public void testEmptyInterface()
 	{
-		Model model = Model.create()
+		var schema = Schema.create()
 			.addType(InterfaceDef.create("Test")
 				.build()
 			)
 			.build();
 
-		TypeDef t = model.get("Test").get();
+		var model = Model.create()
+			.addSchema(schema)
+			.build();
+
+		var t = model.get("Test").get();
 		assertThat(t, instanceOf(StructuredDef.class));
 		assertThat(t, instanceOf(InterfaceDef.class));
 		assertThat(t.getName(), is("Test"));
@@ -61,7 +69,7 @@ public class ModelBuildingTest
 	@Test
 	public void testObjectImplements()
 	{
-		Model model = Model.create()
+		var schema = Schema.create()
 			.addType(InterfaceDef.create("I")
 				.build()
 			)
@@ -71,12 +79,16 @@ public class ModelBuildingTest
 			)
 			.build();
 
-		TypeDef t = model.get("Test").get();
+		var model = Model.create()
+			.addSchema(schema)
+			.build();
+
+		var t = model.get("Test").get();
 		assertThat(t, instanceOf(StructuredDef.class));
 		assertThat(t, instanceOf(ObjectDef.class));
 		assertThat(t.getName(), is("Test"));
 
-		StructuredDef structured = (StructuredDef) t;
+		var structured = (StructuredDef) t;
 		assertThat(structured.getImplementsNames(), contains("I"));
 
 		assertThat(model.getImplements("I"), contains(t));
@@ -85,7 +97,7 @@ public class ModelBuildingTest
 	@Test
 	public void testObjectIndirectlyImplements()
 	{
-		Model model = Model.create()
+		var schema = Schema.create()
 			.addType(InterfaceDef.create("I1")
 				.build()
 			)
@@ -99,6 +111,10 @@ public class ModelBuildingTest
 			)
 			.build();
 
+		var model = Model.create()
+			.addSchema(schema)
+			.build();
+
 		var t = model.get("Test").get();
 		assertThat(t, instanceOf(StructuredDef.class));
 		assertThat(t, instanceOf(ObjectDef.class));
@@ -106,7 +122,7 @@ public class ModelBuildingTest
 
 		var i2 = model.get("I2").get();
 
-		StructuredDef structured = (StructuredDef) t;
+		var structured = (StructuredDef) t;
 		assertThat(structured.getImplementsNames(), contains("I2"));
 
 		assertThat(model.getImplements("I1"), contains(i2));
@@ -118,7 +134,7 @@ public class ModelBuildingTest
 	@Test
 	public void testObjectScalarField()
 	{
-		Model model = Model.create()
+		var schema = Schema.create()
 			.addType(ObjectDef.create("Test")
 				.addField(FieldDef.create("t1")
 					.withType("Int")
@@ -128,13 +144,17 @@ public class ModelBuildingTest
 			)
 			.build();
 
-		TypeDef t = model.get("Test").get();
+		var model = Model.create()
+			.addSchema(schema)
+			.build();
+
+		var t = model.get("Test").get();
 		assertThat(t, instanceOf(StructuredDef.class));
 		assertThat(t, instanceOf(ObjectDef.class));
 		assertThat(t.getName(), is("Test"));
 
-		StructuredDef s = (StructuredDef) t;
-		FieldDef f1 = s.getField("t1").get();
+		var s = (StructuredDef) t;
+		var f1 = s.getField("t1").get();
 
 		assertThat(f1.getName(), is("t1"));
 		assertThat(f1.getType(), is(ScalarDef.INT));
@@ -143,7 +163,7 @@ public class ModelBuildingTest
 	@Test
 	public void testMergeSimple()
 	{
-		Model model = Model.create()
+		var schema = Schema.create()
 			.addType(ObjectDef.create("Test")
 				.addField(FieldDef.create("f1")
 					.withType(ScalarDef.STRING)
@@ -160,12 +180,16 @@ public class ModelBuildingTest
 			)
 			.build();
 
-		TypeDef t = model.get("Test").get();
+		var model = Model.create()
+			.addSchema(schema)
+			.build();
+
+		var t = model.get("Test").get();
 		assertThat(t, instanceOf(StructuredDef.class));
 		assertThat(t, instanceOf(ObjectDef.class));
 		assertThat(t.getName(), is("Test"));
 
-		StructuredDef def = StructuredDef.class.cast(t);
+		var def = StructuredDef.class.cast(t);
 		assertThat(def.getFields(), contains(
 			FieldDef.create("f1")
 				.withType(ScalarDef.STRING)
@@ -179,7 +203,7 @@ public class ModelBuildingTest
 	@Test
 	public void testMergeField()
 	{
-		Model model = Model.create()
+		var schema = Schema.create()
 			.addDirectiveUseProcessor(new TestDirectiveOnFieldProcessor())
 			.addType(ObjectDef.create("Test")
 				.addField(FieldDef.create("f1")
@@ -199,12 +223,16 @@ public class ModelBuildingTest
 			)
 			.build();
 
-		TypeDef t = model.get("Test").get();
+		var model = Model.create()
+			.addSchema(schema)
+			.build();
+
+		var t = model.get("Test").get();
 		assertThat(t, instanceOf(StructuredDef.class));
 		assertThat(t, instanceOf(ObjectDef.class));
 		assertThat(t.getName(), is("Test"));
 
-		StructuredDef def = StructuredDef.class.cast(t);
+		var def = StructuredDef.class.cast(t);
 		assertThat(def.getFields(), contains(
 			FieldDef.create("f1")
 				.withType(ScalarDef.STRING)
@@ -217,22 +245,26 @@ public class ModelBuildingTest
 	@Test
 	public void testMergeFieldDifferentTypes()
 	{
+		var schema = Schema.create()
+			.addType(ObjectDef.create("Test")
+				.addField(FieldDef.create("f1")
+					.withType(ScalarDef.STRING)
+					.build()
+				)
+				.build()
+			)
+			.addType(ObjectDef.create("Test")
+				.addField(FieldDef.create("f1")
+					.withType(ScalarDef.INT)
+					.build()
+				)
+				.build()
+			)
+			.build();
+
 		assertThrows(ModelException.class, () -> {
 			Model.create()
-				.addType(ObjectDef.create("Test")
-					.addField(FieldDef.create("f1")
-						.withType(ScalarDef.STRING)
-						.build()
-					)
-					.build()
-				)
-				.addType(ObjectDef.create("Test")
-					.addField(FieldDef.create("f1")
-						.withType(ScalarDef.INT)
-						.build()
-					)
-					.build()
-				)
+				.addSchema(schema)
 				.build();
 		});
 	}
@@ -240,16 +272,20 @@ public class ModelBuildingTest
 	@Test
 	public void testInvalidInterfaceLoop()
 	{
+		var schema = Schema.create()
+			.addType(InterfaceDef.create("A")
+				.addImplements("B")
+				.build()
+			)
+			.addType(InterfaceDef.create("B")
+				.addImplements("A")
+				.build()
+			)
+			.build();
+
 		assertThrows(ModelException.class, () -> {
 			Model.create()
-				.addType(InterfaceDef.create("A")
-					.addImplements("B")
-					.build()
-				)
-				.addType(InterfaceDef.create("B")
-					.addImplements("A")
-					.build()
-				)
+				.addSchema(schema)
 				.build();
 		});
 	}
@@ -257,20 +293,24 @@ public class ModelBuildingTest
 	@Test
 	public void testInvalidInterfaceLoopIndirect()
 	{
+		var schema = Schema.create()
+			.addType(InterfaceDef.create("A")
+				.addImplements("B")
+				.build()
+			)
+			.addType(InterfaceDef.create("B")
+				.addImplements("C")
+				.build()
+			)
+			.addType(InterfaceDef.create("C")
+				.addImplements("A")
+				.build()
+			)
+			.build();
+
 		assertThrows(ModelException.class, () -> {
 			Model.create()
-				.addType(InterfaceDef.create("A")
-					.addImplements("B")
-					.build()
-				)
-				.addType(InterfaceDef.create("B")
-					.addImplements("C")
-					.build()
-				)
-				.addType(InterfaceDef.create("C")
-					.addImplements("A")
-					.build()
-				)
+				.addSchema(schema)
 				.build();
 		});
 	}
@@ -278,15 +318,19 @@ public class ModelBuildingTest
 	@Test
 	public void testInvalidImplements()
 	{
+		var schema = Schema.create()
+			.addType(ObjectDef.create("A")
+				.build()
+			)
+			.addType(InterfaceDef.create("B")
+				.addImplements("A")
+				.build()
+			)
+			.build();
+
 		assertThrows(ModelException.class, () -> {
 			Model.create()
-				.addType(ObjectDef.create("A")
-					.build()
-				)
-				.addType(InterfaceDef.create("B")
-					.addImplements("A")
-					.build()
-				)
+				.addSchema(schema)
 				.build();
 		});
 	}
@@ -294,7 +338,7 @@ public class ModelBuildingTest
 	@Test
 	public void testImplementsFieldSameTypes()
 	{
-		Model.create()
+		var schema = Schema.create()
 			.addType(ObjectDef.create("A")
 				.addImplements("B")
 				.addField(FieldDef.create("f1")
@@ -311,12 +355,16 @@ public class ModelBuildingTest
 				.build()
 			)
 			.build();
+
+		Model.create()
+			.addSchema(schema)
+			.build();
 	}
 
 	@Test
 	public void testImplementsFieldCompatibleTypes()
 	{
-		Model.create()
+		var schema = Schema.create()
 			.addType(ObjectDef.create("A")
 				.addImplements("B")
 				.addField(FieldDef.create("f1")
@@ -333,12 +381,16 @@ public class ModelBuildingTest
 				.build()
 			)
 			.build();
+
+		Model.create()
+			.addSchema(schema)
+			.build();
 	}
 
 	@Test
 	public void testImplementsFieldSameTypesInList()
 	{
-		Model.create()
+		var schema = Schema.create()
 			.addType(ObjectDef.create("A")
 				.addImplements("B")
 				.addField(FieldDef.create("f1")
@@ -355,12 +407,16 @@ public class ModelBuildingTest
 				.build()
 			)
 			.build();
+
+		Model.create()
+			.addSchema(schema)
+			.build();
 	}
 
 	@Test
 	public void testImplementsFieldCompatibleTypesInList()
 	{
-		Model.create()
+		var schema = Schema.create()
 			.addType(ObjectDef.create("A")
 				.addImplements("B")
 				.addField(FieldDef.create("f1")
@@ -377,28 +433,36 @@ public class ModelBuildingTest
 				.build()
 			)
 			.build();
+
+		Model.create()
+			.addSchema(schema)
+			.build();
 	}
 
 	@Test
 	public void testImplementsFieldDifferentTypes()
 	{
+		var schema = Schema.create()
+			.addType(ObjectDef.create("A")
+				.addImplements("B")
+				.addField(FieldDef.create("f1")
+					.withType(ScalarDef.STRING)
+					.build()
+				)
+				.build()
+			)
+			.addType(InterfaceDef.create("B")
+				.addField(FieldDef.create("f1")
+					.withType(ScalarDef.INT)
+					.build()
+				)
+				.build()
+			)
+			.build();
+
 		assertThrows(ModelException.class, () -> {
 			Model.create()
-				.addType(ObjectDef.create("A")
-					.addImplements("B")
-					.addField(FieldDef.create("f1")
-						.withType(ScalarDef.STRING)
-						.build()
-					)
-					.build()
-				)
-				.addType(InterfaceDef.create("B")
-					.addField(FieldDef.create("f1")
-						.withType(ScalarDef.INT)
-						.build()
-					)
-					.build()
-				)
+				.addSchema(schema)
 				.build();
 		});
 	}

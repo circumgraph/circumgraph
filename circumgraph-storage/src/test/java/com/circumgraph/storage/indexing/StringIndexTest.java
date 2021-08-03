@@ -5,12 +5,12 @@ import static org.hamcrest.Matchers.is;
 
 import com.circumgraph.model.DirectiveUse;
 import com.circumgraph.model.FieldDef;
-import com.circumgraph.model.Model;
 import com.circumgraph.model.NonNullDef;
 import com.circumgraph.model.ObjectDef;
 import com.circumgraph.model.ScalarDef;
+import com.circumgraph.model.Schema;
 import com.circumgraph.storage.SimpleValue;
-import com.circumgraph.storage.SingleModelTest;
+import com.circumgraph.storage.SingleSchemaTest;
 import com.circumgraph.storage.StorageSchema;
 import com.circumgraph.storage.mutation.ScalarValueMutation;
 import com.circumgraph.storage.search.Query;
@@ -21,13 +21,12 @@ import se.l4.silo.index.EqualsMatcher;
 import se.l4.silo.index.search.query.FieldQuery;
 
 public class StringIndexTest
-	extends SingleModelTest
+	extends SingleSchemaTest
 {
 	@Override
-	protected Model createModel()
+	protected Schema createSchema()
 	{
-		return Model.create()
-			.addSchema(StorageSchema.INSTANCE)
+		return Schema.create()
 			.addType(ObjectDef.create("Book")
 				.addImplements(StorageSchema.ENTITY_NAME)
 				.addField(FieldDef.create("title")
