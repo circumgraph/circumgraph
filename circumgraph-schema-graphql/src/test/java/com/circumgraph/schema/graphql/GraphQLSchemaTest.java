@@ -24,7 +24,7 @@ import com.circumgraph.model.StructuredDef;
 import com.circumgraph.model.TypeDef;
 import com.circumgraph.model.TypeRef;
 import com.circumgraph.model.UnionDef;
-import com.circumgraph.model.validation.DirectiveValidator;
+import com.circumgraph.model.processing.DirectiveUseProcessor;
 import com.circumgraph.model.validation.ValidationMessage;
 
 import org.junit.jupiter.api.Test;
@@ -34,7 +34,7 @@ public class GraphQLSchemaTest
 	private static Model parse(String in)
 	{
 		return Model.create()
-			.addDirectiveValidator(new TestDirectiveValidator())
+			.addDirectiveUseProcessor(new TestDirectiveProcessor())
 			.addSchema(GraphQLSchema.create(in))
 			.build();
 	}
@@ -316,8 +316,8 @@ public class GraphQLSchemaTest
 		});
 	}
 
-	static class TestDirectiveValidator
-		implements DirectiveValidator<HasDirectives>
+	static class TestDirectiveProcessor
+		implements DirectiveUseProcessor<HasDirectives>
 	{
 		@Override
 		public String getName()
@@ -332,7 +332,7 @@ public class GraphQLSchemaTest
 		}
 
 		@Override
-		public void validate(
+		public void process(
 			HasDirectives location,
 			DirectiveUse directive,
 			Consumer<ValidationMessage> validationCollector

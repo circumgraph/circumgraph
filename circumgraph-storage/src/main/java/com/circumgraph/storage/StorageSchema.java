@@ -7,13 +7,13 @@ import com.circumgraph.model.NonNullDef;
 import com.circumgraph.model.ScalarDef;
 import com.circumgraph.model.Schema;
 import com.circumgraph.model.TypeDef;
-import com.circumgraph.model.validation.DirectiveValidator;
+import com.circumgraph.model.processing.DirectiveUseProcessor;
 import com.circumgraph.storage.internal.ValueIndexers;
 import com.circumgraph.storage.internal.ValueProviders;
-import com.circumgraph.storage.internal.model.DefaultDirectiveValidator;
-import com.circumgraph.storage.internal.model.IndexDirectiveValidator;
-import com.circumgraph.storage.internal.model.ReadonlyDirectiveValidator;
-import com.circumgraph.storage.internal.model.SortableDirectiveValidator;
+import com.circumgraph.storage.internal.model.DefaultDirectiveProcessor;
+import com.circumgraph.storage.internal.model.IndexDirectiveProcessor;
+import com.circumgraph.storage.internal.model.ReadonlyDirectiveProcessor;
+import com.circumgraph.storage.internal.model.SortableDirectiveProcessor;
 
 import org.eclipse.collections.api.factory.Lists;
 
@@ -33,14 +33,14 @@ public class StorageSchema
 	}
 
 	@Override
-	public Iterable<? extends DirectiveValidator<?>> getDirectiveValidators()
+	public Iterable<? extends DirectiveUseProcessor<?>> getDirectiveUseProcessors()
 	{
 		return Lists.immutable.of(
-			new DefaultDirectiveValidator(new ValueProviders()),
-			new ReadonlyDirectiveValidator(),
+			new DefaultDirectiveProcessor(new ValueProviders()),
+			new ReadonlyDirectiveProcessor(),
 
-			new IndexDirectiveValidator(new ValueIndexers()),
-			new SortableDirectiveValidator()
+			new IndexDirectiveProcessor(new ValueIndexers()),
+			new SortableDirectiveProcessor()
 		);
 	}
 

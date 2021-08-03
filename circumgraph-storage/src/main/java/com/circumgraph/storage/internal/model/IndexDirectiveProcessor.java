@@ -10,7 +10,7 @@ import com.circumgraph.model.OutputTypeDef;
 import com.circumgraph.model.ScalarDef;
 import com.circumgraph.model.SimpleValueDef;
 import com.circumgraph.model.StructuredDef;
-import com.circumgraph.model.validation.DirectiveValidator;
+import com.circumgraph.model.processing.DirectiveUseProcessor;
 import com.circumgraph.model.validation.ValidationMessage;
 import com.circumgraph.model.validation.ValidationMessageType;
 import com.circumgraph.storage.StorageModel;
@@ -20,8 +20,8 @@ import com.circumgraph.storage.internal.ValueIndexers;
 /**
  * Validator for the {@code index} directive.
  */
-public class IndexDirectiveValidator
-	implements DirectiveValidator<FieldDef>
+public class IndexDirectiveProcessor
+	implements DirectiveUseProcessor<FieldDef>
 {
 	private static final ValidationMessageType INVALID_ARGUMENTS = ValidationMessageType.error()
 		.withCode("storage:@index:invalid-arguments")
@@ -56,7 +56,7 @@ public class IndexDirectiveValidator
 
 	private final ValueIndexers indexing;
 
-	public IndexDirectiveValidator(
+	public IndexDirectiveProcessor(
 		ValueIndexers indexing
 	)
 	{
@@ -76,7 +76,7 @@ public class IndexDirectiveValidator
 	}
 
 	@Override
-	public void validate(
+	public void process(
 		FieldDef location,
 		DirectiveUse directive,
 		Consumer<ValidationMessage> validationCollector
@@ -113,7 +113,7 @@ public class IndexDirectiveValidator
 			}
 		}
 
-		if(directive.getArguments().isEmpty() && ! DirectiveValidator.checkOnlyArguments(directive, "types"))
+		if(directive.getArguments().isEmpty() && ! DirectiveUseProcessor.checkOnlyArguments(directive, "types"))
 		{
 			validationCollector.accept(INVALID_ARGUMENTS.toMessage()
 				.withLocation(directive.getSourceLocation())

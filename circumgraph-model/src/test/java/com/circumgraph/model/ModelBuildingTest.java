@@ -9,7 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.function.Consumer;
 
-import com.circumgraph.model.validation.DirectiveValidator;
+import com.circumgraph.model.processing.DirectiveUseProcessor;
 import com.circumgraph.model.validation.ValidationMessage;
 
 import org.junit.jupiter.api.Test;
@@ -180,7 +180,7 @@ public class ModelBuildingTest
 	public void testMergeField()
 	{
 		Model model = Model.create()
-			.addDirectiveValidator(new TestDirectiveOnFieldValidator())
+			.addDirectiveUseProcessor(new TestDirectiveOnFieldProcessor())
 			.addType(ObjectDef.create("Test")
 				.addField(FieldDef.create("f1")
 					.withType(ScalarDef.STRING)
@@ -404,8 +404,8 @@ public class ModelBuildingTest
 	}
 
 
-	static class TestDirectiveOnFieldValidator
-		implements DirectiveValidator<FieldDef>
+	static class TestDirectiveOnFieldProcessor
+		implements DirectiveUseProcessor<FieldDef>
 	{
 		@Override
 		public String getName()
@@ -420,7 +420,7 @@ public class ModelBuildingTest
 		}
 
 		@Override
-		public void validate(
+		public void process(
 			FieldDef location,
 			DirectiveUse directive,
 			Consumer<ValidationMessage> validationCollector

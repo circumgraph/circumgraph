@@ -21,7 +21,7 @@ import com.circumgraph.model.ScalarDef;
 import com.circumgraph.model.Schema;
 import com.circumgraph.model.StructuredDef;
 import com.circumgraph.model.TypeDef;
-import com.circumgraph.model.validation.DirectiveValidator;
+import com.circumgraph.model.processing.DirectiveUseProcessor;
 import com.circumgraph.model.validation.SourceLocation;
 import com.circumgraph.model.validation.ValidationMessage;
 import com.circumgraph.model.validation.ValidationMessageLevel;
@@ -110,23 +110,23 @@ public class ModelBuilderImpl
 			.build();
 
 	private final ImmutableSet<TypeDef> types;
-	private final ImmutableSet<DirectiveValidator<?>> directiveValidators;
+	private final ImmutableSet<DirectiveUseProcessor<?>> directiveUseProcessors;
 
 	public ModelBuilderImpl(
 		ImmutableSet<TypeDef> types,
-		ImmutableSet<DirectiveValidator<?>> directiveValidators
+		ImmutableSet<DirectiveUseProcessor<?>> directiveUseProcessors
 	)
 	{
 		this.types = types;
-		this.directiveValidators = directiveValidators;
+		this.directiveUseProcessors = directiveUseProcessors;
 	}
 
 	@Override
-	public Builder addDirectiveValidator(DirectiveValidator<?> validator)
+	public Builder addDirectiveUseProcessor(DirectiveUseProcessor<?> validator)
 	{
 		return new ModelBuilderImpl(
 			types,
-			directiveValidators.newWith(validator)
+			directiveUseProcessors.newWith(validator)
 		);
 	}
 
@@ -135,7 +135,7 @@ public class ModelBuilderImpl
 	{
 		return new ModelBuilderImpl(
 			types.newWith(type),
-			directiveValidators
+			directiveUseProcessors
 		);
 	}
 
@@ -144,7 +144,7 @@ public class ModelBuilderImpl
 	{
 		return new ModelBuilderImpl(
 			types.newWithAll(schema.getTypes()),
-			directiveValidators.newWithAll(schema.getDirectiveValidators())
+			directiveUseProcessors.newWithAll(schema.getDirectiveUseProcessors())
 		);
 	}
 
@@ -224,8 +224,8 @@ public class ModelBuilderImpl
 		}
 
 		// Validate directives after preparation
-		MutableMultimap<String, DirectiveValidator<?>> directives = Multimaps.mutable.set.empty();
-		for(DirectiveValidator<?> v : directiveValidators)
+		MutableMultimap<String, DirectiveUseProcessor<?>> directives = Multimaps.mutable.set.empty();
+		for(DirectiveUseProcessor<?> v : directiveUseProcessors)
 		{
 			directives.put(v.getName(), v);
 		}
@@ -235,11 +235,11 @@ public class ModelBuilderImpl
 			{
 				boolean didValidate = false;
 
-				for(DirectiveValidator validator : directives.get(d.getName()))
+				for(DirectiveUseProcessor validator : directives.get(d.getName()))
 				{
 					if(validator.getContextType().isAssignableFrom(def.getClass()))
 					{
-						validator.validate(
+						validator.process(
 							(HasDirectives) def,
 							d,
 							validation

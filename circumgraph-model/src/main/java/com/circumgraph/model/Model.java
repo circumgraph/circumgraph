@@ -3,7 +3,7 @@ package com.circumgraph.model;
 import java.util.Optional;
 
 import com.circumgraph.model.internal.ModelBuilderImpl;
-import com.circumgraph.model.validation.DirectiveValidator;
+import com.circumgraph.model.processing.DirectiveUseProcessor;
 
 import org.eclipse.collections.api.set.SetIterable;
 
@@ -70,7 +70,7 @@ public interface Model
 		 * @param validator
 		 * @return
 		 */
-		Builder addDirectiveValidator(DirectiveValidator<?> validator);
+		Builder addDirectiveUseProcessor(DirectiveUseProcessor<?> validator);
 
 		/**
 		 * Add a type to this builder.

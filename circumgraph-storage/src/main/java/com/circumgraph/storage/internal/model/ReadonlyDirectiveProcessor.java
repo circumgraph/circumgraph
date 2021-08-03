@@ -4,7 +4,7 @@ import java.util.function.Consumer;
 
 import com.circumgraph.model.DirectiveUse;
 import com.circumgraph.model.FieldDef;
-import com.circumgraph.model.validation.DirectiveValidator;
+import com.circumgraph.model.processing.DirectiveUseProcessor;
 import com.circumgraph.model.validation.ValidationMessage;
 import com.circumgraph.model.validation.ValidationMessageType;
 
@@ -12,8 +12,8 @@ import com.circumgraph.model.validation.ValidationMessageType;
  * Validator for the {@code readonly} directive which disables mutations for
  * a property.
  */
-public class ReadonlyDirectiveValidator
-	implements DirectiveValidator<FieldDef>
+public class ReadonlyDirectiveProcessor
+	implements DirectiveUseProcessor<FieldDef>
 {
 	private static final ValidationMessageType INVALID_ARGUMENTS = ValidationMessageType.error()
 		.withCode("storage:@readonly:invalid-arguments")
@@ -33,7 +33,7 @@ public class ReadonlyDirectiveValidator
 	}
 
 	@Override
-	public void validate(
+	public void process(
 		FieldDef location,
 		DirectiveUse directive,
 		Consumer<ValidationMessage> validationCollector

@@ -2,7 +2,7 @@ package com.circumgraph.model;
 
 import java.util.function.Consumer;
 
-import com.circumgraph.model.validation.DirectiveValidator;
+import com.circumgraph.model.processing.DirectiveUseProcessor;
 import com.circumgraph.model.validation.ValidationMessage;
 
 import org.eclipse.collections.api.factory.Lists;
@@ -27,7 +27,7 @@ public interface Schema
 	 *
 	 * @return
 	 */
-	default Iterable<? extends DirectiveValidator<?>> getDirectiveValidators()
+	default Iterable<? extends DirectiveUseProcessor<?>> getDirectiveUseProcessors()
 	{
 		return Lists.immutable.empty();
 	}

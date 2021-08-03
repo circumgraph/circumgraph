@@ -5,7 +5,7 @@ import java.util.function.Consumer;
 import com.circumgraph.model.ArgumentUse;
 import com.circumgraph.model.DirectiveUse;
 import com.circumgraph.model.FieldDef;
-import com.circumgraph.model.validation.DirectiveValidator;
+import com.circumgraph.model.processing.DirectiveUseProcessor;
 import com.circumgraph.model.validation.ValidationMessage;
 import com.circumgraph.model.validation.ValidationMessageType;
 import com.circumgraph.storage.internal.ValueProviders;
@@ -19,8 +19,8 @@ import com.circumgraph.storage.internal.ValueProviders;
  * name: String @default(value: "Test Name")
  * </pre>
  */
-public class DefaultDirectiveValidator
-	implements DirectiveValidator<FieldDef>
+public class DefaultDirectiveProcessor
+	implements DirectiveUseProcessor<FieldDef>
 {
 	private static final ValidationMessageType INVALID_ARGUMENTS = ValidationMessageType.error()
 		.withCode("storage:@default:invalid-arguments")
@@ -42,7 +42,7 @@ public class DefaultDirectiveValidator
 
 	private final ValueProviders valueProviders;
 
-	public DefaultDirectiveValidator(ValueProviders valueProviders)
+	public DefaultDirectiveProcessor(ValueProviders valueProviders)
 	{
 		this.valueProviders = valueProviders;
 	}
@@ -60,14 +60,14 @@ public class DefaultDirectiveValidator
 	}
 
 	@Override
-	public void validate(
+	public void process(
 		FieldDef location,
 		DirectiveUse directive,
 		Consumer<ValidationMessage> validationCollector
 	)
 	{
 		if(directive.getArguments().isEmpty()
-			|| ! DirectiveValidator.checkOnlyArguments(directive, "provider", "value"))
+			|| ! DirectiveUseProcessor.checkOnlyArguments(directive, "provider", "value"))
 		{
 			validationCollector.accept(INVALID_ARGUMENTS
 				.toMessage()

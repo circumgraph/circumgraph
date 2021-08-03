@@ -4,7 +4,7 @@ import java.util.function.Consumer;
 
 import com.circumgraph.model.DirectiveUse;
 import com.circumgraph.model.FieldDef;
-import com.circumgraph.model.validation.DirectiveValidator;
+import com.circumgraph.model.processing.DirectiveUseProcessor;
 import com.circumgraph.model.validation.ValidationMessage;
 import com.circumgraph.model.validation.ValidationMessageType;
 import com.circumgraph.storage.StorageModel;
@@ -12,8 +12,8 @@ import com.circumgraph.storage.StorageModel;
 /**
  * Validator for the {@code sortable} directive.
  */
-public class SortableDirectiveValidator
-	implements DirectiveValidator<FieldDef>
+public class SortableDirectiveProcessor
+	implements DirectiveUseProcessor<FieldDef>
 {
 	private static final ValidationMessageType INVALID_ARGUMENTS = ValidationMessageType.error()
 		.withCode("storage:@sortable:invalid-arguments")
@@ -33,7 +33,7 @@ public class SortableDirectiveValidator
 	}
 
 	@Override
-	public void validate(
+	public void process(
 		FieldDef location,
 		DirectiveUse directive,
 		Consumer<ValidationMessage> validationCollector

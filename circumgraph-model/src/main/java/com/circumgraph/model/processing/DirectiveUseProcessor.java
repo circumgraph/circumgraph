@@ -1,17 +1,21 @@
-package com.circumgraph.model.validation;
+package com.circumgraph.model.processing;
 
 import java.util.function.Consumer;
 
 import com.circumgraph.model.ArgumentUse;
 import com.circumgraph.model.DirectiveUse;
 import com.circumgraph.model.HasDirectives;
+import com.circumgraph.model.HasMetadata;
+import com.circumgraph.model.validation.ValidationMessage;
 
 import org.eclipse.collections.api.factory.Sets;
 
 /**
- * Validator for a directive.
+ * Processor that runs when a directive of a certain name is used. This type
+ * of processor should interpret the directive and update {@link HasMetadata metadata}
+ * for the location as needed.
  */
-public interface DirectiveValidator<T extends HasDirectives>
+public interface DirectiveUseProcessor<T extends HasDirectives>
 {
 	/**
 	 * Get the name of the directive this validates.
@@ -28,13 +32,16 @@ public interface DirectiveValidator<T extends HasDirectives>
 	Class<T> getContextType();
 
 	/**
-	 * Validate the directive.
+	 * Process the directive.
 	 *
 	 * @param location
+	 *   location of the directive
 	 * @param directive
+	 *   the use of the directive
 	 * @param validationCollector
+	 *   collector for validation issues that occur during the processing
 	 */
-	void validate(
+	void process(
 		T location,
 		DirectiveUse directive,
 		Consumer<ValidationMessage> validationCollector
