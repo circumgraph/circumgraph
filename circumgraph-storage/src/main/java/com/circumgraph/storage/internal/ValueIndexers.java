@@ -1,25 +1,9 @@
 package com.circumgraph.storage.internal;
 
 import java.util.Optional;
-import java.util.function.Consumer;
 
 import com.circumgraph.model.EnumDef;
-import com.circumgraph.model.FieldDef;
-import com.circumgraph.model.InterfaceDef;
-import com.circumgraph.model.ListDef;
-import com.circumgraph.model.NonNullDef;
-import com.circumgraph.model.ScalarDef;
 import com.circumgraph.model.SimpleValueDef;
-import com.circumgraph.model.StructuredDef;
-import com.circumgraph.model.TypeDef;
-import com.circumgraph.storage.ListValue;
-import com.circumgraph.storage.SimpleValue;
-import com.circumgraph.storage.StorageModel;
-import com.circumgraph.storage.StorageSchema;
-import com.circumgraph.storage.StoredObjectRef;
-import com.circumgraph.storage.StoredObjectValue;
-import com.circumgraph.storage.StructuredValue;
-import com.circumgraph.storage.Value;
 import com.circumgraph.storage.internal.indexing.BooleanValueIndexer;
 import com.circumgraph.storage.internal.indexing.EnumValueIndexer;
 import com.circumgraph.storage.internal.indexing.FloatValueIndexer;
@@ -31,7 +15,6 @@ import com.circumgraph.storage.internal.indexing.TypeAheadStringValueIndexer;
 import com.circumgraph.storage.types.ValueIndexer;
 
 import org.eclipse.collections.api.RichIterable;
-import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.factory.Maps;
 import org.eclipse.collections.api.factory.Sets;
 import org.eclipse.collections.api.map.ImmutableMap;
@@ -39,10 +22,6 @@ import org.eclipse.collections.api.map.MutableMap;
 import org.eclipse.collections.api.multimap.ImmutableMultimap;
 import org.eclipse.collections.api.multimap.MutableMultimap;
 import org.eclipse.collections.impl.factory.Multimaps;
-
-import se.l4.silo.engine.index.search.SearchFieldDef;
-import se.l4.silo.engine.index.search.SearchIndexDef;
-import se.l4.silo.engine.index.search.types.SearchFieldType;
 
 /**
  * Helper for indexing of objects.
@@ -130,212 +109,5 @@ public class ValueIndexers
 	public RichIterable<String> getSupportedIndexers(SimpleValueDef def)
 	{
 		return indexersByType.get(def).collect(d -> d.getName());
-	}
-
-	public SearchIndexDef<StoredObjectValue> generateDefinition(
-		StructuredDef def
-	)
-	{
-		var fields = Lists.mutable.<SearchFieldDef<StoredObjectValue>>empty();
-
-		ValueGenerator gen = (root, consumer) -> consumer.accept(root);
-		collectFields(
-			null,
-			def,
-			null,
-			false,
-			gen,
-			fields::add
-		);
-
-		return SearchIndexDef.create(StoredObjectValue.class, "main")
-			.addFields(fields)
-			.build();
-	}
-
-	private void collectFields(
-		FieldDef field,
-		TypeDef def,
-		String path,
-		boolean multiple,
-		ValueGenerator generator,
-
-		Consumer<SearchFieldDef<StoredObjectValue>> fieldReceiver
-	)
-	{
-		if(def instanceof NonNullDef.Output)
-		{
-			def = ((NonNullDef.Output) def).getType();
-		}
-
-		if(def instanceof ListDef)
-		{
-			var listDef = (ListDef) def;
-			collectFields(
-				field,
-				listDef.getItemType(),
-				path,
-				true,
-
-				(root, consumer) -> generator.generate(root, v -> {
-					var listValue = (ListValue) v;
-					listValue.items().forEach(consumer);
-				}),
-
-				fieldReceiver
-			);
-		}
-		else if(def instanceof SimpleValueDef)
-		{
-			var indexerType = StorageModel.getIndexerType(field);
-			var sortable = StorageModel.isSortable(field);
-			var highlightable = StorageModel.isHighlightable(field);
-
-			// Only handle this field if it is indexed
-			if(indexerType.isEmpty()) return;
-
-			var indexer = getIndexer(indexerType.get()).get();
-
-			if(multiple)
-			{
-				var searchField = SearchFieldDef.create(StoredObjectValue.class, path)
-					.withType(indexer.getSearchFieldType())
-					.withHighlighting(highlightable)
-					.collection()
-					.withSupplier(value -> {
-						var list = Lists.mutable.empty();
-						generator.generate(value, v -> list.add(extractValue(v)));
-						return (Iterable) list;
-					})
-					.build();
-
-				fieldReceiver.accept(searchField);
-			}
-			else
-			{
-				var searchField = SearchFieldDef.create(StoredObjectValue.class, path)
-					.withType((SearchFieldType<Object>) indexer.getSearchFieldType())
-					.withHighlighting(highlightable)
-					.withSupplier(value -> {
-						var list = Lists.mutable.empty();
-						generator.generate(value, v -> list.add(extractValue(v)));
-						return (Object) list.getFirst();
-					})
-					.withSortable(sortable)
-					.build();
-
-				fieldReceiver.accept(searchField);
-			}
-		}
-		else if(def instanceof StructuredDef)
-		{
-			/*
-			 * Three cases, either:
-			 *
-			 * 1) Link to another collection - handle as ID type
-			 * 2) InterfaceDef
-			 * 3) ObjectDef
-			 */
-			var structuredDef = (StructuredDef) def;
-
-			if(path != null && structuredDef.findImplements(StorageSchema.ENTITY_NAME))
-			{
-				// Not root entity and implements entity - index as an ID
-				collectFields(
-					field,
-					ScalarDef.ID,
-					path,
-					multiple,
-					generator,
-
-					fieldReceiver
-				);
-			}
-			else if(def instanceof InterfaceDef)
-			{
-				// For interfaces we first make sure that __typename is available
-				var typenameField = SearchFieldDef.create(StoredObjectValue.class, join(path, "__typename"))
-					.withType(SearchFieldType.forString().token().build())
-					.withSupplier(value -> {
-						var list = Lists.mutable.<String>empty();
-						generator.generate(value, v -> list.add(v.getDefinition().getName()));
-						return (String) list.getFirst();
-					})
-					.build();
-
-				fieldReceiver.accept(typenameField);
-
-				// Index all of the shared fields
-				for(var fieldDef : structuredDef.getFields())
-				{
-					var name = fieldDef.getName();
-					ValueGenerator fieldGenerator = (root, consumer) -> generator.generate(
-						root,
-						v -> {
-							consumer.accept(((StructuredValue) v).getFields().get(name));
-						}
-					);
-
-					collectFields(
-						fieldDef,
-						fieldDef.getType(),
-						join(join(path, "_"), name),
-						multiple,
-						fieldGenerator,
-						fieldReceiver
-					);
-				}
-
-				// TODO: Polymorphism
-			}
-			else
-			{
-				for(var fieldDef : structuredDef.getFields())
-				{
-					var name = fieldDef.getName();
-					ValueGenerator fieldGenerator = (root, consumer) -> generator.generate(
-						root,
-						v -> {
-							consumer.accept(((StructuredValue) v).getFields().get(name));
-						}
-					);
-
-					collectFields(
-						fieldDef,
-						fieldDef.getType(),
-						join(join(path, "_"), name),
-						multiple,
-						fieldGenerator,
-						fieldReceiver
-					);
-				}
-			}
-		}
-	}
-
-	private String join(String path, String next)
-	{
-		return path == null || path.isEmpty() ? next : path + '.' + next;
-	}
-
-	private static Object extractValue(Value v)
-	{
-		if(v == null) return null;
-
-		if(v instanceof SimpleValue)
-		{
-			return ((SimpleValue) v).get();
-		}
-		else if(v instanceof StoredObjectRef)
-		{
-			return ((StoredObjectRef) v).getId();
-		}
-
-		return null;
-	}
-
-	interface ValueGenerator
-	{
-		void generate(Value root, Consumer<Value> consumer);
 	}
 }
