@@ -15,6 +15,8 @@ import graphql.schema.GraphQLInputObjectType;
 import graphql.schema.GraphQLList;
 import graphql.schema.GraphQLNonNull;
 import graphql.schema.GraphQLTypeReference;
+import se.l4.silo.index.AnyMatcher;
+import se.l4.silo.index.NullMatcher;
 import se.l4.silo.index.search.QueryClause;
 import se.l4.silo.index.search.query.AndQuery;
 import se.l4.silo.index.search.query.NegateQuery;
@@ -79,11 +81,25 @@ public class StructuredDefCriteria
 				.type(Scalars.GraphQLBoolean)
 			)
 			.field(GraphQLInputObjectField.newInputObjectField()
+				.name("not")
+				.description("Create a branch where no criteria can match")
+				.type(GraphQLTypeReference.typeRef(name))
+			);
+
+		if(fieldCriteria != null)
+		{
+			// Only output a field criteria if one exists
+			builder.field(GraphQLInputObjectField.newInputObjectField()
 				.name("field")
 				.description("Match against a field in this type")
 				.type(fieldCriteria.getGraphQLType())
-			)
-			.field(GraphQLInputObjectField.newInputObjectField()
+			);
+		}
+
+		if(fieldCriteria != null || ! subTypes.isEmpty())
+		{
+			// If there's fields that can be queried or subtypes output and/or
+			builder.field(GraphQLInputObjectField.newInputObjectField()
 				.name("and")
 				.description("Create a branch where all criteria must match")
 				.type(GraphQLList.list(
@@ -100,12 +116,8 @@ public class StructuredDefCriteria
 						GraphQLTypeReference.typeRef(name)
 					)
 				))
-			)
-			.field(GraphQLInputObjectField.newInputObjectField()
-				.name("not")
-				.description("Create a branch where no criteria can match")
-				.type(GraphQLTypeReference.typeRef(name))
 			);
+		}
 
 		// TODO: Generate specific inputs
 
@@ -126,12 +138,14 @@ public class StructuredDefCriteria
 	{
 		InputUnions.validate(graphQLType, data);
 
-		if(data.containsKey("any"))
+		if(data.get("any") != null)
 		{
-			// TODO: Handle always true somehow
-			return null;
+			return path.toQuery(data.get("any") == Boolean.TRUE
+				? AnyMatcher.create()
+				: NullMatcher.create()
+			);
 		}
-		else if(data.containsKey("and"))
+		else if(data.get("and") != null)
 		{
 			var subCriteria = (List<Map<String, Object>>) data.get("and");
 			var builder = AndQuery.create();
@@ -142,7 +156,7 @@ public class StructuredDefCriteria
 
 			return builder.build();
 		}
-		else if(data.containsKey("or"))
+		else if(data.get("or") != null)
 		{
 			var subCriteria = (List<Map<String, Object>>) data.get("or");
 			var builder = OrQuery.create();
@@ -153,12 +167,12 @@ public class StructuredDefCriteria
 
 			return builder.build();
 		}
-		else if(data.containsKey("not"))
+		else if(data.get("not") != null)
 		{
 			var subClause = (Map<String, Object>) data.get("not");
 			return NegateQuery.create(toClause(subClause, path));
 		}
-		else if(data.containsKey("field"))
+		else if(data.get("field") != null)
 		{
 			var subClause = (Map<String, Object>) data.get("field");
 			return fieldCriteria.toClause(subClause, path);

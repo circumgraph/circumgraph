@@ -6,6 +6,7 @@ import java.util.concurrent.CompletableFuture;
 
 import com.circumgraph.graphql.internal.StorageContext;
 import com.circumgraph.model.FieldDef;
+import com.circumgraph.model.NonNullDef;
 import com.circumgraph.model.OutputTypeDef;
 import com.circumgraph.model.StructuredDef;
 import com.circumgraph.storage.Collection;
@@ -409,6 +410,14 @@ public class SearchQueryGenerator
 
 	private Criteria generateCriteria(OutputTypeDef output)
 	{
+		if(output instanceof NonNullDef.Output)
+		{
+			output = ((NonNullDef.Output) output).getType();
+		}
+
+		// TODO: Caching
+		// TODO: Recursion
+
 		if(output instanceof StructuredDef)
 		{
 			var structuredDef = (StructuredDef) output;
@@ -419,18 +428,36 @@ public class SearchQueryGenerator
 			);
 		}
 
-		throw new RuntimeException();
+		// No querying available
+		return null;
 	}
 
 	private FieldCriteria resolveFieldCriteria(StructuredDef def)
 	{
 		var fields = def.getFields()
-			.select(f -> StorageModel.getIndexer(f).isPresent())
 			.toMap(FieldDef::getName, f -> {
 				var indexer = StorageModel.getIndexer(f);
-				return indexerToCriteria.get(indexer.get().getName());
+				if(indexer.isPresent())
+				{
+					// Field has an indexer - use the Criteria associated with it
+					return indexerToCriteria.get(indexer.get().getName());
+				}
+				else if(StorageModel.isIndexed(f))
+				{
+					// For other fields we try to resolve a criteria
+					return generateCriteria(f.getType());
+				}
+
+				return null;
 			})
+			.select((key, v) -> v != null)
 			.toImmutable();
+
+		if(fields.isEmpty())
+		{
+			// If there are no indexed fields we can't generate a criteria
+			return null;
+		}
 
 		return new FieldCriteria(def, fields);
 	}
