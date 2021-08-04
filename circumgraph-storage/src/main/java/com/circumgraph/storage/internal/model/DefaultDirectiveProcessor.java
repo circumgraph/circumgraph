@@ -29,13 +29,13 @@ public class DefaultDirectiveProcessor
 
 	private static final ValidationMessageType UNKNOWN_PROVIDER = ValidationMessageType.error()
 		.withCode("storage:@default:unknown-provider")
-		.withMessage("The provider {{provider}} is not available")
+		.withMessage("The default provider {{provider}} is not available")
 		.withArgument("provider")
 		.build();
 
 	private static final ValidationMessageType INVALID_PROVIDER = ValidationMessageType.error()
 		.withCode("storage:@default:invalid-provider")
-		.withMessage("{{provider}} does not support the type {{fieldType}}")
+		.withMessage("Default provider {{provider}} does not support the type {{fieldType}}")
 		.withArgument("provider")
 		.withArgument("fieldType")
 		.build();
@@ -99,7 +99,7 @@ public class DefaultDirectiveProcessor
 			else
 			{
 				var instance = actualProvider.get();
-				if(location.getType().isAssignableFrom(instance.getType()))
+				if(! location.getType().isAssignableFrom(instance.getType()))
 				{
 					validationCollector.accept(INVALID_PROVIDER.toMessage()
 						.withLocation(directive.getSourceLocation())
