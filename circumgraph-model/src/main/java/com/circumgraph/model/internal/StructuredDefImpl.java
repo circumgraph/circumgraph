@@ -7,6 +7,7 @@ import java.util.function.Predicate;
 import com.circumgraph.model.DirectiveUse;
 import com.circumgraph.model.FieldDef;
 import com.circumgraph.model.InterfaceDef;
+import com.circumgraph.model.MetadataKey;
 import com.circumgraph.model.StructuredDef;
 import com.circumgraph.model.TypeDef;
 import com.circumgraph.model.TypeRef;
@@ -34,6 +35,7 @@ public abstract class StructuredDefImpl
 	protected final ImmutableList<FieldDef> directFields;
 	protected ImmutableMap<String, FieldDef> fields;
 
+	private final MetadataHelper metadata;
 	protected ModelDefs defs;
 
 	public StructuredDefImpl(
@@ -51,6 +53,8 @@ public abstract class StructuredDefImpl
 		this.directFields = fields;
 		this.implementsTypes = implementsTypes;
 		this.directives = directives;
+
+		this.metadata = new MetadataHelper();
 	}
 
 	@Override
@@ -237,6 +241,18 @@ public abstract class StructuredDefImpl
 		}
 
 		def.getImplements().forEach(i -> collectFields(i, fields));
+	}
+
+	@Override
+	public <V> Optional<V> getMetadata(MetadataKey<V> key)
+	{
+		return metadata.getMetadata(key);
+	}
+
+	@Override
+	public <V> void setMetadata(MetadataKey<V> key, V value)
+	{
+		metadata.setMetadata(key, value);
 	}
 
 	@Override

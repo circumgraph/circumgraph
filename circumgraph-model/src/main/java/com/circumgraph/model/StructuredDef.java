@@ -12,7 +12,7 @@ import org.eclipse.collections.api.set.SetIterable;
  * {@link InterfaceDef}.
  */
 public interface StructuredDef
-	extends OutputTypeDef, HasDirectives, HasSourceLocation
+	extends OutputTypeDef, HasDirectives, HasSourceLocation, HasMetadata
 {
 	/**
 	 * Get the names of types this structured data implements.
