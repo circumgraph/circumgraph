@@ -29,6 +29,7 @@ public class StorageModel
 
 	private static MetadataKey<FieldType> FIELD_TYPE = MetadataKey.create("storage:field-type", FieldType.class);
 	private static MetadataKey<ValueIndexer> FIELD_INDEXER = MetadataKey.create("storage:field-indexer", ValueIndexer.class);
+	private static MetadataKey<Boolean> FIELD_INDEXED = MetadataKey.create("storage:field-indexed", Boolean.class);
 	private static MetadataKey<Boolean> FIELD_SORTABLE = MetadataKey.create("storage:field-sortable", Boolean.class);
 	private static MetadataKey<Boolean> FIELD_HIGHLIGHTABLE = MetadataKey.create("storage:field-highlightable", Boolean.class);
 
@@ -67,6 +68,32 @@ public class StorageModel
 	}
 
 	/**
+	 * Get if this field is indexed.
+	 *
+	 * @param field
+	 *   field
+	 * @return
+	 *   {@code true} if field is indexed
+	 */
+	public static boolean isIndexed(FieldDef field)
+	{
+		return field.getMetadata(FIELD_INDEXED).orElse(false);
+	}
+
+	/**
+	 * Set if the field should be indexed.
+	 *
+	 * @param field
+	 *   field that should have indexed value set
+	 * @param v
+	 *   {@code true} if field is indexed
+	 */
+	public static void setIndexed(FieldDef field, boolean v)
+	{
+		field.setMetadata(FIELD_INDEXED, v);
+	}
+
+	/**
 	 * Get the identifier of the indexer used for the given field.
 	 *
 	 * @param field
@@ -88,6 +115,7 @@ public class StorageModel
 	 */
 	public static void setIndexer(FieldDef field, ValueIndexer type)
 	{
+		setIndexed(field, true);
 		field.setMetadata(FIELD_INDEXER, type);
 	}
 

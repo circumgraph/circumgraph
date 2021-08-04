@@ -46,6 +46,13 @@ public interface ValidationMessage
 	MapIterable<String, Object> getArguments();
 
 	/**
+	 * Format this message for use in error logs.
+	 *
+	 * @return
+	 */
+	String format();
+
+	/**
 	 * Start building a new validation message.
 	 *
 	 * @param type

@@ -18,7 +18,7 @@ import org.eclipse.collections.api.map.MapIterable;
 public class ValidationMessageImpl
 	implements ValidationMessage
 {
-	private final SourceLocation sourceLocation;
+	private final SourceLocation location;
 	private final ValidationMessageLevel level;
 	private final String code;
 	private final MapIterable<String, Object> arguments;
@@ -32,7 +32,7 @@ public class ValidationMessageImpl
 		String message
 	)
 	{
-		this.sourceLocation = sourceLocation;
+		this.location = sourceLocation;
 		this.level = level;
 		this.code = code;
 		this.arguments = arguments;
@@ -42,7 +42,7 @@ public class ValidationMessageImpl
 	@Override
 	public SourceLocation getLocation()
 	{
-		return sourceLocation;
+		return location;
 	}
 
 	@Override
@@ -70,9 +70,15 @@ public class ValidationMessageImpl
 	}
 
 	@Override
+	public String format()
+	{
+		return location.describe() + ": " + code + ": "	+ message;
+	}
+
+	@Override
 	public int hashCode()
 	{
-		return Objects.hash(arguments, code, level, message, sourceLocation);
+		return Objects.hash(arguments, code, level, message, location);
 	}
 
 	@Override
@@ -86,7 +92,7 @@ public class ValidationMessageImpl
 			&& Objects.equals(code, other.code)
 			&& level == other.level
 			&& Objects.equals(message, other.message)
-			&& Objects.equals(sourceLocation, other.sourceLocation);
+			&& Objects.equals(location, other.location);
 	}
 
 	@Override
@@ -97,7 +103,7 @@ public class ValidationMessageImpl
 			+ ", message=" + message
 			+ ", code=" + code
 			+ ", arguments=" + arguments
-			+ ", sourceLocation=" + sourceLocation
+			+ ", sourceLocation=" + location
 			+ "}";
 	}
 

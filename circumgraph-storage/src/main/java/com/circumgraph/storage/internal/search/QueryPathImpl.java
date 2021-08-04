@@ -2,6 +2,7 @@ package com.circumgraph.storage.internal.search;
 
 import com.circumgraph.model.NonNullDef;
 import com.circumgraph.model.OutputTypeDef;
+import com.circumgraph.model.ScalarDef;
 import com.circumgraph.model.StructuredDef;
 import com.circumgraph.storage.StorageSchema;
 import com.circumgraph.storage.search.QueryPath;
@@ -59,22 +60,41 @@ public class QueryPathImpl
 			def = ((NonNullDef.Output) def).getType();
 		}
 
-		var fieldPath = new QueryPathImpl(
-			this.polymorphic(field.get().getDeclaringType()),
-			def,
-			fieldName
-		);
-
-		if(def instanceof StructuredDef && ! ((StructuredDef) def).findImplements(StorageSchema.ENTITY_NAME))
+		if(def instanceof StructuredDef )
+		{
+			/*
+			 * For StructuredDef either descend into the object or link to it
+			 * if entity.
+			 */
+			if(((StructuredDef) def).findImplements(StorageSchema.ENTITY_NAME))
+			{
+				return new QueryPathImpl(
+					this.polymorphic(field.get().getDeclaringType()),
+					ScalarDef.ID,
+					fieldName
+				);
+			}
+			else
+			{
+				return new QueryPathImpl(
+					new QueryPathImpl(
+						this.polymorphic(field.get().getDeclaringType()),
+						def,
+						fieldName
+					),
+					def,
+					def.getName()
+				);
+			}
+		}
+		else
 		{
 			return new QueryPathImpl(
-				fieldPath,
+				this.polymorphic(field.get().getDeclaringType()),
 				def,
-				def.getName()
+				fieldName
 			);
 		}
-
-		return fieldPath;
 	}
 
 	@Override
@@ -102,6 +122,12 @@ public class QueryPathImpl
 	@Override
 	public FieldQuery toQuery(Matcher<?> matcher)
 	{
+		if(def instanceof StructuredDef)
+		{
+			// Querying the object - delegate to the __typename
+			return FieldQuery.create(toIndexName() + ".__typename", matcher);
+		}
+
 		return FieldQuery.create(toIndexName(), matcher);
 	}
 

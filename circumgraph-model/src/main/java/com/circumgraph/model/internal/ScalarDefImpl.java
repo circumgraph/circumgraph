@@ -3,6 +3,7 @@ package com.circumgraph.model.internal;
 import java.util.Objects;
 import java.util.Optional;
 
+import com.circumgraph.model.NonNullDef;
 import com.circumgraph.model.ScalarDef;
 import com.circumgraph.model.TypeDef;
 
@@ -39,6 +40,11 @@ public class ScalarDefImpl
 	@Override
 	public boolean isAssignableFrom(TypeDef other)
 	{
+		if(other instanceof NonNullDef)
+		{
+			other = ((NonNullDef) other).getType();
+		}
+
 		return this == other;
 	}
 

@@ -14,7 +14,7 @@ import com.circumgraph.model.InterfaceDef;
 import com.circumgraph.model.ListDef;
 import com.circumgraph.model.Model;
 import com.circumgraph.model.Model.Builder;
-import com.circumgraph.model.ModelException;
+import com.circumgraph.model.ModelValidationException;
 import com.circumgraph.model.ObjectDef;
 import com.circumgraph.model.OutputTypeDef;
 import com.circumgraph.model.ScalarDef;
@@ -188,12 +188,7 @@ public class ModelBuilderImpl
 		Predicate<ValidationMessage> isError = m -> m.getLevel() == ValidationMessageLevel.ERROR;
 		if(validationMessages.anySatisfy(isError))
 		{
-			throw new ModelException(
-				"Invalid model, errors reported:\n"
-				+ validationMessages.select(isError)
-					.collect(msg -> "  * " + msg.getLocation().describe() + ": " + msg.getMessage())
-					.makeString("\n")
-			);
+			throw new ModelValidationException(validationMessages);
 		}
 
 		// Prepare and create model
@@ -245,6 +240,12 @@ public class ModelBuilderImpl
 		for(TypeDef type : types)
 		{
 			validateDirectives(type, directiveValidator);
+		}
+
+		// Throw an error if processing fails
+		if(validationMessages.anySatisfy(isError))
+		{
+			throw new ModelValidationException(validationMessages);
 		}
 
 		return new ModelImpl(types);

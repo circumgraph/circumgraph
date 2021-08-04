@@ -10,6 +10,7 @@ import com.circumgraph.model.OutputTypeDef;
 import com.circumgraph.model.ScalarDef;
 import com.circumgraph.model.SimpleValueDef;
 import com.circumgraph.model.StructuredDef;
+import com.circumgraph.model.UnionDef;
 import com.circumgraph.model.processing.DirectiveUseProcessor;
 import com.circumgraph.model.validation.ValidationMessage;
 import com.circumgraph.model.validation.ValidationMessageType;
@@ -26,6 +27,11 @@ public class IndexDirectiveProcessor
 	private static final ValidationMessageType INVALID_ARGUMENTS = ValidationMessageType.error()
 		.withCode("storage:@index:invalid-arguments")
 		.withMessage("@index only supports an optional type argument")
+		.build();
+
+	private static final ValidationMessageType INVALID_ARGUMENTS_POLYMORPHIC = ValidationMessageType.error()
+		.withCode("storage:@index:invalid-arguments-polymorphic")
+		.withMessage("Polymorphic types, such as objects, interfaces and unions can not specify an indexer type")
 		.build();
 
 	private static final ValidationMessageType TYPE_UNSUPPORTED = ValidationMessageType.error()
@@ -106,6 +112,20 @@ public class IndexDirectiveProcessor
 			{
 				fieldType = ((ListDef.Output) fieldType).getItemType();
 			}
+			else if(fieldType instanceof StructuredDef || fieldType instanceof UnionDef)
+			{
+				// Mark as indexed allowing for the field to be descended into
+				StorageModel.setIndexed(location, true);
+				if(! directive.getArguments().isEmpty())
+				{
+					validationCollector.accept(INVALID_ARGUMENTS_POLYMORPHIC.toMessage()
+						.withLocation(directive.getSourceLocation())
+						.build()
+					);
+				}
+
+				return;
+			}
 			else
 			{
 				error(location, directive, validationCollector);
@@ -113,7 +133,7 @@ public class IndexDirectiveProcessor
 			}
 		}
 
-		if(directive.getArguments().isEmpty() && ! DirectiveUseProcessor.checkOnlyArguments(directive, "types"))
+		if(! DirectiveUseProcessor.checkOnlyArguments(directive, "type"))
 		{
 			validationCollector.accept(INVALID_ARGUMENTS.toMessage()
 				.withLocation(directive.getSourceLocation())

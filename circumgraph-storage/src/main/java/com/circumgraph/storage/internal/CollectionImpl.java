@@ -5,6 +5,7 @@ import com.circumgraph.model.validation.ValidationMessage;
 import com.circumgraph.model.validation.ValidationMessageLevel;
 import com.circumgraph.storage.Collection;
 import com.circumgraph.storage.StorageException;
+import com.circumgraph.storage.StorageSearchException;
 import com.circumgraph.storage.StorageValidationException;
 import com.circumgraph.storage.StoredObjectValue;
 import com.circumgraph.storage.Value;
@@ -128,7 +129,9 @@ public class CollectionImpl
 	public Mono<SearchResult> search(Query query)
 	{
 		return backing.fetch(((QueryImpl) query).buildQuery())
-			.map(sr -> new SearchResultImpl(sr));
+			.map(sr -> new SearchResultImpl(sr))
+			.onErrorMap(se.l4.silo.StorageException.class, e -> new StorageSearchException("Unable to search; " + e.getMessage(), e))
+			.cast(SearchResult.class);
 	}
 
 	private static class MappingEncounterImpl

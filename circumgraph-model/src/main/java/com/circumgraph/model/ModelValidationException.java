@@ -1,4 +1,4 @@
-package com.circumgraph.storage;
+package com.circumgraph.model;
 
 import com.circumgraph.model.validation.ValidationMessage;
 import com.circumgraph.model.validation.ValidationMessageLevel;
@@ -6,19 +6,19 @@ import com.circumgraph.model.validation.ValidationMessageLevel;
 import org.eclipse.collections.api.list.ListIterable;
 
 /**
- * Exception thrown when a validation issues occurs during mutation of an
- * object.
+ * Exception thrown when a model fails to validate during construction.
  */
-public class StorageValidationException
-	extends StorageException
+public class ModelValidationException
+	extends ModelException
 {
 	private final ListIterable<ValidationMessage> issues;
 
-	public StorageValidationException(ListIterable<ValidationMessage> issues)
+	public ModelValidationException(ListIterable<ValidationMessage> issues)
 	{
-		super("Unable to store, validation failed:\n" +
+		super("Invalid model, errors reported:\n" +
 			issues
 				.select(m -> m.getLevel() == ValidationMessageLevel.ERROR)
+				.collect(msg -> "  * " + msg.format())
 				.makeString("\n")
 		);
 

@@ -2,6 +2,7 @@ package com.circumgraph.storage.indexing;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.circumgraph.model.DirectiveUse;
 import com.circumgraph.model.FieldDef;
@@ -12,6 +13,7 @@ import com.circumgraph.model.Schema;
 import com.circumgraph.model.StructuredDef;
 import com.circumgraph.storage.SingleSchemaTest;
 import com.circumgraph.storage.StorageSchema;
+import com.circumgraph.storage.StorageSearchException;
 import com.circumgraph.storage.mutation.ScalarValueMutation;
 import com.circumgraph.storage.mutation.StructuredMutation;
 import com.circumgraph.storage.search.Query;
@@ -19,7 +21,9 @@ import com.circumgraph.storage.search.QueryPath;
 
 import org.junit.jupiter.api.Test;
 
+import se.l4.silo.index.AnyMatcher;
 import se.l4.silo.index.EqualsMatcher;
+import se.l4.silo.index.NullMatcher;
 
 public class SubObjectIndexTest
 	extends SingleSchemaTest
@@ -30,7 +34,14 @@ public class SubObjectIndexTest
 		return Schema.create()
 			.addType(ObjectDef.create("Test")
 				.addImplements(StorageSchema.ENTITY_NAME)
-				.addField(FieldDef.create("sub")
+				.addField(FieldDef.create("indexed")
+					.withType("Sub")
+					.addDirective(DirectiveUse.create("index")
+						.build()
+					)
+					.build()
+				)
+				.addField(FieldDef.create("nonIndexed")
 					.withType("Sub")
 					.build()
 				)
@@ -57,7 +68,7 @@ public class SubObjectIndexTest
 		var subDef = (StructuredDef) storage.getModel().get("Sub").get();
 
 		var mutation = collection.newMutation()
-			.updateField("sub", StructuredMutation.create(subDef)
+			.updateField("indexed", StructuredMutation.create(subDef)
 				.updateField("value", ScalarValueMutation.createString("a1"))
 				.build())
 			.build();
@@ -77,7 +88,7 @@ public class SubObjectIndexTest
 		var subDef = (StructuredDef) storage.getModel().get("Sub").get();
 
 		var mutation = collection.newMutation()
-			.updateField("sub", StructuredMutation.create(subDef)
+			.updateField("indexed", StructuredMutation.create(subDef)
 				.updateField("value", ScalarValueMutation.createString("a1"))
 				.build())
 			.build();
@@ -95,7 +106,7 @@ public class SubObjectIndexTest
 		var subDef = (StructuredDef) storage.getModel().get("Sub").get();
 
 		var mutation = collection.newMutation()
-			.updateField("sub", StructuredMutation.create(subDef)
+			.updateField("indexed", StructuredMutation.create(subDef)
 				.updateField("value", ScalarValueMutation.createString("a1"))
 				.build())
 			.build();
@@ -105,7 +116,7 @@ public class SubObjectIndexTest
 		var root = QueryPath.root(collection.getDefinition());
 		var results = collection.search(
 			Query.create()
-				.addClause(root.field("sub").field("value").toQuery(EqualsMatcher.create("b1")))
+				.addClause(root.field("indexed").field("value").toQuery(EqualsMatcher.create("b1")))
 		).block();
 
 		assertThat(results.getTotalCount(), is(0));
@@ -118,7 +129,7 @@ public class SubObjectIndexTest
 		var subDef = (StructuredDef) storage.getModel().get("Sub").get();
 
 		var mutation = collection.newMutation()
-			.updateField("sub", StructuredMutation.create(subDef)
+			.updateField("indexed", StructuredMutation.create(subDef)
 				.updateField("value", ScalarValueMutation.createString("a1"))
 				.build())
 			.build();
@@ -128,9 +139,66 @@ public class SubObjectIndexTest
 		var root = QueryPath.root(collection.getDefinition());
 		var results = collection.search(
 			Query.create()
-				.addClause(root.field("sub").field("value").toQuery(EqualsMatcher.create("a1")))
+				.addClause(root.field("indexed").field("value").toQuery(EqualsMatcher.create("a1")))
 		).block();
 
 		assertThat(results.getTotalCount(), is(1));
+	}
+
+	@Test
+	public void testQueryNullMatchesNull()
+	{
+		var collection = storage.get("Test");
+
+		var mutation = collection.newMutation()
+			.build();
+
+		collection.store(mutation).block();
+
+		var root = QueryPath.root(collection.getDefinition());
+		var results = collection.search(
+			Query.create()
+				.addClause(root.field("indexed").toQuery(NullMatcher.create()))
+		).block();
+
+		assertThat(results.getTotalCount(), is(1));
+	}
+
+	@Test
+	public void testQueryNullDoesNotMatchAny()
+	{
+		var collection = storage.get("Test");
+
+		var mutation = collection.newMutation()
+			.build();
+
+		collection.store(mutation).block();
+
+		var root = QueryPath.root(collection.getDefinition());
+		var results = collection.search(
+			Query.create()
+				.addClause(root.field("indexed").toQuery(AnyMatcher.create()))
+		).block();
+
+		assertThat(results.getTotalCount(), is(0));
+	}
+
+	@Test
+	public void testQueryNonIndexed()
+	{
+		var collection = storage.get("Test");
+
+		var mutation = collection.newMutation()
+			.build();
+
+		collection.store(mutation).block();
+
+		var root = QueryPath.root(collection.getDefinition());
+		assertThrows(StorageSearchException.class, () -> {
+			collection.search(
+				Query.create()
+					.addClause(root.field("nonIndexed").toQuery(NullMatcher.create()))
+			).block();
+		});
 	}
 }

@@ -216,6 +216,12 @@ public class StorageImpl
 		Consumer<SearchFieldDef<StoredObjectValue>> fieldReceiver
 	)
 	{
+		if(field != null && ! StorageModel.isIndexed(field))
+		{
+			// Field has not been marked as indexed
+			return;
+		}
+
 		if(def instanceof NonNullDef.Output)
 		{
 			def = ((NonNullDef.Output) def).getType();
@@ -312,6 +318,8 @@ public class StorageImpl
 				var typenameField = SearchFieldDef.create(StoredObjectValue.class, path.typename().toIndexName())
 					.withType(SearchFieldType.forString().token().build())
 					.withSupplier(value -> {
+						if(value == null) return null;
+
 						var list = Lists.mutable.<String>empty();
 						generator.generate(value, v -> list.add(v.getDefinition().getName()));
 						return (String) list.getFirst();
@@ -336,12 +344,7 @@ public class StorageImpl
 
 						if(! fields.add(fieldPath.toIndexName())) continue;
 
-						ValueGenerator fieldGenerator = (root, consumer) -> generator.generate(
-							root,
-							v -> {
-								consumer.accept(((StructuredValue) v).getFields().get(name));
-							}
-						);
+						ValueGenerator fieldGenerator = createFieldGenerator(generator, name);
 
 						collectIndexedFields(
 							model,
@@ -359,15 +362,22 @@ public class StorageImpl
 			}
 			else
 			{
+				// Index type of object - this is used for any/null queries
+				var typenameField = SearchFieldDef.create(StoredObjectValue.class, path.typename().toIndexName())
+					.withType(SearchFieldType.forString().token().build())
+					.withSupplier(value -> {
+						var list = Lists.mutable.<String>empty();
+						generator.generate(value, v -> list.add(v.getDefinition().getName()));
+						return (String) list.getFirst();
+					})
+					.build();
+
+				fieldReceiver.accept(typenameField);
+
 				for(var fieldDef : structuredDef.getFields())
 				{
 					var name = fieldDef.getName();
-					ValueGenerator fieldGenerator = (root, consumer) -> generator.generate(
-						root,
-						v -> {
-							consumer.accept(((StructuredValue) v).getFields().get(name));
-						}
-					);
+					ValueGenerator fieldGenerator = createFieldGenerator(generator, name);
 
 					collectIndexedFields(
 						model,
@@ -404,5 +414,19 @@ public class StorageImpl
 	interface ValueGenerator
 	{
 		void generate(Value root, Consumer<Value> consumer);
+	}
+
+	private static ValueGenerator createFieldGenerator(ValueGenerator generator, String name)
+	{
+		return (root, consumer) -> generator.generate(
+			root,
+			v -> {
+				var value = ((StructuredValue) v).getFields().get(name);
+				if(value != null)
+				{
+					consumer.accept(value);
+				}
+			}
+		);
 	}
 }
