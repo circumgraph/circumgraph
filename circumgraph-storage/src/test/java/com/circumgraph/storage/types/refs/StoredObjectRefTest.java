@@ -1,4 +1,4 @@
-package com.circumgraph.storage;
+package com.circumgraph.storage.types.refs;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -13,6 +13,13 @@ import com.circumgraph.model.Schema;
 import com.circumgraph.model.StructuredDef;
 import com.circumgraph.model.TypeRef;
 import com.circumgraph.model.UnionDef;
+import com.circumgraph.storage.ListValue;
+import com.circumgraph.storage.SimpleValue;
+import com.circumgraph.storage.StorageSchema;
+import com.circumgraph.storage.StorageTest;
+import com.circumgraph.storage.StorageValidationException;
+import com.circumgraph.storage.StoredObjectRef;
+import com.circumgraph.storage.StructuredValue;
 import com.circumgraph.storage.mutation.ListSetMutation;
 import com.circumgraph.storage.mutation.ScalarValueMutation;
 import com.circumgraph.storage.mutation.StoredObjectRefMutation;

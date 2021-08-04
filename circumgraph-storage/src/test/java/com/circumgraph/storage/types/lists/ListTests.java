@@ -1,4 +1,4 @@
-package com.circumgraph.storage;
+package com.circumgraph.storage.types.lists;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
@@ -13,6 +13,11 @@ import com.circumgraph.model.NonNullDef;
 import com.circumgraph.model.ObjectDef;
 import com.circumgraph.model.ScalarDef;
 import com.circumgraph.model.Schema;
+import com.circumgraph.storage.ListValue;
+import com.circumgraph.storage.SimpleValue;
+import com.circumgraph.storage.StorageSchema;
+import com.circumgraph.storage.StorageTest;
+import com.circumgraph.storage.StorageValidationException;
 import com.circumgraph.storage.mutation.ListSetMutation;
 import com.circumgraph.storage.mutation.NullMutation;
 import com.circumgraph.storage.mutation.ScalarValueMutation;

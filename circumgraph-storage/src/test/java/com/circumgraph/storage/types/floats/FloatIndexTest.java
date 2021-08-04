@@ -1,4 +1,4 @@
-package com.circumgraph.storage.indexing;
+package com.circumgraph.storage.types.floats;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -20,7 +20,7 @@ import org.junit.jupiter.api.Test;
 import se.l4.silo.index.EqualsMatcher;
 import se.l4.silo.index.RangeMatcher;
 
-public class IntIndexTest
+public class FloatIndexTest
 	extends SingleSchemaTest
 {
 	@Override
@@ -30,7 +30,7 @@ public class IntIndexTest
 			.addType(ObjectDef.create("Test")
 				.addImplements(StorageSchema.ENTITY_NAME)
 				.addField(FieldDef.create("value")
-					.withType(ScalarDef.INT)
+					.withType(ScalarDef.FLOAT)
 					.addDirective(DirectiveUse.create("index")
 						.build()
 					)
@@ -50,7 +50,7 @@ public class IntIndexTest
 		var collection = storage.get("Test");
 
 		var mutation = collection.newMutation()
-			.updateField("value", ScalarValueMutation.createInt(10))
+			.updateField("value", ScalarValueMutation.createFloat(10.2))
 			.build();
 
 		var stored = collection.store(mutation).block();
@@ -61,8 +61,8 @@ public class IntIndexTest
 		var fetched = collection.get(id).block();
 		assertThat(fetched, is(stored));
 
-		var value = fetched.getField("value", SimpleValue.class).get().asInt();
-		assertThat(value, is(10));
+		var value = fetched.getField("value", SimpleValue.class).get().asFloat();
+		assertThat(value, is(10.2));
 	}
 
 	@Test
@@ -71,14 +71,14 @@ public class IntIndexTest
 		var collection = storage.get("Test");
 
 		var mutation = collection.newMutation()
-			.updateField("value", ScalarValueMutation.createInt(10))
+			.updateField("value", ScalarValueMutation.createFloat(10.2))
 			.build();
 
 		collection.store(mutation).block();
 
 		var root = QueryPath.root(collection.getDefinition());
 		var results = collection.search(Query.create()
-			.addClause(root.field("value").toQuery(EqualsMatcher.create(10)))
+			.addClause(root.field("value").toQuery(EqualsMatcher.create(10.2)))
 		).block();
 
 		assertThat(results.getTotalCount(), is(1));
@@ -90,14 +90,14 @@ public class IntIndexTest
 		var collection = storage.get("Test");
 
 		var mutation = collection.newMutation()
-			.updateField("value", ScalarValueMutation.createInt(10))
+			.updateField("value", ScalarValueMutation.createFloat(10.2))
 			.build();
 
 		collection.store(mutation).block();
 
 		var root = QueryPath.root(collection.getDefinition());
 		var results = collection.search(Query.create()
-			.addClause(root.field("value").toQuery(RangeMatcher.isMoreThan(9)))
+			.addClause(root.field("value").toQuery(RangeMatcher.isMoreThan(10.0)))
 		).block();
 
 		assertThat(results.getTotalCount(), is(1));
@@ -109,14 +109,14 @@ public class IntIndexTest
 		var collection = storage.get("Test");
 
 		var mutation = collection.newMutation()
-			.updateField("value", ScalarValueMutation.createInt(10))
+			.updateField("value", ScalarValueMutation.createFloat(10.2))
 			.build();
 
 		collection.store(mutation).block();
 
 		var root = QueryPath.root(collection.getDefinition());
 		var results = collection.search(Query.create()
-			.addClause(root.field("value").toQuery(RangeMatcher.isMoreThan(11)))
+			.addClause(root.field("value").toQuery(RangeMatcher.isMoreThan(11.0)))
 		).block();
 
 		assertThat(results.getTotalCount(), is(0));

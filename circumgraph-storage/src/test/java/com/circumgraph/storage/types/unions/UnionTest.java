@@ -1,4 +1,4 @@
-package com.circumgraph.storage.unions;
+package com.circumgraph.storage.types.unions;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;

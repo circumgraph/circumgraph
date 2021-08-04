@@ -1,14 +1,10 @@
-package com.circumgraph.storage.search;
+package com.circumgraph.storage.internal.search;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
-
-import com.circumgraph.storage.internal.search.OffsetBasedCursor;
-import com.circumgraph.storage.internal.search.PageCursorImpl;
-import com.circumgraph.storage.internal.search.PageCursorsImpl;
 
 import org.junit.jupiter.api.Test;
 

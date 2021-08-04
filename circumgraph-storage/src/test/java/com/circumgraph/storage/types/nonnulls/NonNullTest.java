@@ -1,4 +1,4 @@
-package com.circumgraph.storage;
+package com.circumgraph.storage.types.nonnulls;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -11,6 +11,10 @@ import com.circumgraph.model.NonNullDef;
 import com.circumgraph.model.ObjectDef;
 import com.circumgraph.model.ScalarDef;
 import com.circumgraph.model.Schema;
+import com.circumgraph.storage.SimpleValue;
+import com.circumgraph.storage.SingleSchemaTest;
+import com.circumgraph.storage.StorageException;
+import com.circumgraph.storage.StorageSchema;
 import com.circumgraph.storage.mutation.ScalarValueMutation;
 
 import org.junit.jupiter.api.Test;

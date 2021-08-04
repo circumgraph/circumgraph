@@ -1,4 +1,4 @@
-package com.circumgraph.storage.indexing;
+package com.circumgraph.storage.types.lists.refs;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;

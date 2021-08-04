@@ -1,4 +1,4 @@
-package com.circumgraph.storage;
+package com.circumgraph.storage.types.enums;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -8,6 +8,9 @@ import com.circumgraph.model.EnumValueDef;
 import com.circumgraph.model.FieldDef;
 import com.circumgraph.model.ObjectDef;
 import com.circumgraph.model.Schema;
+import com.circumgraph.storage.SimpleValue;
+import com.circumgraph.storage.SingleSchemaTest;
+import com.circumgraph.storage.StorageSchema;
 import com.circumgraph.storage.mutation.SetEnumValueMutation;
 
 import org.junit.jupiter.api.Test;
