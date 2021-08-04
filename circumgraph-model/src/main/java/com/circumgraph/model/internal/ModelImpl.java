@@ -36,6 +36,14 @@ public class ModelImpl
 	}
 
 	@Override
+	@SuppressWarnings("unchecked")
+	public <T extends TypeDef> Optional<T> get(String id, Class<T> type)
+	{
+		var value = types.get(id);
+		return type.isInstance(value) ? Optional.of((T) value) : Optional.empty();
+	}
+
+	@Override
 	public SetIterable<? extends TypeDef> getTypes()
 	{
 		return typeSet;
