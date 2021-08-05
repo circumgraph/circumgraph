@@ -176,12 +176,15 @@ public class StorageImpl
 		var fields = Lists.mutable.<SearchFieldDef<StoredObjectValue>>empty();
 
 		ValueGenerator gen = (root, consumer) -> consumer.accept(root);
+
+		var rootPath = QueryPath.root(def);
+
 		collectIndexedFields(
 			model,
 
 			null,
 			def,
-			QueryPath.root(def),
+			rootPath,
 			false,
 			gen,
 
@@ -314,19 +317,12 @@ public class StorageImpl
 			}
 			else if(def instanceof InterfaceDef)
 			{
-				// For interfaces we first make sure that __typename is available
-				var typenameField = SearchFieldDef.create(StoredObjectValue.class, path.typename().toIndexName())
-					.withType(SearchFieldType.forString().token().build())
-					.withSupplier(value -> {
-						if(value == null) return null;
-
-						var list = Lists.mutable.<String>empty();
-						generator.generate(value, v -> list.add(v.getDefinition().getName()));
-						return (String) list.getFirst();
-					})
-					.build();
-
-				fieldReceiver.accept(typenameField);
+				// Index type of object - this is used for any/null queries
+				fieldReceiver.accept(createTypenameField(
+					generator,
+					path,
+					structuredDef
+				));
 
 				/*
 				 * Go through all the implementations of this interface and
@@ -335,6 +331,17 @@ public class StorageImpl
 				MutableSet<String> fields = Sets.mutable.empty();
 				for(var subDef : model.findImplements(def.getName()))
 				{
+					// Index type of object - this is used for any/null queries
+					var specificPath = path.polymorphic(subDef);
+					if(fields.add(specificPath.toIndexName()))
+					{
+						fieldReceiver.accept(createTypenameField(
+							generator,
+							specificPath,
+							subDef
+						));
+					}
+
 					for(var fieldDef : subDef.getFields())
 					{
 						var name = fieldDef.getName();
@@ -363,16 +370,11 @@ public class StorageImpl
 			else
 			{
 				// Index type of object - this is used for any/null queries
-				var typenameField = SearchFieldDef.create(StoredObjectValue.class, path.typename().toIndexName())
-					.withType(SearchFieldType.forString().token().build())
-					.withSupplier(value -> {
-						var list = Lists.mutable.<String>empty();
-						generator.generate(value, v -> list.add(v.getDefinition().getName()));
-						return (String) list.getFirst();
-					})
-					.build();
-
-				fieldReceiver.accept(typenameField);
+				fieldReceiver.accept(createTypenameField(
+					generator,
+					path.polymorphic(structuredDef),
+					structuredDef
+				));
 
 				for(var fieldDef : structuredDef.getFields())
 				{
@@ -393,6 +395,29 @@ public class StorageImpl
 				}
 			}
 		}
+	}
+
+	private static SearchFieldDef<StoredObjectValue> createTypenameField(
+		ValueGenerator generator,
+		QueryPath path,
+		StructuredDef def
+	)
+	{
+		return SearchFieldDef.create(StoredObjectValue.class, path.typename().toIndexName())
+			.withType(SearchFieldType.forString().token().build())
+			.withSupplier(value -> {
+				if(value == null) return null;
+
+				var list = Lists.mutable.<String>empty();
+				generator.generate(value, v -> {
+					if(def.isAssignableFrom(v.getDefinition()))
+					{
+						list.add(v.getDefinition().getName());
+					}
+				});
+				return (String) list.getFirst();
+			})
+			.build();
 	}
 
 	private static Object extractValue(Value v)

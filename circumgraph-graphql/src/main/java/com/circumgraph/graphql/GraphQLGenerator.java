@@ -127,7 +127,7 @@ public class GraphQLGenerator
 			(DataFetchingEnvironment env) -> env.getContext()
 		);
 
-		var searchGenerator = new SearchQueryGenerator(registry, idCodec);
+		var searchGenerator = new SearchQueryGenerator(model, registry, idCodec);
 
 		// Generate the query and mutation root objects
 		GraphQLObjectType.Builder queryBuilder = GraphQLObjectType.newObject()

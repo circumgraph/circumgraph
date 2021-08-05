@@ -7,7 +7,7 @@ import com.circumgraph.graphql.internal.InputUnions;
 import com.circumgraph.model.StructuredDef;
 import com.circumgraph.storage.search.QueryPath;
 
-import org.eclipse.collections.api.map.MapIterable;
+import org.eclipse.collections.api.map.ImmutableMap;
 
 import graphql.Scalars;
 import graphql.schema.GraphQLInputObjectField;
@@ -59,17 +59,21 @@ public class StructuredDefCriteria
 		raise an error.
 	""";
 
+	private final StructuredDef def;
 	private final GraphQLInputObjectType graphQLType;
-
 	private final FieldCriteria fieldCriteria;
+	private final ImmutableMap<String, StructuredDefCriteria> subTypes;
 
 	public StructuredDefCriteria(
 		StructuredDef def,
 		FieldCriteria fieldCriteria,
-		MapIterable<String, StructuredDefCriteria> subTypes
+		ImmutableMap<String, StructuredDefCriteria> subTypes
 	)
 	{
+		this.def = def;
 		this.fieldCriteria = fieldCriteria;
+		this.subTypes = subTypes;
+
 		var name = def.getName() + "CriteriaInput";
 
 		var builder = GraphQLInputObjectType.newInputObject()
@@ -119,7 +123,13 @@ public class StructuredDefCriteria
 			);
 		}
 
-		// TODO: Generate specific inputs
+		for(var subType : subTypes.keyValuesView())
+		{
+			builder.field(GraphQLInputObjectField.newInputObjectField()
+				.name(subType.getOne())
+				.type(subType.getTwo().getGraphQLType())
+			);
+		}
 
 		this.graphQLType = builder.build();
 	}
@@ -131,6 +141,7 @@ public class StructuredDefCriteria
 	}
 
 	@Override
+	@SuppressWarnings("unchecked")
 	public QueryClause toClause(
 		Map<String, Object> data,
 		QueryPath path
@@ -178,8 +189,11 @@ public class StructuredDefCriteria
 			return fieldCriteria.toClause(subClause, path);
 		}
 
-		// TODO: Polymorphism
-
-		throw new RuntimeException();
+		String subKey = data.keySet().iterator().next();
+		var subType = subTypes.get(subKey);
+		return subType.toClause(
+			(Map<String, Object>) data.get(subKey),
+			path.polymorphic(subType.def)
+		);
 	}
 }

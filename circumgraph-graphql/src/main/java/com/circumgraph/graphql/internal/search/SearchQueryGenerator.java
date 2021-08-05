@@ -7,6 +7,8 @@ import java.util.concurrent.CompletableFuture;
 import com.circumgraph.graphql.internal.SchemaNames;
 import com.circumgraph.graphql.internal.StorageContext;
 import com.circumgraph.model.FieldDef;
+import com.circumgraph.model.InterfaceDef;
+import com.circumgraph.model.Model;
 import com.circumgraph.model.NonNullDef;
 import com.circumgraph.model.OutputTypeDef;
 import com.circumgraph.model.StructuredDef;
@@ -22,6 +24,7 @@ import com.circumgraph.storage.search.QueryPath;
 import com.circumgraph.storage.search.SearchResult;
 
 import org.eclipse.collections.api.factory.Maps;
+import org.eclipse.collections.api.map.ImmutableMap;
 import org.eclipse.collections.api.map.MutableMap;
 
 import graphql.Scalars;
@@ -94,6 +97,8 @@ public class SearchQueryGenerator
 		return ctx.getNode();
 	};
 
+	private final Model model;
+
 	private final GraphQLCodeRegistry.Builder codeRegistry;
 
 	private final MutableMap<String, Criteria> indexerToCriteria;
@@ -102,11 +107,15 @@ public class SearchQueryGenerator
 	private final GraphQLOutputType pageCursorsType;
 
 	public SearchQueryGenerator(
+		Model model,
+
 		GraphQLCodeRegistry.Builder codeRegistry,
 		LongIdCodec<String> idCodec
 	)
 	{
+		this.model = model;
 		this.codeRegistry = codeRegistry;
+
 		indexerToCriteria = Maps.mutable.empty();
 		indexerToCriteria.put("ID", new IDCriteria(idCodec));
 		indexerToCriteria.put("INT", new IntCriteria());
@@ -425,7 +434,7 @@ public class SearchQueryGenerator
 			return new StructuredDefCriteria(
 				structuredDef,
 				resolveFieldCriteria(structuredDef),
-				Maps.immutable.empty()
+				generateSubCriteria(structuredDef)
 			);
 		}
 
@@ -461,6 +470,23 @@ public class SearchQueryGenerator
 		}
 
 		return new FieldCriteria(def, fields);
+	}
+
+	private ImmutableMap<String, StructuredDefCriteria> generateSubCriteria(StructuredDef def)
+	{
+		if(! (def instanceof InterfaceDef)) return Maps.immutable.empty();
+
+		var result = Maps.mutable.<String, StructuredDefCriteria>empty();
+
+		for(var subDef : model.findImplements(def.getName()))
+		{
+			result.put(
+				SchemaNames.toQueryFieldName(subDef),
+				(StructuredDefCriteria) generateCriteria(subDef)
+			);
+		}
+
+		return result.toImmutable();
 	}
 
 	private GraphQLInputObjectType generateSortInput(
