@@ -19,6 +19,7 @@ public class StorageValidationException
 		super("Unable to store, validation failed:\n" +
 			issues
 				.select(m -> m.getLevel() == ValidationMessageLevel.ERROR)
+				.collect(msg -> "  * " + msg.format())
 				.makeString("\n")
 		);
 
