@@ -3,6 +3,7 @@ package com.circumgraph.graphql.internal.mutation;
 import java.util.Map;
 
 import com.circumgraph.graphql.MutationInputMapper;
+import com.circumgraph.graphql.internal.SchemaNames;
 import com.circumgraph.model.FieldDef;
 import com.circumgraph.model.OutputTypeDef;
 import com.circumgraph.model.StructuredDef;
@@ -33,7 +34,7 @@ public class StructuredValueMutationMapper
 		this.modelDef = modelDef;
 
 		GraphQLInputObjectType.Builder builder = GraphQLInputObjectType.newInputObject()
-			.name(modelDef.getName() + "MutationInput")
+			.name(SchemaNames.toMutationInputTypeName(modelDef))
 			.description("Mutation for " + modelDef.getName());
 
 		for(var keyValue : fields.keyValuesView())
@@ -42,14 +43,14 @@ public class StructuredValueMutationMapper
 			var mapper = keyValue.getTwo();
 
 			builder.field(GraphQLInputObjectField.newInputObjectField()
-				.name(field.getName())
+				.name(SchemaNames.toInputFieldName(field))
 				.description(field.getDescription().orElse(null))
-				.type(mapper.getGraphQLType()
-			));
+				.type(mapper.getGraphQLType())
+			);
 		}
 
 		this.graphQLType = builder.build();
-		this.fields = fields.collect((f, m) -> Tuples.pair(f.getName(), m));
+		this.fields = fields.collect((f, m) -> Tuples.pair(SchemaNames.toInputFieldName(f), m));
 	}
 
 	@Override

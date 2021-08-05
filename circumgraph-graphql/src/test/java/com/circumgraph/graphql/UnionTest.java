@@ -52,7 +52,7 @@ public class UnionTest
 			Maps.immutable.of(
 				"m", Maps.immutable.of(
 					"value", Maps.immutable.of(
-						"A", Maps.immutable.of(
+						"a", Maps.immutable.of(
 							"valueA", "valueInUnion"
 						)
 					)
@@ -89,7 +89,7 @@ public class UnionTest
 			Maps.immutable.of(
 				"m", Maps.immutable.of(
 					"value", Maps.immutable.of(
-						"A", Maps.immutable.of(
+						"a", Maps.immutable.of(
 							"valueA", "valueInUnion"
 						)
 					)
@@ -107,7 +107,7 @@ public class UnionTest
 				"id", id,
 				"m", Maps.immutable.of(
 					"value", Maps.immutable.of(
-						"A", Maps.immutable.of(
+						"a", Maps.immutable.of(
 							"valueA", "updatedValueInUnion"
 						)
 					)
@@ -148,7 +148,7 @@ public class UnionTest
 			Maps.immutable.of(
 				"m", Maps.immutable.of(
 					"value", Maps.immutable.of(
-						"A", Maps.immutable.of(
+						"a", Maps.immutable.of(
 							"valueA", "valueInUnion"
 						)
 					)
@@ -166,7 +166,7 @@ public class UnionTest
 				"id", id,
 				"m", Maps.immutable.of(
 					"value", Maps.immutable.of(
-						"B", Maps.immutable.of(
+						"b", Maps.immutable.of(
 							"valueB", 100
 						)
 					)

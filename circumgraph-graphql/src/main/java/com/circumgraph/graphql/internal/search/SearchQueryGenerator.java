@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
+import com.circumgraph.graphql.internal.SchemaNames;
 import com.circumgraph.graphql.internal.StorageContext;
 import com.circumgraph.model.FieldDef;
 import com.circumgraph.model.NonNullDef;
@@ -471,7 +472,7 @@ public class SearchQueryGenerator
 		var values = def.getFields()
 			.select(f -> StorageModel.isSortable(f))
 			.collect(field -> GraphQLEnumValueDefinition.newEnumValueDefinition()
-				.name(field.getName().toUpperCase()) // TODO should be upper snake case
+				.name(SchemaNames.toSortEnumValue(field))
 				.description("Sort by the field " + field.getName())
 				.value(rootPath.field(field.getName()))
 				.build()
@@ -485,16 +486,16 @@ public class SearchQueryGenerator
 		}
 
 		var enumType = GraphQLEnumType.newEnum()
-			.name(def.getName() + "Sort")
+			.name(SchemaNames.toSortEnumName(def))
 			.values(values)
 			.build();
 
 		return GraphQLInputObjectType.newInputObject()
-			.name(def.getName() + "SortInput")
+			.name(SchemaNames.toSortInputName(def))
 			.description("Input used to define sorting when querying for " + def.getName())
 			.field(GraphQLInputObjectField.newInputObjectField()
 				.name("field")
-				.description("The field to sort one")
+				.description("The field to sort on")
 				.type(GraphQLNonNull.nonNull(enumType))
 			)
 			.field(GraphQLInputObjectField.newInputObjectField()
@@ -510,7 +511,7 @@ public class SearchQueryGenerator
 		StructuredDef def
 	)
 	{
-		var name = def.getName() + "SearchResult";
+		var name = SchemaNames.toSearchResultTypeName(def);
 
 		var type = GraphQLObjectType.newObject()
 			.name(name)
@@ -593,7 +594,7 @@ public class SearchQueryGenerator
 		StructuredDef def
 	)
 	{
-		var name = def.getName() + "Edge";
+		var name = SchemaNames.toSearchEdgeTypeName(def);
 
 		var type = GraphQLObjectType.newObject()
 			.name(name)

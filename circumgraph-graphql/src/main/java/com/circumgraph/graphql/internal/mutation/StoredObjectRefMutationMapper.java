@@ -4,6 +4,7 @@ import java.util.Map;
 
 import com.circumgraph.graphql.MutationInputMapper;
 import com.circumgraph.graphql.internal.InputUnions;
+import com.circumgraph.graphql.internal.SchemaNames;
 import com.circumgraph.model.OutputTypeDef;
 import com.circumgraph.model.StructuredDef;
 import com.circumgraph.storage.mutation.Mutation;
@@ -32,7 +33,7 @@ public class StoredObjectRefMutationMapper
 		this.idCodec = idCodec;
 
 		this.graphQLType = GraphQLInputObjectType.newInputObject()
-			.name(modelDef.getName() + "RefInput")
+			.name(SchemaNames.toRefInputTypeName(modelDef))
 			.description("Reference to a " + modelDef.getName())
 			.field(GraphQLInputObjectField.newInputObjectField()
 				.name("id")

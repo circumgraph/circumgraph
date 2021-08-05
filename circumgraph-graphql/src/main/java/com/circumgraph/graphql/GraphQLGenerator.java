@@ -1,6 +1,7 @@
 package com.circumgraph.graphql;
 
 import com.circumgraph.graphql.internal.InterfaceResolver;
+import com.circumgraph.graphql.internal.SchemaNames;
 import com.circumgraph.graphql.internal.TransactionInstrumentation;
 import com.circumgraph.graphql.internal.datafetchers.CollectionDeleteMutation;
 import com.circumgraph.graphql.internal.datafetchers.CollectionGetByIdFetcher;
@@ -298,11 +299,8 @@ public class GraphQLGenerator
 		GraphQLObjectType.Builder queryBuilder
 	)
 	{
-		// TODO: Support for controlling the name of the field in query
-		// TODO: Support for controlling the type name
-
-		String queryObjectName = entity.getDefinition().getName() + "Query";
-		String queryFieldName = entity.getDefinition().getName().toLowerCase();
+		String queryObjectName = SchemaNames.toQueryObjectName(entity.getDefinition());
+		String queryFieldName = SchemaNames.toQueryFieldName(entity.getDefinition());
 
 		GraphQLObjectType.Builder query = GraphQLObjectType.newObject()
 			.name(queryObjectName)

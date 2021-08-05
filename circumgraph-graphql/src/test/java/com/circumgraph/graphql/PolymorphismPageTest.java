@@ -46,7 +46,7 @@ public class PolymorphismPageTest
 			mutation,
 			Maps.immutable.of(
 				"m", Maps.immutable.of(
-					"HomePage", Maps.immutable.of(
+					"homePage", Maps.immutable.of(
 						"title", "Home Page",
 						"intro", "Example intro text"
 					)

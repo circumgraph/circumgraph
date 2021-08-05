@@ -4,6 +4,7 @@ import java.util.Map;
 
 import com.circumgraph.graphql.MutationInputMapper;
 import com.circumgraph.graphql.internal.InputUnions;
+import com.circumgraph.graphql.internal.SchemaNames;
 import com.circumgraph.model.OutputTypeDef;
 import com.circumgraph.storage.mutation.Mutation;
 
@@ -31,13 +32,13 @@ public class PolymorphicMutationMapper
 		this.modelDef = modelDef;
 
 		GraphQLInputObjectType.Builder builder = GraphQLInputObjectType.newInputObject()
-			.name(modelDef.getName() + "MutationInput")
+			.name(SchemaNames.toMutationInputTypeName(modelDef))
 			.description("Mutation for " + modelDef.getName());
 
 		MutableMap<String, MutationInputMapper<?>> fieldToMapper = Maps.mutable.empty();
 		for(var mapper : types)
 		{
-			var fieldName = mapper.getModelDef().getName();
+			var fieldName = SchemaNames.toInputFieldName(mapper.getModelDef());
 
 			builder.field(GraphQLInputObjectField.newInputObjectField()
 				.name(fieldName)
