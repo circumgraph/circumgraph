@@ -62,7 +62,7 @@ public interface ArgumentUse
 	 */
 	static Builder create(String name)
 	{
-		return ArgumentUse.create(name);
+		return ArgumentUseImpl.create(name);
 	}
 
 	/**
