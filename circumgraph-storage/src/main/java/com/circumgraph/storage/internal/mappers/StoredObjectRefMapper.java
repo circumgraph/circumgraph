@@ -14,6 +14,13 @@ import com.circumgraph.storage.mutation.StoredObjectRefMutation;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+/**
+ * {@link ValueMapper} that is responsible for creating {@link StoredObjectRef}s
+ * based on a {@link StoredObjectRefMutation}.
+ *
+ * In the generated model this mapper is always wrapped in a
+ * {@link PolymorphicValueMapper}.
+ */
 public class StoredObjectRefMapper
 	implements ValueMapper<StoredObjectRef, StoredObjectRefMutation>
 {
