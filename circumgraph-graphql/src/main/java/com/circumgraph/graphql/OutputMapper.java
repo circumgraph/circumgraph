@@ -8,7 +8,7 @@ import se.l4.silo.Transaction;
 /**
  * Mapper for output.
  */
-public interface OutputMapper<I extends Value, O>
+public interface OutputMapper<I extends Value>
 {
 	/**
 	 * Get the GraphQL type.
@@ -23,5 +23,5 @@ public interface OutputMapper<I extends Value, O>
 	 * @param in
 	 * @return
 	 */
-	O toOutput(Transaction tx, I in);
+	Object toOutput(Transaction tx, I in);
 }

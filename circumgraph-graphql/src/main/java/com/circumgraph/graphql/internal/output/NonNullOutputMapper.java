@@ -7,14 +7,14 @@ import graphql.schema.GraphQLNonNull;
 import graphql.schema.GraphQLOutputType;
 import se.l4.silo.Transaction;
 
-public class NonNullOutputMapper<I extends Value, O>
-	implements OutputMapper<I, O>
+public class NonNullOutputMapper<I extends Value>
+	implements OutputMapper<I>
 {
 	private final GraphQLNonNull type;
-	private final OutputMapper<I, O> mapper;
+	private final OutputMapper<I> mapper;
 
 	public NonNullOutputMapper(
-		OutputMapper<I, O> mapper
+		OutputMapper<I> mapper
 	)
 	{
 		this.type = GraphQLNonNull.nonNull(mapper.getGraphQLType());
@@ -28,7 +28,7 @@ public class NonNullOutputMapper<I extends Value, O>
 	}
 
 	@Override
-	public O toOutput(Transaction tx, I in)
+	public Object toOutput(Transaction tx, I in)
 	{
 		return mapper.toOutput(tx, in);
 	}

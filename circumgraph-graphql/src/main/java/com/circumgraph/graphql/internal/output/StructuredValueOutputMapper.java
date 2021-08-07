@@ -16,7 +16,7 @@ import se.l4.silo.Transaction;
  * will be generated for it from the current {@link com.circumgraph.model.Model}.
  */
 public class StructuredValueOutputMapper
-	implements OutputMapper<StructuredValue, StructuredValue>
+	implements OutputMapper<StructuredValue>
 {
 	private final GraphQLTypeReference type;
 
@@ -34,7 +34,7 @@ public class StructuredValueOutputMapper
 	}
 
 	@Override
-	public StructuredValue toOutput(Transaction tx, StructuredValue in)
+	public Object toOutput(Transaction tx, StructuredValue in)
 	{
 		return in;
 	}

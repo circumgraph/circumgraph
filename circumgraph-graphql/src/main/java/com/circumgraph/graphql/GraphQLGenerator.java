@@ -6,7 +6,7 @@ import com.circumgraph.graphql.internal.TransactionInstrumentation;
 import com.circumgraph.graphql.internal.datafetchers.CollectionDeleteMutation;
 import com.circumgraph.graphql.internal.datafetchers.CollectionGetByIdFetcher;
 import com.circumgraph.graphql.internal.datafetchers.CollectionStoreMutation;
-import com.circumgraph.graphql.internal.datafetchers.StructuredValueDataFetcher;
+import com.circumgraph.graphql.internal.datafetchers.FieldResolverAdapter;
 import com.circumgraph.graphql.internal.mutation.ListMutationMapper;
 import com.circumgraph.graphql.internal.mutation.PolymorphicMutationMapper;
 import com.circumgraph.graphql.internal.mutation.ScalarMutationMapper;
@@ -16,6 +16,7 @@ import com.circumgraph.graphql.internal.output.ListOutputMapper;
 import com.circumgraph.graphql.internal.output.NonNullOutputMapper;
 import com.circumgraph.graphql.internal.output.StoredObjectRefOutputMapper;
 import com.circumgraph.graphql.internal.output.StructuredValueOutputMapper;
+import com.circumgraph.graphql.internal.resolvers.StoredValueFieldResolver;
 import com.circumgraph.graphql.internal.scalars.BooleanScalar;
 import com.circumgraph.graphql.internal.scalars.FloatScalar;
 import com.circumgraph.graphql.internal.scalars.IDScalar;
@@ -36,6 +37,7 @@ import com.circumgraph.model.TypeDef;
 import com.circumgraph.model.UnionDef;
 import com.circumgraph.storage.Collection;
 import com.circumgraph.storage.Storage;
+import com.circumgraph.storage.StorageModel;
 import com.circumgraph.storage.StorageSchema;
 
 import org.eclipse.collections.api.factory.Maps;
@@ -172,6 +174,8 @@ public class GraphQLGenerator
 
 			for(FieldDef field : def.getFields())
 			{
+				var resolver = GraphQLModel.getFieldResolver(field);
+				var type = StorageModel.getFieldType(field);
 				var fieldMapper = resolveOutputType(field.getType());
 
 				GraphQLFieldDefinition fieldDef = GraphQLFieldDefinition.newFieldDefinition()
@@ -182,11 +186,21 @@ public class GraphQLGenerator
 
 				builder.field(fieldDef);
 
+				if(type == StorageModel.FieldType.DYNAMIC && resolver.isEmpty())
+				{
+					throw new ModelException("GraphQL generation failed, dynamic field but no resolver");
+				}
+
 				registry.dataFetcher(
 					FieldCoordinates.coordinates(def.getName(), field.getName()),
-					new StructuredValueDataFetcher(
-						field.getName(),
-						fieldMapper
+
+					new FieldResolverAdapter(
+						resolver.isPresent()
+							? resolver.get()
+							: new StoredValueFieldResolver<>(
+								field.getName(),
+								fieldMapper
+							)
 					)
 				);
 			}
@@ -248,7 +262,7 @@ public class GraphQLGenerator
 		}
 	}
 
-	private OutputMapper<?, ?> resolveOutputType(OutputTypeDef type)
+	private OutputMapper<?> resolveOutputType(OutputTypeDef type)
 	{
 		if(type instanceof NonNullDef.Output)
 		{

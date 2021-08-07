@@ -8,6 +8,7 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Observes;
 import javax.inject.Singleton;
 
+import com.circumgraph.graphql.GraphQLAPISchema;
 import com.circumgraph.graphql.GraphQLGenerator;
 import com.circumgraph.model.Model;
 import com.circumgraph.schema.graphql.GraphQLSchema;
@@ -83,7 +84,8 @@ public class CircumgraphApp
 		}
 
 		var builder = Model.create()
-			.addSchema(StorageSchema.INSTANCE);
+			.addSchema(StorageSchema.INSTANCE)
+			.addSchema(new GraphQLAPISchema());
 
 		for(var file : matching)
 		{

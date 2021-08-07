@@ -10,7 +10,7 @@ import graphql.schema.GraphQLScalarType;
  * Mapper for scalars defined via {@link ScalarDef}.
  */
 public interface ScalarMapper<V>
-	extends OutputMapper<SimpleValue, Object>
+	extends OutputMapper<SimpleValue>
 {
 	/**
 	 * Get how this scalar is defined in the model.

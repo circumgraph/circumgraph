@@ -49,6 +49,7 @@ public class GraphQLTest
 
 		var model = Model.create()
 			.addSchema(StorageSchema.INSTANCE)
+			.addSchema(new GraphQLAPISchema())
 			.addSchema(GraphQLSchema.create(schema))
 			.build();
 
