@@ -40,6 +40,7 @@ import com.circumgraph.storage.Storage;
 import com.circumgraph.storage.StorageModel;
 import com.circumgraph.storage.StorageSchema;
 
+import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.factory.Maps;
 import org.eclipse.collections.api.map.ImmutableMap;
 import org.eclipse.collections.api.map.MutableMap;
@@ -187,32 +188,31 @@ public class GraphQLGenerator
 			{
 				var resolver = GraphQLModel.getFieldResolverFactory(field);
 				var type = StorageModel.getFieldType(field);
-				var fieldMapper = resolveOutputType(field.getType());
-
-				GraphQLFieldDefinition fieldDef = GraphQLFieldDefinition.newFieldDefinition()
-					.name(field.getName())
-					.description(field.getDescription().orElse(null))
-					.type(fieldMapper.getGraphQLType())
-					.build();
-
-				builder.field(fieldDef);
 
 				if(type == StorageModel.FieldType.DYNAMIC && resolver.isEmpty())
 				{
 					throw new ModelException("GraphQL generation failed, dynamic field but no resolver");
 				}
 
+				FieldResolver actualResolver = resolver.isPresent()
+					? resolver.get().create(encounter)
+					: new StoredValueFieldResolver<>(
+						field.getName(),
+						resolveOutputType(field.getType())
+					);
+
+				GraphQLFieldDefinition fieldDef = GraphQLFieldDefinition.newFieldDefinition()
+					.name(field.getName())
+					.description(field.getDescription().orElse(null))
+					.type(actualResolver.getGraphQLType())
+					.arguments(Lists.mutable.ofAll(actualResolver.getArguments()))
+					.build();
+
+				builder.field(fieldDef);
+
 				registry.dataFetcher(
 					FieldCoordinates.coordinates(def.getName(), field.getName()),
-
-					new FieldResolverAdapter(
-						resolver.isPresent()
-							? resolver.get().create(encounter)
-							: new StoredValueFieldResolver<>(
-								field.getName(),
-								fieldMapper
-							)
-					)
+					new FieldResolverAdapter(actualResolver)
 				);
 			}
 

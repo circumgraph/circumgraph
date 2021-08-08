@@ -6,7 +6,11 @@ import com.circumgraph.graphql.internal.StorageContext;
 import com.circumgraph.storage.StructuredValue;
 import com.circumgraph.storage.Value;
 
+import org.eclipse.collections.api.factory.Lists;
+
 import graphql.schema.DataFetchingEnvironment;
+import graphql.schema.GraphQLArgument;
+import graphql.schema.GraphQLOutputType;
 
 /**
  * {@link FieldResolver} that is used for getting a value that is stored.
@@ -24,6 +28,18 @@ public class StoredValueFieldResolver<I extends Value, O>
 	{
 		this.key = key;
 		this.mapper = mapper;
+	}
+
+	@Override
+	public Iterable<? extends GraphQLArgument> getArguments()
+	{
+		return Lists.immutable.empty();
+	}
+
+	@Override
+	public GraphQLOutputType getGraphQLType()
+	{
+		return mapper.getGraphQLType();
 	}
 
 	@Override

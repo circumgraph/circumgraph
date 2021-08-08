@@ -11,7 +11,14 @@ import com.circumgraph.storage.search.Page;
 import com.circumgraph.storage.search.Query;
 import com.circumgraph.storage.search.QueryPath;
 
+import org.eclipse.collections.api.factory.Lists;
+
 import graphql.schema.DataFetchingEnvironment;
+import graphql.schema.GraphQLArgument;
+import graphql.schema.GraphQLList;
+import graphql.schema.GraphQLNonNull;
+import graphql.schema.GraphQLOutputType;
+import graphql.schema.GraphQLTypeReference;
 import se.l4.silo.index.EqualsMatcher;
 import se.l4.silo.index.FieldSort;
 
@@ -37,6 +44,20 @@ public class RelationListFieldResolver
 		this.other = other;
 		this.path = path;
 		this.sort = sort;
+	}
+
+	@Override
+	public Iterable<? extends GraphQLArgument> getArguments()
+	{
+		return Lists.immutable.empty();
+	}
+
+	@Override
+	public GraphQLOutputType getGraphQLType()
+	{
+		return GraphQLNonNull.nonNull(GraphQLList.list(
+			GraphQLNonNull.nonNull(GraphQLTypeReference.typeRef(other.getDefinition().getName()))
+		));
 	}
 
 	@Override
