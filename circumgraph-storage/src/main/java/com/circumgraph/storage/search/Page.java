@@ -42,4 +42,14 @@ public interface Page
 	{
 		return new PageImpl(limit, after);
 	}
+
+	/**
+	 * Get a page that will try to return all of the results.
+	 *
+	 * @return
+	 */
+	static Page infinite()
+	{
+		return first(1000000);
+	}
 }

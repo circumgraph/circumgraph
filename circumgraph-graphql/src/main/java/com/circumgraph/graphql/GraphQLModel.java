@@ -4,6 +4,7 @@ import java.util.Optional;
 
 import com.circumgraph.model.FieldDef;
 import com.circumgraph.model.MetadataKey;
+import com.circumgraph.storage.StorageModel;
 
 /**
  * Utilities for accessing and setting things related to the generated GraphQL
@@ -11,27 +12,30 @@ import com.circumgraph.model.MetadataKey;
  */
 public class GraphQLModel
 {
-	private static MetadataKey<FieldResolver> FIELD_RESOLVER = MetadataKey.create("graphql:field-resolver", FieldResolver.class);
+	private static MetadataKey<FieldResolverFactory> FIELD_RESOLVER_FACTORY =
+		MetadataKey.create("graphql:field-resolver-factory", FieldResolverFactory.class);
 
 	/**
-	 * Get if a custom {@link FieldResolver} has been set for the given field.
+	 * Get if a custom {@link FieldResolverFactory} has been set for the given
+	 * field.
 	 *
-	 * @param def
+	 * @param field
 	 * @return
 	 */
-	public static Optional<FieldResolver> getFieldResolver(FieldDef def)
+	public static Optional<FieldResolverFactory> getFieldResolverFactory(FieldDef field)
 	{
-		return def.getMetadata(FIELD_RESOLVER);
+		return field.getMetadata(FIELD_RESOLVER_FACTORY);
 	}
 
 	/**
-	 * Set a custom {@link FieldResolver} to use for the given field.
+	 * Set factory used to create {@link FieldResolver}s for the given field.
 	 *
-	 * @param def
-	 * @param resolver
+	 * @param field
+	 * @param factory
 	 */
-	public static void setFieldResolver(FieldDef def, FieldResolver resolver)
+	public static void setFieldResolverFactory(FieldDef field, FieldResolverFactory factory)
 	{
-		def.setMetadata(FIELD_RESOLVER, resolver);
+		StorageModel.setType(field, StorageModel.FieldType.DYNAMIC);
+		field.setMetadata(FIELD_RESOLVER_FACTORY, factory);
 	}
 }

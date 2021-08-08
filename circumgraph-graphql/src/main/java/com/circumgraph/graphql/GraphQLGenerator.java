@@ -71,6 +71,8 @@ public class GraphQLGenerator
 
 	private final MutableMap<OutputTypeDef, MutationInputMapper<?>> mutationMappers;
 
+	private final GraphQLCreationEncounter encounter;
+
 	public GraphQLGenerator(Storage storage)
 	{
 		this.storage = storage;
@@ -87,6 +89,15 @@ public class GraphQLGenerator
 			.newWithKeyValue(ScalarDef.STRING, new StringScalar());
 
 		mutationMappers = Maps.mutable.empty();
+
+		encounter = new GraphQLCreationEncounter()
+		{
+			@Override
+			public Storage getStorage()
+			{
+				return storage;
+			}
+		};
 	}
 
 	public GraphQL.Builder generate()
@@ -174,7 +185,7 @@ public class GraphQLGenerator
 
 			for(FieldDef field : def.getFields())
 			{
-				var resolver = GraphQLModel.getFieldResolver(field);
+				var resolver = GraphQLModel.getFieldResolverFactory(field);
 				var type = StorageModel.getFieldType(field);
 				var fieldMapper = resolveOutputType(field.getType());
 
@@ -196,7 +207,7 @@ public class GraphQLGenerator
 
 					new FieldResolverAdapter(
 						resolver.isPresent()
-							? resolver.get()
+							? resolver.get().create(encounter)
 							: new StoredValueFieldResolver<>(
 								field.getName(),
 								fieldMapper

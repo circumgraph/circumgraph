@@ -33,13 +33,13 @@ import org.eclipse.collections.api.block.procedure.Procedure;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.factory.Maps;
 import org.eclipse.collections.api.factory.Sets;
+import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.ListIterable;
 import org.eclipse.collections.api.map.ImmutableMap;
+import org.eclipse.collections.api.map.MapIterable;
 import org.eclipse.collections.api.map.MutableMap;
-import org.eclipse.collections.api.multimap.MutableMultimap;
 import org.eclipse.collections.api.set.ImmutableSet;
 import org.eclipse.collections.api.set.MutableSet;
-import org.eclipse.collections.impl.factory.Multimaps;
 
 /**
  * Implementation of {@link Model.Builder}.
@@ -110,15 +110,17 @@ public class ModelBuilderImpl
 			.build();
 
 	private final ImmutableSet<TypeDef> types;
-	private final ImmutableSet<DirectiveUseProcessor<?>> directiveUseProcessors;
+	private final ImmutableList<DirectiveUseProcessor<?>> directiveUseProcessors;
+	private final MapIterable<String, DirectiveUseProcessor<?>> directiveMap;
 
 	public ModelBuilderImpl(
 		ImmutableSet<TypeDef> types,
-		ImmutableSet<DirectiveUseProcessor<?>> directiveUseProcessors
+		ImmutableList<DirectiveUseProcessor<?>> directiveUseProcessors
 	)
 	{
 		this.types = types;
 		this.directiveUseProcessors = directiveUseProcessors;
+		this.directiveMap = directiveUseProcessors.toMap(DirectiveUseProcessor::getName, d -> d);
 	}
 
 	@Override
@@ -200,47 +202,8 @@ public class ModelBuilderImpl
 			HasPreparation.maybePrepare(type, defs);
 		}
 
-		// Validate directives after preparation
-		MutableMultimap<String, DirectiveUseProcessor<?>> directives = Multimaps.mutable.set.empty();
-		for(DirectiveUseProcessor<?> v : directiveUseProcessors)
-		{
-			directives.put(v.getName(), v);
-		}
-
-		Consumer<HasDirectives> directiveValidator = def -> {
-			for(DirectiveUse d : def.getDirectives())
-			{
-				boolean didValidate = false;
-
-				for(DirectiveUseProcessor validator : directives.get(d.getName()))
-				{
-					if(validator.getContextType().isAssignableFrom(def.getClass()))
-					{
-						validator.process(
-							(HasDirectives) def,
-							d,
-							validation
-						);
-
-						didValidate = true;
-					}
-				}
-
-				if(! didValidate)
-				{
-					validation.accept(INVALID_DIRECTIVE.toMessage()
-						.withLocation(d.getSourceLocation())
-						.withArgument("directive", d.getName())
-						.build()
-					);
-				}
-			}
-		};
-
-		for(TypeDef type : types)
-		{
-			validateDirectives(type, directiveValidator);
-		}
+		// Process model after preparation
+		process(validation);
 
 		// Throw an error if processing fails
 		if(validationMessages.anySatisfy(isError))
@@ -259,7 +222,7 @@ public class ModelBuilderImpl
 			ScalarDef.INT,
 			ScalarDef.STRING,
 			ScalarDef.ID
-		), Sets.immutable.empty());
+		), Lists.immutable.empty());
 	}
 
 	private TypeDef merge(
@@ -537,11 +500,49 @@ public class ModelBuilderImpl
 	{
 		// TODO: Schema specific validation
 
-		if(type instanceof StructuredDef)
+		// Validate that the directives will be processed
+		if(type instanceof HasDirectives hasDirectives)
 		{
-			StructuredDef structured = (StructuredDef) type;
+			validateDirectives(hasDirectives, validationCollector);
+		}
 
+		if(type instanceof StructuredDef structured)
+		{
 			validateImplements(types, structured, validationCollector);
+
+			for(var field : structured.getDirectFields())
+			{
+				validateDirectives(field, validationCollector);
+			}
+		}
+	}
+
+	/**
+	 * Validate that all of the directives places on something will be
+	 * processed.
+	 *
+	 * @param hasDirectives
+	 */
+	private void validateDirectives(
+		HasDirectives hasDirectives,
+		Consumer<ValidationMessage> validationCollector
+	)
+	{
+		for(var directive : hasDirectives.getDirectives())
+		{
+			var processor = directiveMap.get(directive.getName());
+			if(processor == null || ! processor.getContextType().isAssignableFrom(hasDirectives.getClass()))
+			{
+				validationCollector.accept(INVALID_DIRECTIVE.toMessage()
+					.withLocation(
+						hasDirectives instanceof HasSourceLocation source
+							? source.getSourceLocation()
+							: SourceLocation.unknown()
+					)
+					.withArgument("directive", directive.getName())
+					.build()
+				);
+			}
 		}
 	}
 
@@ -640,35 +641,6 @@ public class ModelBuilderImpl
 		}
 	}
 
-	private void validateDirectives(
-		TypeDef type,
-		Consumer<HasDirectives> directiveValidator
-	)
-	{
-		// TODO: Schema specific validation
-
-		// Validate all the directives
-		if(type instanceof HasDirectives)
-		{
-			directiveValidator.accept((HasDirectives) type);
-		}
-
-		if(type instanceof StructuredDef)
-		{
-			StructuredDef structured = (StructuredDef) type;
-
-			for(FieldDef field : structured.getDirectFields())
-			{
-				directiveValidator.accept(field);
-
-				for(ArgumentDef arg : field.getArguments())
-				{
-					directiveValidator.accept(arg);
-				}
-			}
-		}
-	}
-
 	/**
 	 * Check if the two given types are compatible. Types are compatible if:
 	 *
@@ -739,6 +711,48 @@ public class ModelBuilderImpl
 
 		// Default to not being compatible
 		return false;
+	}
+
+	public void process(Consumer<ValidationMessage> validation)
+	{
+		for(DirectiveUseProcessor<?> v : directiveUseProcessors)
+		{
+			for(TypeDef type : types)
+			{
+				if(type instanceof HasDirectives hasDirectives)
+				{
+					processDirective(v, hasDirectives, validation);
+				}
+
+				if(type instanceof StructuredDef structured)
+				{
+					for(FieldDef def : structured.getDirectFields())
+					{
+						processDirective(v, def, validation);
+					}
+				}
+			}
+		}
+	}
+
+	private void processDirective(
+		DirectiveUseProcessor<?> processor,
+		HasDirectives hasDirectives,
+		Consumer<ValidationMessage> validation
+	)
+	{
+		if(! processor.getContextType().isAssignableFrom(hasDirectives.getClass()))
+		{
+			return;
+		}
+
+		var directive = hasDirectives.getDirective(processor.getName());
+		if(directive.isEmpty())
+		{
+			return;
+		}
+
+		((DirectiveUseProcessor) processor).process(hasDirectives, directive.get(), validation);
 	}
 
 	/**

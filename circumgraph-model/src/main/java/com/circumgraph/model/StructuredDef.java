@@ -76,9 +76,22 @@ public interface StructuredDef
 	/**
 	 * Get field using its name.
 	 *
+	 * @param name
+	 *   name of field
 	 * @return
 	 */
 	Optional<FieldDef> getField(String name);
+
+	/**
+	 * Get a field using a path, this will descend into fields delimited by
+	 * a period ({@code .}).
+	 *
+	 * @param path
+	 *   path to get
+	 * @return
+	 *   field if it exists
+	 */
+	Optional<FieldDef> pickField(String path);
 
 	/**
 	 * Builder for instances of {@link StructuredDef}.

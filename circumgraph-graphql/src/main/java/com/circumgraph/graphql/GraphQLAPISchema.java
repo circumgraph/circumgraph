@@ -12,4 +12,11 @@ import org.eclipse.collections.api.factory.Lists;
 public class GraphQLAPISchema
 	implements Schema
 {
+	@Override
+	public Iterable<? extends DirectiveUseProcessor<?>> getDirectiveUseProcessors()
+	{
+		return Lists.immutable.of(
+			new RelationDirectiveProcessor()
+		);
+	}
 }

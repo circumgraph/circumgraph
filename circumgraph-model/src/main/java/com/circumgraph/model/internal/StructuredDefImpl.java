@@ -185,6 +185,26 @@ public abstract class StructuredDefImpl
 	}
 
 	@Override
+	public Optional<FieldDef> pickField(String path)
+	{
+		int idx = path.indexOf('.');
+		if(idx <= 0)
+		{
+			// No separators, get the field directly
+			return getField(path);
+		}
+
+		// Get the field in this def and then try to descend
+		var ownField = getField(path.substring(0, idx));
+		if(ownField.isPresent() && ownField.get() instanceof StructuredDef d)
+		{
+			return d.pickField(path.substring(idx + 1));
+		}
+
+		return Optional.empty();
+	}
+
+	@Override
 	public ListIterable<DirectiveUse> getDirectives()
 	{
 		return directives;

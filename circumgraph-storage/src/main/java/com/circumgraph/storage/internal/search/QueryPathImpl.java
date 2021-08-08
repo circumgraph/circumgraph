@@ -47,6 +47,13 @@ public class QueryPathImpl
 			throw new StorageException(this.toIndexName() + ": At a field that is not a StructuredDef");
 		}
 
+		int idx = fieldName.indexOf('.');
+		if(idx >= 0)
+		{
+			// This field is a path, resolve the first part of it and then descend into it
+			return this.field(fieldName.substring(0, idx)).field(fieldName.substring(idx+1));
+		}
+
 		var structuredDef = (StructuredDef) this.def;
 		var field = structuredDef.getField(fieldName);
 		if(field.isEmpty())

@@ -5,6 +5,7 @@ import java.util.Optional;
 import com.circumgraph.model.FieldDef;
 import com.circumgraph.model.MetadataKey;
 import com.circumgraph.model.Model;
+import com.circumgraph.model.StructuredDef;
 import com.circumgraph.storage.types.ValueIndexer;
 
 /**
@@ -35,6 +36,23 @@ public class StorageModel
 
 	private StorageModel()
 	{
+	}
+
+	/**
+	 * Get the type that represents the actual entity for the given
+	 * {@link StructuredDef}.
+	 *
+	 * @param def
+	 * @return
+	 */
+	public static Optional<? extends StructuredDef> getEntity(StructuredDef def)
+	{
+		if(def.hasImplements(StorageSchema.ENTITY_NAME))
+		{
+			return Optional.of(def);
+		}
+
+		return def.findImplements(interfaceDef -> interfaceDef.hasImplements(StorageSchema.ENTITY_NAME));
 	}
 
 	/**
