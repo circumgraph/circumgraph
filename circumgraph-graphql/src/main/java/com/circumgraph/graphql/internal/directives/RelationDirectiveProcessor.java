@@ -213,7 +213,6 @@ public class RelationDirectiveProcessor
 		}
 
 		// Check that it is indexed
-		System.out.println(relationField.get());
 		if(! StorageModel.isIndexed(relationField.get()))
 		{
 			validationCollector.accept(FIELD_NOT_INDEXED.toMessage()
