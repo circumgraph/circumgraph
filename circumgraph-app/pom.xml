@@ -15,24 +15,6 @@
 	<artifactId>circumgraph-app</artifactId>
 	<name>${project.artifactId}</name>
 
-	<properties>
-		<quarkus.platform.artifact-id>quarkus-universe-bom</quarkus.platform.artifact-id>
-		<quarkus.platform.group-id>io.quarkus</quarkus.platform.group-id>
-		<quarkus.platform.version>2.0.3.Final</quarkus.platform.version>
-	</properties>
-
-	<dependencyManagement>
-		<dependencies>
-			<dependency>
-				<groupId>${quarkus.platform.group-id}</groupId>
-				<artifactId>${quarkus.platform.artifact-id}</artifactId>
-				<version>${quarkus.platform.version}</version>
-				<type>pom</type>
-				<scope>import</scope>
-			</dependency>
-		</dependencies>
-	</dependencyManagement>
-
 	<dependencies>
 		<dependency>
 			<groupId>${project.groupId}</groupId>
@@ -47,58 +29,57 @@
 		</dependency>
 
 		<dependency>
-			<groupId>io.quarkus</groupId>
-			<artifactId>quarkus-arc</artifactId>
+			<groupId>se.l4.exoconf</groupId>
+			<artifactId>exoconf</artifactId>
+			<version>1.0.0</version>
 		</dependency>
 
 		<dependency>
-			<groupId>io.quarkus</groupId>
-			<artifactId>quarkus-vertx-graphql</artifactId>
+			<groupId>se.l4.exobytes</groupId>
+			<artifactId>exobytes</artifactId>
+			<version>[1.0.2,2.0.0)</version>
 		</dependency>
 
 		<dependency>
-			<groupId>io.quarkus</groupId>
-			<artifactId>quarkus-junit5</artifactId>
-			<scope>test</scope>
+			<groupId>ch.qos.logback</groupId>
+			<artifactId>logback-classic</artifactId>
+			<version>1.2.5</version>
+		</dependency>
+
+		<dependency>
+			<groupId>io.vertx</groupId>
+			<artifactId>vertx-web-graphql</artifactId>
+			<version>4.1.2</version>
 		</dependency>
 	</dependencies>
 
 	<build>
 		<plugins>
 			<plugin>
-				<groupId>${quarkus.platform.group-id}</groupId>
-				<artifactId>quarkus-maven-plugin</artifactId>
-				<version>${quarkus.platform.version}</version>
-				<extensions>true</extensions>
+				<groupId>io.github.git-commit-id</groupId>
+				<artifactId>git-commit-id-maven-plugin</artifactId>
+				<version>5.0.0</version>
 				<executions>
 					<execution>
+						<id>get-the-git-infos</id>
 						<goals>
-							<goal>build</goal>
-							<goal>generate-code</goal>
-							<goal>generate-code-tests</goal>
+							<goal>revision</goal>
 						</goals>
+						<phase>initialize</phase>
 					</execution>
 				</executions>
 				<configuration>
-				</configuration>
-			</plugin>
-			<plugin>
-				<artifactId>maven-compiler-plugin</artifactId>
-				<configuration>
-					<parameters>${maven.compiler.parameters}</parameters>
-				</configuration>
-			</plugin>
-			<plugin>
-				<artifactId>maven-surefire-plugin</artifactId>
-				<configuration>
-					<systemPropertyVariables>
-						<java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
-						<maven.home>${maven.home}</maven.home>
-					</systemPropertyVariables>
+					<generateGitPropertiesFile>true</generateGitPropertiesFile>
+
+					<includeOnlyProperties>
+							<includeOnlyProperty>^git.commit.id.describe$</includeOnlyProperty>
+							<includeOnlyProperty>^git.commit.id.describe-short$</includeOnlyProperty>
+					</includeOnlyProperties>
 				</configuration>
 			</plugin>
 		</plugins>
 	</build>
+
 	<profiles>
 		<profile>
 			<id>deploy</id>
@@ -107,24 +88,40 @@
 					<name>deploy</name>
 				</property>
 			</activation>
-			<dependencies>
-			    <dependency>
-					<groupId>io.quarkus</groupId>
-					<artifactId>quarkus-container-image-jib</artifactId>
-					</dependency>
-			</dependencies>
-			<properties>
-				<quarkus.container-image.push>true</quarkus.container-image.push>
-				<quarkus.container-image.registry>ghcr.io</quarkus.container-image.registry>
-				<quarkus.container-image.group>circumgraph</quarkus.container-image.group>
-				<quarkus.container-image.name>circumgraph</quarkus.container-image.name>
-
-				<quarkus.jib.base-jvm-image>adoptopenjdk/openjdk16:alpine-jre</quarkus.jib.base-jvm-image>
-
-				<quarkus.jib.environment-variables.CONFIG_DIR>/config</quarkus.jib.environment-variables.CONFIG_DIR>
-				<quarkus.jib.environment-variables.DATA_DIR>/data</quarkus.jib.environment-variables.DATA_DIR>
-				<quarkus.jib.jvm-arguments>-Djava.util.logging.manager=org.jboss.logmanager.LogManager,-XX:+UseZGC</quarkus.jib.jvm-arguments>
-			</properties>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>com.google.cloud.tools</groupId>
+						<artifactId>jib-maven-plugin</artifactId>
+						<version>3.1.2</version>
+						<configuration>
+							<from>
+								<image>adoptopenjdk/openjdk16:alpine-jre</image>
+							</from>
+							<to>
+								<image>ghcr.io/circumgraph/circumgraph</image>
+								<tags>
+									<tag>latest</tag>
+									<tag>${project.version}</tag>
+								</tags>
+							</to>
+							<container>
+								<jvmFlags>
+									<jvmFlag>-XX:+UseZGC</jvmFlag>
+								</jvmFlags>
+							</container>
+						</configuration>
+						<executions>
+							<execution>
+								<phase>package</phase>
+								<goals>
+									<goal>build</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
 		</profile>
 	</profiles>
 </project>

@@ -50,7 +50,7 @@ jobs:
     - name: Test
       run: mvn test -B --file pom.xml
     - name: Package
-      run: mvn package -B -Ddeploy -DskipTests -Dquarkus.container-image.tag=latest '-Dquarkus.jib.labels."org.opencontainers.image.revision"='$GITHUB_SHA --file pom.xml
+      run: mvn package -B -Ddeploy -DskipTests --file pom.xml
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v1
