@@ -22,6 +22,7 @@ import com.circumgraph.model.Schema;
 import com.circumgraph.model.StructuredDef;
 import com.circumgraph.model.TypeDef;
 import com.circumgraph.model.processing.DirectiveUseProcessor;
+import com.circumgraph.model.processing.TypeDefProcessor;
 import com.circumgraph.model.validation.SourceLocation;
 import com.circumgraph.model.validation.ValidationMessage;
 import com.circumgraph.model.validation.ValidationMessageLevel;
@@ -111,15 +112,20 @@ public class ModelBuilderImpl
 
 	private final ImmutableSet<TypeDef> types;
 	private final ImmutableList<DirectiveUseProcessor<?>> directiveUseProcessors;
+	private final ImmutableList<TypeDefProcessor<?>> typeDefProcessors;
+
 	private final MapIterable<String, DirectiveUseProcessor<?>> directiveMap;
 
 	public ModelBuilderImpl(
 		ImmutableSet<TypeDef> types,
-		ImmutableList<DirectiveUseProcessor<?>> directiveUseProcessors
+		ImmutableList<DirectiveUseProcessor<?>> directiveUseProcessors,
+		ImmutableList<TypeDefProcessor<?>> typeDefProcessors
 	)
 	{
 		this.types = types;
 		this.directiveUseProcessors = directiveUseProcessors;
+		this.typeDefProcessors = typeDefProcessors;
+
 		this.directiveMap = directiveUseProcessors.toMap(DirectiveUseProcessor::getName, d -> d);
 	}
 
@@ -128,7 +134,8 @@ public class ModelBuilderImpl
 	{
 		return new ModelBuilderImpl(
 			types.newWithAll(schema.getTypes()),
-			directiveUseProcessors.newWithAll(schema.getDirectiveUseProcessors())
+			directiveUseProcessors.newWithAll(schema.getDirectiveUseProcessors()),
+			typeDefProcessors.newWithAll(schema.getTypeDefProcessors())
 		);
 	}
 
@@ -234,7 +241,7 @@ public class ModelBuilderImpl
 			ScalarDef.INT,
 			ScalarDef.STRING,
 			ScalarDef.ID
-		), Lists.immutable.empty());
+		), Lists.immutable.empty(), Lists.immutable.empty());
 	}
 
 	private TypeDef merge(
@@ -725,11 +732,13 @@ public class ModelBuilderImpl
 		return false;
 	}
 
-	public void process(Consumer<ValidationMessage> validation)
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	private void process(Consumer<ValidationMessage> validation)
 	{
+		// Process directives
 		for(DirectiveUseProcessor<?> v : directiveUseProcessors)
 		{
-			for(TypeDef type : types)
+			for(var type : types)
 			{
 				if(type instanceof HasDirectives hasDirectives)
 				{
@@ -745,8 +754,21 @@ public class ModelBuilderImpl
 				}
 			}
 		}
+
+		// Process all the types
+		for(var type : types)
+		{
+			for(var processor : typeDefProcessors)
+			{
+				if(processor.getType().isAssignableFrom(type.getClass()))
+				{
+					((TypeDefProcessor) processor).process(type, validation);
+				}
+			}
+		}
 	}
 
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	private void processDirective(
 		DirectiveUseProcessor<?> processor,
 		HasDirectives hasDirectives,

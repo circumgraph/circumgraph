@@ -2,6 +2,7 @@ package com.circumgraph.model;
 
 import com.circumgraph.model.internal.SchemaImpl;
 import com.circumgraph.model.processing.DirectiveUseProcessor;
+import com.circumgraph.model.processing.TypeDefProcessor;
 
 import org.eclipse.collections.api.factory.Lists;
 
@@ -26,6 +27,16 @@ public interface Schema
 	 * @return
 	 */
 	default Iterable<? extends DirectiveUseProcessor<?>> getDirectiveUseProcessors()
+	{
+		return Lists.immutable.empty();
+	}
+
+	/**
+	 * Get processors of types.
+	 *
+	 * @return
+	 */
+	default Iterable<? extends TypeDefProcessor<?>> getTypeDefProcessors()
 	{
 		return Lists.immutable.empty();
 	}
@@ -60,6 +71,22 @@ public interface Schema
 		 * @return
 		 */
 		Builder addDirectiveUseProcessors(Iterable<? extends DirectiveUseProcessor<?>> processors);
+
+		/**
+		 * Add a processor of types.
+		 *
+		 * @param processor
+		 * @return
+		 */
+		Builder addTypeDefProcessor(TypeDefProcessor<?> processor);
+
+		/**
+		 * Add several processors for types.
+		 *
+		 * @param processors
+		 * @return
+		 */
+		Builder addTypeDefProcessors(Iterable<? extends TypeDefProcessor<?>> processors);
 
 		/**
 		 * Add a type to the schema.

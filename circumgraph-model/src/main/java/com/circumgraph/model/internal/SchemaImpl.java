@@ -3,8 +3,11 @@ package com.circumgraph.model.internal;
 import com.circumgraph.model.Schema;
 import com.circumgraph.model.TypeDef;
 import com.circumgraph.model.processing.DirectiveUseProcessor;
+import com.circumgraph.model.processing.TypeDefProcessor;
 
+import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.factory.Sets;
+import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.set.ImmutableSet;
 
 /**
@@ -14,15 +17,18 @@ public class SchemaImpl
 	implements Schema
 {
 	private final ImmutableSet<? extends TypeDef> types;
-	private final ImmutableSet<? extends DirectiveUseProcessor<?>> directiveUseProcessors;
+	private final ImmutableList<? extends DirectiveUseProcessor<?>> directiveUseProcessors;
+	private final ImmutableList<? extends TypeDefProcessor<?>> typeDefProcessors;
 
 	private SchemaImpl(
 		ImmutableSet<? extends TypeDef> types,
-		ImmutableSet<? extends DirectiveUseProcessor<?>> directiveUseProcessors
+		ImmutableList<? extends DirectiveUseProcessor<?>> directiveUseProcessors,
+		ImmutableList<? extends TypeDefProcessor<?>> typeDefProcessors
 	)
 	{
 		this.types = types;
 		this.directiveUseProcessors = directiveUseProcessors;
+		this.typeDefProcessors = typeDefProcessors;
 	}
 
 	@Override
@@ -37,11 +43,18 @@ public class SchemaImpl
 		return directiveUseProcessors;
 	}
 
+	@Override
+	public Iterable<? extends TypeDefProcessor<?>> getTypeDefProcessors()
+	{
+		return typeDefProcessors;
+	}
+
 	public static Builder create()
 	{
 		return new BuilderImpl(
 			Sets.immutable.empty(),
-			Sets.immutable.empty()
+			Lists.immutable.empty(),
+			Lists.immutable.empty()
 		);
 	}
 
@@ -49,16 +62,19 @@ public class SchemaImpl
 		implements Builder
 	{
 		private final ImmutableSet<TypeDef> types;
-		private final ImmutableSet<DirectiveUseProcessor<?>> directiveUseProcessors;
+		private final ImmutableList<DirectiveUseProcessor<?>> directiveUseProcessors;
+		private final ImmutableList<TypeDefProcessor<?>> typeDefProcessors;
 
 		public BuilderImpl(
 			ImmutableSet<TypeDef> types,
 
-			ImmutableSet<DirectiveUseProcessor<?>> directiveUseProcessors
+			ImmutableList<DirectiveUseProcessor<?>> directiveUseProcessors,
+			ImmutableList<TypeDefProcessor<?>> typeDefProcessors
 		)
 		{
 			this.types = types;
 			this.directiveUseProcessors = directiveUseProcessors;
+			this.typeDefProcessors = typeDefProcessors;
 		}
 
 		@Override
@@ -68,7 +84,8 @@ public class SchemaImpl
 		{
 			return new BuilderImpl(
 				types,
-				directiveUseProcessors.newWith(processor)
+				directiveUseProcessors.newWith(processor),
+				typeDefProcessors
 			);
 		}
 
@@ -79,7 +96,30 @@ public class SchemaImpl
 		{
 			return new BuilderImpl(
 				types,
-				directiveUseProcessors.newWithAll(processors)
+				directiveUseProcessors.newWithAll(processors),
+				typeDefProcessors
+			);
+		}
+
+		@Override
+		public Builder addTypeDefProcessor(TypeDefProcessor<?> processor)
+		{
+			return new BuilderImpl(
+				types,
+				directiveUseProcessors,
+				typeDefProcessors.newWith(processor)
+			);
+		}
+
+		@Override
+		public Builder addTypeDefProcessors(
+			Iterable<? extends TypeDefProcessor<?>> processors
+		)
+		{
+			return new BuilderImpl(
+				types,
+				directiveUseProcessors,
+				typeDefProcessors.newWithAll(processors)
 			);
 		}
 
@@ -88,7 +128,8 @@ public class SchemaImpl
 		{
 			return new BuilderImpl(
 				types.newWith(type),
-				directiveUseProcessors
+				directiveUseProcessors,
+				typeDefProcessors
 			);
 		}
 
@@ -97,7 +138,8 @@ public class SchemaImpl
 		{
 			return new BuilderImpl(
 				this.types.newWithAll(types),
-				directiveUseProcessors
+				directiveUseProcessors,
+				typeDefProcessors
 			);
 		}
 
@@ -106,7 +148,8 @@ public class SchemaImpl
 		{
 			return new SchemaImpl(
 				types,
-				directiveUseProcessors
+				directiveUseProcessors,
+				typeDefProcessors
 			);
 		}
 	}
