@@ -91,7 +91,8 @@ public class ModelBuildingTest
 		var structured = (StructuredDef) t;
 		assertThat(structured.getImplementsNames(), contains("I"));
 
-		assertThat(model.getImplements("I"), contains(t));
+		var i = model.get("I", InterfaceDef.class).get();
+		assertThat(i.getImplementors(), contains(t));
 	}
 
 	@Test
@@ -120,15 +121,16 @@ public class ModelBuildingTest
 		assertThat(t, instanceOf(ObjectDef.class));
 		assertThat(t.getName(), is("Test"));
 
-		var i2 = model.get("I2").get();
+		var i1 = model.get("I1", InterfaceDef.class).get();
+		var i2 = model.get("I2", InterfaceDef.class).get();
 
 		var structured = (StructuredDef) t;
 		assertThat(structured.getImplementsNames(), contains("I2"));
 
-		assertThat(model.getImplements("I1"), contains(i2));
-		assertThat(model.getImplements("I2"), contains(t));
+		assertThat(i1.getImplementors(), contains(i2));
+		assertThat(i2.getImplementors(), contains(t));
 
-		assertThat(model.findImplements("I1"), containsInAnyOrder(t, i2));
+		assertThat(i1.getAllImplementors(), containsInAnyOrder(t, i2));
 	}
 
 	@Test

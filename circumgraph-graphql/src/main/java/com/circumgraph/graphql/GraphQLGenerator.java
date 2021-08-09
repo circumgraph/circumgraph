@@ -465,9 +465,9 @@ public class GraphQLGenerator
 			return generateReferenceInput(def);
 		}
 
-		if(def instanceof InterfaceDef)
+		if(def instanceof InterfaceDef i)
 		{
-			var mappers = storage.getModel().getImplements(def.getName())
+			var mappers =  i.getImplementors()
 				.collect(d -> generateStructuredMutationInput(d, false));
 
 			return new PolymorphicMutationMapper(def, mappers);

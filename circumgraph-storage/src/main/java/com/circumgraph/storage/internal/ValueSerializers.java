@@ -155,10 +155,9 @@ public class ValueSerializers
 			{
 				defs.put(subDef.getName(), resolveDirect((ObjectDef) subDef));
 			}
-			else if(subDef instanceof InterfaceDef)
+			else if(subDef instanceof InterfaceDef i)
 			{
-				model.getImplements(subDef.getName())
-					.each(queue::add);
+				i.getImplementors().each(queue::add);
 			}
 		}
 

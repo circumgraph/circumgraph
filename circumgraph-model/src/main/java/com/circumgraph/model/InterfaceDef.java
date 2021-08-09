@@ -2,6 +2,8 @@ package com.circumgraph.model;
 
 import com.circumgraph.model.internal.InterfaceDefImpl;
 
+import org.eclipse.collections.api.set.SetIterable;
+
 /**
  * Interface within the model. Interfaces are a type of structured data that
  * {@link ObjectDef objects} can implement.
@@ -9,6 +11,20 @@ import com.circumgraph.model.internal.InterfaceDefImpl;
 public interface InterfaceDef
 	extends StructuredDef
 {
+	/**
+	 * Get types that directly implements this interface.
+	 *
+	 * @return
+	 */
+	SetIterable<? extends StructuredDef> getImplementors();
+
+	/**
+	 * Get all the types that implements this interface.
+	 *
+	 * @return
+	 */
+	SetIterable<? extends StructuredDef> getAllImplementors();
+
 	/**
 	 * Create a builder that will create a {@link InterfaceDef}.
 	 *

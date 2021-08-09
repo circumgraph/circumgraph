@@ -211,10 +211,9 @@ public class ValueMappers
 			{
 				defs.put(subDef.getName(), createDirect((ObjectDef) subDef));
 			}
-			else if(subDef instanceof InterfaceDef)
+			else if(subDef instanceof InterfaceDef i)
 			{
-				model.getImplements(subDef.getName())
-					.each(queue::add);
+				i.getImplementors().each(queue::add);
 			}
 		}
 

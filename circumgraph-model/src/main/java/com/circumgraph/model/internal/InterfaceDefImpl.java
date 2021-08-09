@@ -8,7 +8,9 @@ import com.circumgraph.model.TypeDef;
 import com.circumgraph.model.validation.SourceLocation;
 
 import org.eclipse.collections.api.factory.Lists;
+import org.eclipse.collections.api.factory.Sets;
 import org.eclipse.collections.api.list.ImmutableList;
+import org.eclipse.collections.api.set.SetIterable;
 
 public class InterfaceDefImpl
 	extends StructuredDefImpl
@@ -16,7 +18,7 @@ public class InterfaceDefImpl
 {
 	public InterfaceDefImpl(
 		SourceLocation sourceLocation,
-		String id,
+		String name,
 		String description,
 		ImmutableList<TypeDef> implementsTypes,
 		ImmutableList<DirectiveUse> directives,
@@ -25,12 +27,39 @@ public class InterfaceDefImpl
 	{
 		super(
 			sourceLocation,
-			id,
+			name,
 			description,
 			implementsTypes,
 			directives,
 			fields
 		);
+	}
+
+	@Override
+	public SetIterable<? extends StructuredDef> getImplementors()
+	{
+		return defs.getAll().asLazy()
+			.selectInstancesOf(StructuredDef.class)
+			.select(type -> type.getImplementsNames().contains(this.name))
+			.toSet();
+	}
+
+	@Override
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	public SetIterable<? extends StructuredDef> getAllImplementors()
+	{
+		var result = Sets.mutable.<StructuredDef>empty();
+		for(var def : getImplementors())
+		{
+			result.add(def);
+
+			if(def instanceof InterfaceDef i)
+			{
+				result.withAll((SetIterable) i.getAllImplementors());
+			}
+		}
+
+		return result;
 	}
 
 	@Override

@@ -11,6 +11,7 @@ import java.util.Properties;
 
 import com.circumgraph.graphql.GraphQLAPISchema;
 import com.circumgraph.graphql.GraphQLGenerator;
+import com.circumgraph.model.InterfaceDef;
 import com.circumgraph.model.Model;
 import com.circumgraph.model.ModelValidationException;
 import com.circumgraph.model.validation.ValidationMessage;
@@ -213,7 +214,10 @@ public class CircumgraphApp
 			var model = builder.build();
 
 			// Log all of the entities that are active
-			var entities = model.getImplements(StorageSchema.ENTITY_NAME);
+			var entities = model.get(StorageSchema.ENTITY_NAME, InterfaceDef.class)
+				.get()
+				.getImplementors();
+
 			if(entities.isEmpty())
 			{
 				logger.error("No entities defined, can not start");

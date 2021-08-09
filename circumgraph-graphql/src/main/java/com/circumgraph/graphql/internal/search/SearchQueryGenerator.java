@@ -474,11 +474,11 @@ public class SearchQueryGenerator
 
 	private ImmutableMap<String, StructuredDefCriteria> generateSubCriteria(StructuredDef def)
 	{
-		if(! (def instanceof InterfaceDef)) return Maps.immutable.empty();
+		if(! (def instanceof InterfaceDef i)) return Maps.immutable.empty();
 
 		var result = Maps.mutable.<String, StructuredDefCriteria>empty();
 
-		for(var subDef : model.findImplements(def.getName()))
+		for(var subDef : i.getImplementors())
 		{
 			result.put(
 				SchemaNames.toQueryFieldName(subDef),

@@ -54,7 +54,9 @@ public class StorageImpl
 
 		var providers = new ValueProviders();
 		var mappers = new ValueMappers(model, this, providers);
-		this.collections = model.getImplements(StorageSchema.ENTITY_NAME)
+		this.collections = model.get(StorageSchema.ENTITY_NAME, InterfaceDef.class)
+			.get()
+			.getImplementors()
 			.toMap(StructuredDef::getName, def -> new CollectionImpl(
 				silo.transactions(),
 				def,
@@ -99,7 +101,9 @@ public class StorageImpl
 	)
 	{
 		ValueSerializers serializers = new ValueSerializers(model);
-		return model.getImplements(StorageSchema.ENTITY_NAME)
+		return model.get(StorageSchema.ENTITY_NAME, InterfaceDef.class)
+			.get()
+			.getImplementors()
 			.collect(def -> {
 				var codec = new ObjectCodecImpl(
 					serializers.resolvePolymorphic(
@@ -315,7 +319,7 @@ public class StorageImpl
 					fieldReceiver
 				);
 			}
-			else if(def instanceof InterfaceDef)
+			else if(def instanceof InterfaceDef i)
 			{
 				// Index type of object - this is used for any/null queries
 				fieldReceiver.accept(createTypenameField(
@@ -329,7 +333,7 @@ public class StorageImpl
 				 * index all the fields in it.
 				 */
 				MutableSet<String> fields = Sets.mutable.empty();
-				for(var subDef : model.findImplements(def.getName()))
+				for(var subDef : i.getAllImplementors())
 				{
 					// Index type of object - this is used for any/null queries
 					var specificPath = path.polymorphic(subDef);

@@ -195,7 +195,19 @@ public class ModelBuilderImpl
 
 		// Prepare and create model
 		ImmutableMap<String, TypeDef> types = typeMap.toImmutable();
-		ModelDefs defs = types::get;
+		ModelDefs defs = new ModelDefs()
+		{
+			@Override
+			public RichIterable<? extends TypeDef> getAll()
+			{
+				return types;
+			}
+
+			public TypeDef maybeResolve(String name)
+			{
+				return types.get(name);
+			}
+		};
 
 		for(TypeDef type : types)
 		{

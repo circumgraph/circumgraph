@@ -3,7 +3,6 @@ package com.circumgraph.model;
 import java.util.Optional;
 
 import com.circumgraph.model.internal.ModelBuilderImpl;
-import com.circumgraph.model.processing.DirectiveUseProcessor;
 
 import org.eclipse.collections.api.set.SetIterable;
 
@@ -42,22 +41,6 @@ public interface Model
 	 * @return
 	 */
 	SetIterable<? extends TypeDef> getTypes();
-
-	/**
-	 * Get types that directly implement a type with the given identifier.
-	 *
-	 * @param id
-	 * @return
-	 */
-	SetIterable<? extends StructuredDef> getImplements(String id);
-
-	/**
-	 * Find all types that implement a specific type.
-	 *
-	 * @param id
-	 * @return
-	 */
-	SetIterable<? extends StructuredDef> findImplements(String id);
 
 	/**
 	 * Start building a new model.
