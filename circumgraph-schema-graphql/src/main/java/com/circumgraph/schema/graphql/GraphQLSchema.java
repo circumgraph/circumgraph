@@ -15,6 +15,7 @@ import com.circumgraph.model.InputTypeDef;
 import com.circumgraph.model.InterfaceDef;
 import com.circumgraph.model.ListDef;
 import com.circumgraph.model.ModelException;
+import com.circumgraph.model.ModelValidationException;
 import com.circumgraph.model.NonNullDef;
 import com.circumgraph.model.ObjectDef;
 import com.circumgraph.model.OutputTypeDef;
@@ -23,12 +24,16 @@ import com.circumgraph.model.TypeDef;
 import com.circumgraph.model.TypeRef;
 import com.circumgraph.model.UnionDef;
 import com.circumgraph.model.validation.SourceLocation;
+import com.circumgraph.model.validation.ValidationMessage;
+import com.circumgraph.model.validation.ValidationMessageType;
 
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.factory.Maps;
 import org.eclipse.collections.api.list.MutableList;
+import org.eclipse.collections.api.map.ImmutableMap;
 import org.eclipse.collections.api.map.MutableMap;
 
+import graphql.GraphQLError;
 import graphql.language.ArrayValue;
 import graphql.language.BooleanValue;
 import graphql.language.DescribedNode;
@@ -63,6 +68,12 @@ import graphql.schema.idl.errors.SchemaProblem;
 public class GraphQLSchema
 	implements Schema
 {
+	private static final ValidationMessageType SYNTAX_ERROR = ValidationMessageType.error()
+		.withCode("schema:graphql:parse-error")
+		.withArgument("message")
+		.withMessage("{{message}}")
+		.build();
+
 	private final Iterable<? extends TypeDef> types;
 
 	public GraphQLSchema(
@@ -107,7 +118,15 @@ public class GraphQLSchema
 		}
 		catch(SchemaProblem e)
 		{
-			throw new ModelException("Unable to parse schema; " + e.getMessage(), e);
+			throw new ModelValidationException(
+				"Unable to parse schema:",
+				Lists.immutable.ofAll(e.getErrors())
+					.collect(err -> SYNTAX_ERROR.toMessage()
+						.withLocation(toSourceLocation(err.getLocations()))
+						.withArgument("message", err.getMessage())
+						.build()
+					)
+			);
 		}
 
 		for(TypeDefinition<?> type : registry.types().values())
@@ -328,9 +347,22 @@ public class GraphQLSchema
 			: node.getDescription().getContent();
 	}
 
+	private static SourceLocation toSourceLocation(
+		List<graphql.language.SourceLocation> locations
+	)
+	{
+		return locations.isEmpty()
+			? SourceLocation.unknown()
+			: toSourceLocation(locations.get(0));
+	}
+
 	private static SourceLocation toSourceLocation(Node<?> def)
 	{
-		graphql.language.SourceLocation loc = def.getSourceLocation();
+		return toSourceLocation(def.getSourceLocation());
+	}
+
+	private static SourceLocation toSourceLocation(graphql.language.SourceLocation loc)
+	{
 		if(loc == null) return SourceLocation.unknown();
 
 		return SourceLocation.create(

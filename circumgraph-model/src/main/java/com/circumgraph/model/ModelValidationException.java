@@ -15,7 +15,12 @@ public class ModelValidationException
 
 	public ModelValidationException(ListIterable<ValidationMessage> issues)
 	{
-		super("Invalid model, errors reported:\n" +
+		this("Invalid model, errors reported:", issues);
+	}
+
+	public ModelValidationException(String prefix, ListIterable<ValidationMessage> issues)
+	{
+		super(prefix + "\n" +
 			issues
 				.select(m -> m.getLevel() == ValidationMessageLevel.ERROR)
 				.collect(msg -> "  * " + msg.format())

@@ -18,6 +18,7 @@ import com.circumgraph.model.InterfaceDef;
 import com.circumgraph.model.ListDef;
 import com.circumgraph.model.Model;
 import com.circumgraph.model.ModelException;
+import com.circumgraph.model.ModelValidationException;
 import com.circumgraph.model.NonNullDef;
 import com.circumgraph.model.ObjectDef;
 import com.circumgraph.model.ScalarDef;
@@ -28,6 +29,7 @@ import com.circumgraph.model.TypeRef;
 import com.circumgraph.model.UnionDef;
 import com.circumgraph.model.processing.DirectiveUseProcessor;
 import com.circumgraph.model.validation.ValidationMessage;
+import com.circumgraph.model.validation.ValidationMessageLevel;
 
 import org.junit.jupiter.api.Test;
 
@@ -113,12 +115,23 @@ public class GraphQLSchemaTest
 	@Test
 	public void testInterfaceRedefine()
 	{
-		assertThrows(ModelException.class, () -> {
-			parse(
-				"interface Page {\nid: String\n}\n"
-				+ "interface Page {\nvalue: Int\n}"
-			);
+		var e = assertThrows(ModelValidationException.class, () -> {
+			parse("""
+				interface Page {
+					id: String
+				}
+
+				interface Page {
+					value: Int
+				}
+			""");
 		});
+
+		var err = e.getIssues().getFirst();
+		assertThat(err.getLevel(), is(ValidationMessageLevel.ERROR));
+		assertThat(err.getCode(), is("schema:graphql:parse-error"));
+		assertThat(err.getLocation().describe(), is("<source>:1:2"));
+		assertThat(err.getMessage(), is("'Page' type [@5:2] tried to redefine existing 'Page' type [@1:2]"));
 	}
 
 	@Test
