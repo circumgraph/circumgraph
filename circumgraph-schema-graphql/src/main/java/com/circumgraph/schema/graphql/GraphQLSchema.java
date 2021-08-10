@@ -3,6 +3,8 @@ package com.circumgraph.schema.graphql;
 import java.io.Reader;
 import java.io.StringReader;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
 
 import com.circumgraph.model.ArgumentDef;
 import com.circumgraph.model.DirectiveUse;
@@ -132,7 +134,27 @@ public class GraphQLSchema
 			}
 		}
 
+		// Handle extensions
+		handleExtension(types, registry.interfaceTypeExtensions(), GraphQLSchema::defineInterface);
+		handleExtension(types, registry.objectTypeExtensions(), GraphQLSchema::defineObject);
+		handleExtension(types, registry.unionTypeExtensions(), GraphQLSchema::defineUnion);
+		handleExtension(types, registry.enumTypeExtensions(), GraphQLSchema::defineEnum);
+
 		return new GraphQLSchema(types);
+	}
+
+	private static <V> void handleExtension(
+		MutableList<TypeDef> types,
+		Map<String, List<V>> items,
+		Function<V, ? extends TypeDef> f)
+	{
+		for(var extension : items.values())
+		{
+			for(var type : extension)
+			{
+				types.add(f.apply(type));
+			}
+		}
 	}
 
 	private static ObjectDef defineObject(ObjectTypeDefinition def)

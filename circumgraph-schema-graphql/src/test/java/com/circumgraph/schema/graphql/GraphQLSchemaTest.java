@@ -2,6 +2,7 @@ package com.circumgraph.schema.graphql;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -123,21 +124,35 @@ public class GraphQLSchemaTest
 	@Test
 	public void testInterfaceExtend()
 	{
-		Model model = parse(
-			"interface Page {\nid: String\n}\n"
-			+ "extend interface Page {\nvalue: Int\n}"
-		);
+		Model model = parse("""
+			interface Page {
+				id: String
+			}
 
-		TypeDef t = model.get("Page").get();
-		assertThat(t, instanceOf(StructuredDef.class));
+			extend interface Page {
+				value: Int
+			}
+		""");
+
+		var t = model.get("Page", StructuredDef.class).get();
 		assertThat(t, instanceOf(InterfaceDef.class));
 		assertThat(t.getName(), is("Page"));
+
+		assertThat(t.getField("id").get().getType(), is(ScalarDef.STRING));
+		assertThat(t.getField("value").get().getType(), is(ScalarDef.INT));
 	}
 
 	@Test
 	public void testEnum()
 	{
-		Model model = parse("enum Direction {\nNORTH\nEAST\nSOUTH\nWEST\n}");
+		Model model = parse("""
+			enum Direction {
+				NORTH
+				EAST
+				SOUTH
+				WEST
+			}
+		""");
 
 		TypeDef t = model.get("Direction").get();
 		assertThat(t, instanceOf(EnumDef.class));
@@ -147,6 +162,32 @@ public class GraphQLSchemaTest
 		assertThat(
 			e.getValues().collect(EnumValueDef::getName),
 			contains("NORTH", "EAST", "SOUTH", "WEST")
+		);
+	}
+
+	@Test
+	public void testEnumMerge()
+	{
+		Model model = parse("""
+			enum Direction {
+				NORTH
+				EAST
+			}
+
+			extend enum Direction {
+				SOUTH
+				WEST
+			}
+		""");
+
+		TypeDef t = model.get("Direction").get();
+		assertThat(t, instanceOf(EnumDef.class));
+		assertThat(t.getName(), is("Direction"));
+
+		EnumDef e = (EnumDef) t;
+		assertThat(
+			e.getValues().collect(EnumValueDef::getName),
+			containsInAnyOrder("NORTH", "EAST", "SOUTH", "WEST")
 		);
 	}
 
@@ -171,6 +212,52 @@ public class GraphQLSchemaTest
 			def.getTypeNames(),
 			contains("A", "B")
 		);
+	}
+
+	@Test
+	public void testUnionExtend()
+	{
+		Model model = parse(
+			"""
+				type A { id: String }
+				type B { title: Int }
+
+				union U = A
+
+				extend union U = B
+			"""
+		);
+
+		TypeDef t = model.get("U").get();
+		assertThat(t, instanceOf(UnionDef.class));
+		assertThat(t.getName(), is("U"));
+
+		UnionDef def = UnionDef.class.cast(t);
+		assertThat(
+			def.getTypeNames(),
+			contains("A", "B")
+		);
+	}
+
+	@Test
+	public void testObjectExtend()
+	{
+		Model model = parse("""
+			type Page {
+				id: String
+			}
+
+			extend type Page {
+				value: Int
+			}
+		""");
+
+		var t = model.get("Page", StructuredDef.class).get();
+		assertThat(t, instanceOf(ObjectDef.class));
+		assertThat(t.getName(), is("Page"));
+
+		assertThat(t.getField("id").get().getType(), is(ScalarDef.STRING));
+		assertThat(t.getField("value").get().getType(), is(ScalarDef.INT));
 	}
 
 	@Test
