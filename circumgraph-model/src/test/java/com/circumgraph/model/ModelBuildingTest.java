@@ -469,6 +469,74 @@ public class ModelBuildingTest
 		});
 	}
 
+	@Test
+	public void testMergeUnion()
+	{
+		var schema = Schema.create()
+			.addType(ObjectDef.create("A")
+				.addField(FieldDef.create("f1")
+					.withType(ScalarDef.STRING)
+					.build()
+				)
+				.build()
+			)
+			.addType(ObjectDef.create("B")
+				.addField(FieldDef.create("f2")
+					.withType(ScalarDef.STRING)
+					.build()
+				)
+				.build()
+			)
+			.addType(UnionDef.create("U")
+				.addType(TypeRef.create("A"))
+				.build()
+			)
+			.addType(UnionDef.create("U")
+				.addType(TypeRef.create("B"))
+				.build()
+			)
+			.build();
+
+		var model = Model.create()
+			.addSchema(schema)
+			.build();
+
+		var t = model.get("U", UnionDef.class).get();
+		assertThat(t.getName(), is("U"));
+
+		assertThat(t.getTypeNames(), contains("A", "B"));
+	}
+
+	@Test
+	public void testMergeEnum()
+	{
+		var schema = Schema.create()
+			.addType(EnumDef.create("Direction")
+				.addValue(EnumValueDef.create("NORTH")
+					.build())
+				.addValue(EnumValueDef.create("EAST")
+					.build())
+				.build()
+			)
+			.addType(EnumDef.create("Direction")
+				.addValue(EnumValueDef.create("SOUTH")
+					.build())
+				.addValue(EnumValueDef.create("WEST")
+					.build())
+				.build()
+			)
+			.build();
+
+		var model = Model.create()
+			.addSchema(schema)
+			.build();
+
+		var t = model.get("Direction", EnumDef.class).get();
+		assertThat(
+			t.getValues().collect(EnumValueDef::getName),
+			containsInAnyOrder("NORTH", "EAST", "SOUTH", "WEST")
+		);
+	}
 
 	static class TestDirectiveOnFieldProcessor
 		implements DirectiveUseProcessor<FieldDef>

@@ -6,6 +6,8 @@ import java.util.function.Consumer;
 
 import com.circumgraph.model.ArgumentDef;
 import com.circumgraph.model.DirectiveUse;
+import com.circumgraph.model.EnumDef;
+import com.circumgraph.model.EnumValueDef;
 import com.circumgraph.model.FieldDef;
 import com.circumgraph.model.HasDirectives;
 import com.circumgraph.model.HasSourceLocation;
@@ -21,6 +23,8 @@ import com.circumgraph.model.ScalarDef;
 import com.circumgraph.model.Schema;
 import com.circumgraph.model.StructuredDef;
 import com.circumgraph.model.TypeDef;
+import com.circumgraph.model.TypeRef;
+import com.circumgraph.model.UnionDef;
 import com.circumgraph.model.processing.DirectiveUseProcessor;
 import com.circumgraph.model.processing.TypeDefProcessor;
 import com.circumgraph.model.validation.SourceLocation;
@@ -264,6 +268,20 @@ public class ModelBuilderImpl
 				return mergeInterface(validationCollector, (InterfaceDef) current, (InterfaceDef) extension);
 			}
 		}
+		else if(current instanceof UnionDef)
+		{
+			if(extension instanceof UnionDef)
+			{
+				return mergeUnion(validationCollector, (UnionDef) current, (UnionDef) extension);
+			}
+		}
+		else if(current instanceof EnumDef)
+		{
+			if(extension instanceof EnumDef)
+			{
+				return mergeEnum(validationCollector, (EnumDef) current, (EnumDef) extension);
+			}
+		}
 
 		// Report not being able to merge
 		validationCollector.accept(INCOMPATIBLE_TYPES.toMessage()
@@ -486,6 +504,59 @@ public class ModelBuilderImpl
 	{
 		// TODO: Logic for merging the directives
 		return d1;
+	}
+
+	private UnionDef mergeUnion(
+		Consumer<ValidationMessage> validationCollector,
+		UnionDef d1,
+		UnionDef d2
+	)
+	{
+		MutableSet<String> result = Sets.mutable.ofAll(d1.getTypeNames());
+		result.addAllIterable(d2.getTypeNames());
+
+		return UnionDef.create(d1.getName())
+			.withSourceLocation(d1.getSourceLocation())
+			.withDescription(pickFirstNonBlank(d1.getDescription(), d2.getDescription()))
+			.addTypes(result.collect(TypeRef::create))
+			.addDirectives(mergeDirectives(validationCollector, d1, d2))
+			.build();
+	}
+
+	private EnumDef mergeEnum(
+		Consumer<ValidationMessage> validationCollector,
+		EnumDef d1,
+		EnumDef d2
+	)
+	{
+		MutableMap<String, EnumValueDef> arguments = Maps.mutable.empty();
+		Procedure<EnumValueDef> p = v1 -> {
+			if(arguments.containsKey(v1.getName()))
+			{
+				var v2 = arguments.get(v1.getName());
+
+				var mergedValue = EnumValueDef.create(v1.getName())
+					.withSourceLocation(v1.getSourceLocation())
+					.addDirectives(mergeDirectives(validationCollector, v1, v2))
+					.build();
+
+				arguments.put(v1.getName(), mergedValue);
+			}
+			else
+			{
+				arguments.put(v1.getName(), v1);
+			}
+		};
+
+		d1.getValues().forEach(p);
+		d2.getValues().forEach(p);
+
+		return EnumDef.create(d1.getName())
+			.withSourceLocation(d1.getSourceLocation())
+			.withDescription(pickFirstNonBlank(d1.getDescription(), d2.getDescription()))
+			.addValues(arguments)
+			.addDirectives(mergeDirectives(validationCollector, d1, d2))
+			.build();
 	}
 
 	/**
