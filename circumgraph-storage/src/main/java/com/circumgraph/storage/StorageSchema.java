@@ -8,12 +8,14 @@ import com.circumgraph.model.ScalarDef;
 import com.circumgraph.model.Schema;
 import com.circumgraph.model.TypeDef;
 import com.circumgraph.model.processing.DirectiveUseProcessor;
+import com.circumgraph.model.processing.TypeDefProcessor;
 import com.circumgraph.storage.internal.ValueIndexers;
 import com.circumgraph.storage.internal.ValueProviders;
 import com.circumgraph.storage.internal.model.DefaultDirectiveProcessor;
 import com.circumgraph.storage.internal.model.IndexDirectiveProcessor;
 import com.circumgraph.storage.internal.model.ReadonlyDirectiveProcessor;
 import com.circumgraph.storage.internal.model.SortableDirectiveProcessor;
+import com.circumgraph.storage.internal.processors.InterfaceImplementationProcessor;
 
 import org.eclipse.collections.api.factory.Lists;
 
@@ -41,6 +43,14 @@ public class StorageSchema
 
 			new IndexDirectiveProcessor(new ValueIndexers()),
 			new SortableDirectiveProcessor()
+		);
+	}
+
+	@Override
+	public Iterable<? extends TypeDefProcessor<?>> getTypeDefProcessors()
+	{
+		return Lists.immutable.of(
+			new InterfaceImplementationProcessor()
 		);
 	}
 
