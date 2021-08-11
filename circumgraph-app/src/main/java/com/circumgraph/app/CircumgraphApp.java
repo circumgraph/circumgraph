@@ -10,10 +10,10 @@ import java.nio.file.StandardWatchEventKinds;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
 import java.util.Properties;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-import com.circumgraph.app.config.ConfigConfig;
 import com.circumgraph.app.config.InstanceConfig;
 
 import org.eclipse.collections.api.factory.Lists;
@@ -171,8 +171,8 @@ public class CircumgraphApp
 	{
 		logger.info("Development mode, will monitor config for changes");
 
-		var executor = CompletableFuture.delayedExecutor(1, TimeUnit.SECONDS);
-		CompletableFuture<?> future = null;
+		var executor = Executors.newScheduledThreadPool(1, r -> new Thread(r, "dev-mode"));
+		ScheduledFuture<?> future = null;
 		try
 		{
 			WatchService watchService = FileSystems.getDefault().newWatchService();
@@ -191,14 +191,19 @@ public class CircumgraphApp
 				{
 					if(event.kind() == StandardWatchEventKinds.OVERFLOW) continue;
 
-					if(future != null && ! future.isCancelled())
+
+					if(future == null || future.isDone())
+					{
+						logger.info("Changes to config detected, restart queued");
+					}
+					else if(future != null && ! future.isCancelled())
 					{
 						future.cancel(false);
 					}
 
-					future = CompletableFuture.runAsync(() -> {
+					future = executor.schedule(() -> {
 						start(config);
-					}, executor);
+					}, 1, TimeUnit.SECONDS);
 				}
 
 				key.reset();
