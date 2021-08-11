@@ -3,6 +3,7 @@ package com.circumgraph.model.validation;
 import com.circumgraph.model.HasSourceLocation;
 import com.circumgraph.model.internal.validation.ValidationMessageImpl;
 
+import org.eclipse.collections.api.block.predicate.Predicate;
 import org.eclipse.collections.api.map.MapIterable;
 
 /**
@@ -51,6 +52,42 @@ public interface ValidationMessage
 	 * @return
 	 */
 	String format();
+
+	/**
+	 * Predicate that matches if any messages with an
+	 * {@link ValidationMessageLevel#ERROR error level} are found.
+	 *
+	 * @return
+	 */
+	static Predicate<? super ValidationMessage> errorPredicate()
+	{
+		return predicate(ValidationMessageLevel.ERROR);
+	}
+
+	/**
+	 * Predicate that matches if any messages with an
+	 * {@link ValidationMessageLevel#WARNING warning level} or
+	 * {@link ValidationMessageLevel#ERROR error level} are found.
+	 *
+	 * @return
+	 */
+	static Predicate<? super ValidationMessage> warningPredicate()
+	{
+		return predicate(ValidationMessageLevel.WARNING);
+	}
+
+	/**
+	 * Create a predicate that matches items with the given level or higher.
+	 *
+	 * @param error
+	 * @return
+	 */
+	static Predicate<? super ValidationMessage> predicate(
+		ValidationMessageLevel minLevel
+	)
+	{
+		return msg -> msg.getLevel().ordinal() >= minLevel.ordinal();
+	}
 
 	/**
 	 * Start building a new validation message.

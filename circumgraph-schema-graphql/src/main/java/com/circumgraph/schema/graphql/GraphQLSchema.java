@@ -14,7 +14,6 @@ import com.circumgraph.model.FieldDef;
 import com.circumgraph.model.InputTypeDef;
 import com.circumgraph.model.InterfaceDef;
 import com.circumgraph.model.ListDef;
-import com.circumgraph.model.ModelException;
 import com.circumgraph.model.ModelValidationException;
 import com.circumgraph.model.NonNullDef;
 import com.circumgraph.model.ObjectDef;
@@ -30,10 +29,8 @@ import com.circumgraph.model.validation.ValidationMessageType;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.factory.Maps;
 import org.eclipse.collections.api.list.MutableList;
-import org.eclipse.collections.api.map.ImmutableMap;
 import org.eclipse.collections.api.map.MutableMap;
 
-import graphql.GraphQLError;
 import graphql.language.ArrayValue;
 import graphql.language.BooleanValue;
 import graphql.language.DescribedNode;
@@ -72,6 +69,12 @@ public class GraphQLSchema
 		.withCode("schema:graphql:parse-error")
 		.withArgument("message")
 		.withMessage("{{message}}")
+		.build();
+
+	private static final ValidationMessageType UNSUPPORTED_TYPE = ValidationMessageType.error()
+		.withCode("schema:graphql:unsupported-type")
+		.withArgument("type")
+		.withMessage("{{type}} was defined, but its underlying type is currently unsupported")
 		.build();
 
 	private final Iterable<? extends TypeDef> types;
@@ -129,6 +132,8 @@ public class GraphQLSchema
 			);
 		}
 
+		MutableList<ValidationMessage> messages = Lists.mutable.empty();
+
 		for(TypeDefinition<?> type : registry.types().values())
 		{
 			if(type instanceof ObjectTypeDefinition)
@@ -149,7 +154,11 @@ public class GraphQLSchema
 			}
 			else
 			{
-				throw new ModelException("Encountered unknown type " + type.getName());
+				messages.add(UNSUPPORTED_TYPE.toMessage()
+					.withLocation(toSourceLocation(type))
+					.withArgument("type", type.getName())
+					.build()
+				);
 			}
 		}
 
@@ -158,6 +167,12 @@ public class GraphQLSchema
 		handleExtension(types, registry.objectTypeExtensions(), GraphQLSchema::defineObject);
 		handleExtension(types, registry.unionTypeExtensions(), GraphQLSchema::defineUnion);
 		handleExtension(types, registry.enumTypeExtensions(), GraphQLSchema::defineEnum);
+
+		if(messages.anySatisfy(ValidationMessage.errorPredicate()))
+		{
+			// Schema has errors, throw a validation message
+			throw new ModelValidationException(messages);
+		}
 
 		return new GraphQLSchema(types);
 	}

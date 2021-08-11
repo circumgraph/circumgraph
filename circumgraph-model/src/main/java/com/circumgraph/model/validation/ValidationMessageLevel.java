@@ -2,6 +2,10 @@ package com.circumgraph.model.validation;
 
 /**
  * Different types of messages.
+ *
+ * Note: Enum values are declared in increasing severity as this is used by
+ * {@link ValidationMessage#predicate(ValidationMessageLevel)} to match
+ * messages.
  */
 public enum ValidationMessageLevel
 {
