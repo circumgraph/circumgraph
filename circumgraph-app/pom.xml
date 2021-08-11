@@ -109,6 +109,12 @@
 								<jvmFlags>
 									<jvmFlag>-XX:+UseZGC</jvmFlag>
 								</jvmFlags>
+								<ports>
+									<port>8080</port>
+								</ports>
+								<volumes>
+									<volume>/data</volume>
+								</volumes>
 							</container>
 						</configuration>
 						<executions>
