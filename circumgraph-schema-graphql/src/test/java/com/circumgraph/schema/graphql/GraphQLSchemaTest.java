@@ -115,23 +115,22 @@ public class GraphQLSchemaTest
 	@Test
 	public void testInterfaceRedefine()
 	{
-		var e = assertThrows(ModelValidationException.class, () -> {
-			parse("""
-				interface Page {
-					id: String
-				}
+		var model = parse("""
+			interface Page {
+				id: String
+			}
 
-				interface Page {
-					value: Int
-				}
-			""");
-		});
+			interface Page {
+				value: Int
+			}
+		""");
 
-		var err = e.getIssues().getFirst();
-		assertThat(err.getLevel(), is(ValidationMessageLevel.ERROR));
-		assertThat(err.getCode(), is("schema:graphql:parse-error"));
-		assertThat(err.getLocation().describe(), is("<source>:1:2"));
-		assertThat(err.getMessage(), is("'Page' type [@5:2] tried to redefine existing 'Page' type [@1:2]"));
+		var t = model.get("Page", StructuredDef.class).get();
+		assertThat(t, instanceOf(InterfaceDef.class));
+		assertThat(t.getName(), is("Page"));
+
+		assertThat(t.getField("id").get().getType(), is(ScalarDef.STRING));
+		assertThat(t.getField("value").get().getType(), is(ScalarDef.INT));
 	}
 
 	@Test

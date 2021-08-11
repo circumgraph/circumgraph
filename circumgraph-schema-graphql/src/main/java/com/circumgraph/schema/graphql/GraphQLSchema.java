@@ -3,8 +3,6 @@ package com.circumgraph.schema.graphql;
 import java.io.Reader;
 import java.io.StringReader;
 import java.util.List;
-import java.util.Map;
-import java.util.function.Function;
 
 import com.circumgraph.model.ArgumentDef;
 import com.circumgraph.model.DirectiveUse;
@@ -33,8 +31,10 @@ import org.eclipse.collections.api.map.MutableMap;
 
 import graphql.language.ArrayValue;
 import graphql.language.BooleanValue;
+import graphql.language.Definition;
 import graphql.language.DescribedNode;
 import graphql.language.DirectivesContainer;
+import graphql.language.Document;
 import graphql.language.EnumTypeDefinition;
 import graphql.language.EnumValue;
 import graphql.language.FieldDefinition;
@@ -54,9 +54,9 @@ import graphql.language.TypeDefinition;
 import graphql.language.TypeName;
 import graphql.language.UnionTypeDefinition;
 import graphql.language.Value;
+import graphql.parser.InvalidSyntaxException;
+import graphql.parser.Parser;
 import graphql.schema.CoercingParseLiteralException;
-import graphql.schema.idl.SchemaParser;
-import graphql.schema.idl.TypeDefinitionRegistry;
 import graphql.schema.idl.errors.SchemaProblem;
 
 /**
@@ -107,17 +107,32 @@ public class GraphQLSchema
 	 * Create a schema from the given {@link Reader}.
 	 *
 	 * @param reader
+	 *   reader to parse from
 	 * @return
+	 *   parsed schema
+	 * @throws ModelValidationException
+	 *   if schema is not valid
 	 */
 	public static GraphQLSchema create(Reader reader)
 	{
 		MutableList<TypeDef> types = Lists.mutable.empty();
 
-		TypeDefinitionRegistry registry;
+		Document doc;
 		try
 		{
-			SchemaParser schemaParser = new SchemaParser();
-			registry = schemaParser.parse(reader);
+			Parser parser = new Parser();
+			doc = parser.parseDocument(reader);
+		}
+		catch(InvalidSyntaxException e)
+		{
+			throw new ModelValidationException(
+				"Unable to parse schema:",
+				Lists.immutable.of(SYNTAX_ERROR.toMessage()
+					.withLocation(toSourceLocation(e.getLocation()))
+					.withArgument("message", e.getMessage())
+					.build()
+				)
+			);
 		}
 		catch(SchemaProblem e)
 		{
@@ -134,39 +149,41 @@ public class GraphQLSchema
 
 		MutableList<ValidationMessage> messages = Lists.mutable.empty();
 
-		for(TypeDefinition<?> type : registry.types().values())
+		for(Definition type : doc.getDefinitions())
 		{
-			if(type instanceof ObjectTypeDefinition)
+			if(type instanceof ObjectTypeDefinition o)
 			{
-				types.add(defineObject((ObjectTypeDefinition) type));
+				types.add(defineObject(o));
 			}
-			else if(type instanceof InterfaceTypeDefinition)
+			else if(type instanceof InterfaceTypeDefinition i)
 			{
-				types.add(defineInterface((InterfaceTypeDefinition) type));
+				types.add(defineInterface(i));
 			}
-			else if(type instanceof EnumTypeDefinition)
+			else if(type instanceof EnumTypeDefinition e)
 			{
-				types.add(defineEnum((EnumTypeDefinition) type));
+				types.add(defineEnum(e));
 			}
-			else if(type instanceof UnionTypeDefinition)
+			else if(type instanceof UnionTypeDefinition u)
 			{
-				types.add(defineUnion((UnionTypeDefinition) type));
+				types.add(defineUnion(u));
 			}
-			else
+			else if(type instanceof TypeDefinition<?> d)
 			{
 				messages.add(UNSUPPORTED_TYPE.toMessage()
 					.withLocation(toSourceLocation(type))
-					.withArgument("type", type.getName())
+					.withArgument("type", d.getName())
+					.build()
+				);
+			}
+			else
+			{
+				messages.add(SYNTAX_ERROR.toMessage()
+					.withLocation(toSourceLocation(type))
+					.withArgument("message", "Non-SDL content in schema")
 					.build()
 				);
 			}
 		}
-
-		// Handle extensions
-		handleExtension(types, registry.interfaceTypeExtensions(), GraphQLSchema::defineInterface);
-		handleExtension(types, registry.objectTypeExtensions(), GraphQLSchema::defineObject);
-		handleExtension(types, registry.unionTypeExtensions(), GraphQLSchema::defineUnion);
-		handleExtension(types, registry.enumTypeExtensions(), GraphQLSchema::defineEnum);
 
 		if(messages.anySatisfy(ValidationMessage.errorPredicate()))
 		{
@@ -177,20 +194,14 @@ public class GraphQLSchema
 		return new GraphQLSchema(types);
 	}
 
-	private static <V> void handleExtension(
-		MutableList<TypeDef> types,
-		Map<String, List<V>> items,
-		Function<V, ? extends TypeDef> f)
-	{
-		for(var extension : items.values())
-		{
-			for(var type : extension)
-			{
-				types.add(f.apply(type));
-			}
-		}
-	}
-
+	/**
+	 * Create a {@link ObjectDef} from a {@link ObjectTypeDefinition}.
+	 *
+	 * @param def
+	 *   definition to convert
+	 * @return
+	 *   converted {@link ObjectDef}
+	 */
 	private static ObjectDef defineObject(ObjectTypeDefinition def)
 	{
 		return ObjectDef.create(def.getName())
@@ -202,6 +213,14 @@ public class GraphQLSchema
 			.build();
 	}
 
+	/**
+	 * Create a {@link InterfaceDef} from a {@link InterfaceTypeDefinition}.
+	 *
+	 * @param def
+	 *   definition to convert
+	 * @return
+	 *   convert {@link InterfaceDef}
+	 */
 	private static InterfaceDef defineInterface(InterfaceTypeDefinition def)
 	{
 		return InterfaceDef.create(def.getName())
@@ -213,6 +232,14 @@ public class GraphQLSchema
 			.build();
 	}
 
+	/**
+	 * Create a {@link EnumDef} from a {@link EnumTypeDefinition}.
+	 *
+	 * @param def
+	 *   definition to convert
+	 * @return
+	 *   convert {@link EnumDef}
+	 */
 	private static EnumDef defineEnum(EnumTypeDefinition def)
 	{
 		return EnumDef.create(def.getName())
@@ -228,6 +255,14 @@ public class GraphQLSchema
 			.build();
 	}
 
+	/**
+	 * Create a {@link UnionDef} from a {@link UnionTypeDefinition}.
+	 *
+	 * @param def
+	 *   definition to convert
+	 * @return
+	 *   convert {@link UnionDef}
+	 */
 	private static UnionDef defineUnion(UnionTypeDefinition def)
 	{
 		return UnionDef.create(def.getName())
@@ -240,6 +275,15 @@ public class GraphQLSchema
 			.build();
 	}
 
+	/**
+	 * Create an iterable with implemented types from an iterable of
+	 * {@link Type}.
+	 *
+	 * @param types
+	 *   iterable to convert
+	 * @return
+	 *   converted type
+	 */
 	private static Iterable<String> createImplements(
 		Iterable<Type> types
 	)
@@ -248,6 +292,15 @@ public class GraphQLSchema
 			.collect(t -> ((TypeName) t).getName());
 	}
 
+	/**
+	 * Create an iterable of {@link FieldDef} from an iterable of
+	 * {@link FieldDefinition}.
+	 *
+	 * @param fields
+	 *   fields to convert
+	 * @return
+	 *   converted iterable
+	 */
 	private static Iterable<FieldDef> createFields(
 		Iterable<FieldDefinition> fields
 	)
@@ -256,6 +309,14 @@ public class GraphQLSchema
 			.collect(GraphQLSchema::defineField);
 	}
 
+	/**
+	 * Create a {@link FieldDef} from a {@link FieldDefinition}.
+	 *
+	 * @param def
+	 *   field to convert
+	 * @return
+	 *   converted {@link FieldDef}
+	 */
 	private static FieldDef defineField(FieldDefinition def)
 	{
 		graphql.language.Type<?> gqlType = def.getType();
@@ -270,6 +331,14 @@ public class GraphQLSchema
 			.build();
 	}
 
+	/**
+	 * Create an iterable of {@link ArgumentDef} from a {@link FieldDefinition}.
+	 *
+	 * @param def
+	 *   field to get arguments for
+	 * @return
+	 *   iterable with {@link ArgumentDef}
+	 */
 	private static Iterable<ArgumentDef> createArguments(FieldDefinition def)
 	{
 		return Lists.immutable.ofAll(def.getInputValueDefinitions())
@@ -286,6 +355,15 @@ public class GraphQLSchema
 			});
 	}
 
+	/**
+	 * Create an iterable of {@link DirectiveUse} for directives placed on
+	 * a {@link DirectivesContainer}.
+	 *
+	 * @param def
+	 *   container to get directives
+	 * @return
+	 *   iterable of {@link DirectiveUse}
+	 */
 	private static Iterable<DirectiveUse> createDirectives(
 		DirectivesContainer<?> def
 	)
@@ -304,6 +382,15 @@ public class GraphQLSchema
 			});
 	}
 
+	/**
+	 * Create a {@link OutputTypeDef} based on a {@link Type}. Used for all
+	 * output types in fields.
+	 *
+	 * @param type
+	 *   type to convert
+	 * @return
+	 *   converted type
+	 */
 	private static OutputTypeDef toOutputType(graphql.language.Type<?> type)
 	{
 		if(type instanceof NonNullType)
@@ -323,6 +410,15 @@ public class GraphQLSchema
 		return TypeRef.create(tn.getName());
 	}
 
+	/**
+	 * Create a {@link InputTypeDef} based on a {@link Type}. Used for all
+	 * input types in field arguments.
+	 *
+	 * @param type
+	 *   type to convert
+	 * @return
+	 *   converted type
+	 */
 	private static InputTypeDef toInputType(graphql.language.Type<?> type)
 	{
 		if(type instanceof NonNullType)
@@ -342,6 +438,14 @@ public class GraphQLSchema
 		return TypeRef.create(tn.getName());
 	}
 
+	/**
+	 * Get a plain string description from a {@link DescribedNode}.
+	 *
+	 * @param node
+	 *   node to get description for
+	 * @return
+	 *   description in plain text, or {@code null}
+	 */
 	private static String toDescription(DescribedNode<?> node)
 	{
 		return node.getDescription() == null
@@ -349,6 +453,14 @@ public class GraphQLSchema
 			: node.getDescription().getContent();
 	}
 
+	/**
+	 * Perform a conversion to {@link SourceLocation} for a list.
+	 *
+	 * @param locations
+	 *   locations to converter
+	 * @return
+	 *   source location
+	 */
 	private static SourceLocation toSourceLocation(
 		List<graphql.language.SourceLocation> locations
 	)
@@ -358,11 +470,27 @@ public class GraphQLSchema
 			: toSourceLocation(locations.get(0));
 	}
 
+	/**
+	 * Perform a conversion to {@link SourceLocation} for a {@link Node}.
+	 *
+	 * @param def
+	 *   node to convert
+	 * @return
+	 *   source location
+	 */
 	private static SourceLocation toSourceLocation(Node<?> def)
 	{
 		return toSourceLocation(def.getSourceLocation());
 	}
 
+	/**
+	 * Perform a conversion to {@link SourceLocation}.
+	 *
+	 * @param loc
+	 *   location to convert
+	 * @return
+	 *   source location
+	 */
 	private static SourceLocation toSourceLocation(graphql.language.SourceLocation loc)
 	{
 		if(loc == null) return SourceLocation.unknown();
@@ -373,6 +501,12 @@ public class GraphQLSchema
 		);
 	}
 
+	/**
+	 * Convert a {@link Value} into a Java object.
+	 *
+	 * @param input
+	 * @return
+	 */
 	private static Object toJavaValue(Value<?> input)
 	{
 		if(input instanceof NullValue)
