@@ -463,7 +463,6 @@ public class ModelBuilderImpl
 			.withSourceLocation(a1.getSourceLocation())
 			.withType(a1.getType())
 			.withDescription(pickFirstNonBlank(a1.getDescription(), a2.getDescription()))
-			.withNullable(a1.isNullable())
 			.addDirectives(mergeDirectives(validationCollector, a1, a2))
 			.build();
 	}

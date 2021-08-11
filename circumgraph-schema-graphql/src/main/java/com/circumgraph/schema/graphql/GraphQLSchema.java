@@ -260,25 +260,12 @@ public class GraphQLSchema
 		return Lists.immutable.ofAll(def.getInputValueDefinitions())
 			.collect(arg -> {
 				graphql.language.Type<?> gqlType = def.getType();
-				boolean nullable;
-
-				if(gqlType instanceof NonNullType)
-				{
-					nullable = false;
-					gqlType = ((NonNullType) gqlType).getType();
-				}
-				else
-				{
-					nullable = true;
-				}
-
 				InputTypeDef dataType = toInputType(gqlType);
 
 				return ArgumentDef.create(arg.getName())
 					.withSourceLocation(toSourceLocation(def))
 					.withDescription(toDescription(def))
 					.withType(dataType)
-					.withNullable(nullable)
 					.addDirectives(createDirectives(arg))
 					.build();
 			});

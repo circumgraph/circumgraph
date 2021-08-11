@@ -38,13 +38,6 @@ public interface ArgumentDef
 	 */
 	String getTypeName();
 
-	/**
-	 * Get if the field is nullable.
-	 *
-	 * @return
-	 */
-	boolean isNullable();
-
 	public static Builder create(String name)
 	{
 		return ArgumentDefImpl.create(name);
@@ -68,21 +61,6 @@ public interface ArgumentDef
 		 * @return
 		 */
 		Builder withType(InputTypeDef type);
-
-		/**
-		 * Set if the argument will be nullable.
-		 *
-		 * @param nullable
-		 * @return
-		 */
-		Builder withNullable(boolean nullable);
-
-		/**
-		 * Mark the argument as nullable.
-		 *
-		 * @return
-		 */
-		Builder nullable();
 
 		/**
 		 * Add a directive to the argument.

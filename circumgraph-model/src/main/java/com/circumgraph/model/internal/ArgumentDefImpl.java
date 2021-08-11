@@ -23,7 +23,6 @@ public class ArgumentDefImpl
 	private final String description;
 
 	private final InputTypeDef type;
-	private final boolean nullable;
 
 	private final ImmutableList<DirectiveUse> directives;
 
@@ -34,7 +33,6 @@ public class ArgumentDefImpl
 		String name,
 		String description,
 		InputTypeDef type,
-		boolean nullable,
 		ImmutableList<DirectiveUse> directives
 	)
 	{
@@ -42,7 +40,6 @@ public class ArgumentDefImpl
 		this.name = name;
 		this.description = description;
 		this.type = type;
-		this.nullable = nullable;
 		this.directives = directives;
 	}
 
@@ -77,12 +74,6 @@ public class ArgumentDefImpl
 	}
 
 	@Override
-	public boolean isNullable()
-	{
-		return nullable;
-	}
-
-	@Override
 	public ListIterable<DirectiveUse> getDirectives()
 	{
 		return directives;
@@ -107,7 +98,6 @@ public class ArgumentDefImpl
 			name,
 			null,
 			null,
-			false,
 			Lists.immutable.empty()
 		);
 	}
@@ -119,7 +109,6 @@ public class ArgumentDefImpl
 		private final String name;
 		private final String description;
 		private final InputTypeDef type;
-		private final boolean nullable;
 		private final ImmutableList<DirectiveUse> directives;
 
 		public BuilderImpl(
@@ -127,7 +116,6 @@ public class ArgumentDefImpl
 			String name,
 			String description,
 			InputTypeDef type,
-			boolean nullable,
 			ImmutableList<DirectiveUse> directives
 		)
 		{
@@ -135,7 +123,6 @@ public class ArgumentDefImpl
 			this.name = name;
 			this.description = description;
 			this.type = type;
-			this.nullable = nullable;
 			this.directives = directives;
 		}
 
@@ -147,7 +134,6 @@ public class ArgumentDefImpl
 				name,
 				description,
 				type,
-				nullable,
 				directives
 			);
 		}
@@ -160,7 +146,6 @@ public class ArgumentDefImpl
 				name,
 				description,
 				type,
-				nullable,
 				directives
 			);
 		}
@@ -173,26 +158,6 @@ public class ArgumentDefImpl
 				name,
 				description,
 				type,
-				nullable,
-				directives
-			);
-		}
-
-		@Override
-		public Builder nullable()
-		{
-			return withNullable(true);
-		}
-
-		@Override
-		public Builder withNullable(boolean nullable)
-		{
-			return new BuilderImpl(
-				sourceLocation,
-				name,
-				description,
-				type,
-				nullable,
 				directives
 			);
 		}
@@ -205,7 +170,6 @@ public class ArgumentDefImpl
 				name,
 				description,
 				type,
-				nullable,
 				directives.newWith(directive)
 			);
 		}
@@ -220,7 +184,6 @@ public class ArgumentDefImpl
 				name,
 				description,
 				type,
-				nullable,
 				this.directives.newWithAll(directives)
 			);
 		}
@@ -233,7 +196,6 @@ public class ArgumentDefImpl
 				name,
 				description,
 				type,
-				nullable,
 				directives
 			);
 		}
