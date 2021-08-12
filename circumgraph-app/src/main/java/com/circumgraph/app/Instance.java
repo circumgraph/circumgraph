@@ -1,5 +1,6 @@
 package com.circumgraph.app;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -13,6 +14,7 @@ import com.circumgraph.model.InterfaceDef;
 import com.circumgraph.model.Model;
 import com.circumgraph.model.ModelValidationException;
 import com.circumgraph.model.validation.ValidationMessage;
+import com.circumgraph.model.validation.ValidationMessageType;
 import com.circumgraph.schema.graphql.GraphQLSchema;
 import com.circumgraph.storage.Storage;
 import com.circumgraph.storage.StorageSchema;
@@ -36,6 +38,12 @@ import io.vertx.ext.web.handler.graphql.GraphQLHandlerOptions;
 public class Instance
 {
 	private static final Logger logger = LoggerFactory.getLogger("com.circumgraph");
+
+	private static final ValidationMessageType IO_ERROR = ValidationMessageType.error()
+		.withCode("schema:io-error")
+		.withArgument("message")
+		.withMessage("{{message}}")
+		.build();
 
 	private final Storage storage;
 	private final Vertx vertx;
@@ -120,20 +128,41 @@ public class Instance
 				throw new UnrecoverableException("Config directory does not exist, no schema will be loaded");
 			}
 
+			var validationMessages = Lists.mutable.<ValidationMessage>empty();
+
 			var builder = Model.create()
 				.addSchema(StorageSchema.INSTANCE)
 				.addSchema(new GraphQLAPISchema());
 
 			for(var file : matching)
 			{
-				logger.info("Loading " + dir.relativize(file));
+				var relativeFile = dir.relativize(file);
+				logger.info("Loading " + relativeFile);
 
 				try(var reader = Files.newBufferedReader(file))
 				{
 					builder = builder.addSchema(
-						GraphQLSchema.create(reader)
+						GraphQLSchema.create(reader, relativeFile.toString())
 					);
 				}
+				catch(IOException e)
+				{
+					validationMessages.add(IO_ERROR.toMessage()
+						.withLocation(() -> relativeFile.toString())
+						.withArgument("message", e.getMessage())
+						.build()
+					);
+				}
+				catch(ModelValidationException e)
+				{
+					validationMessages.withAll(e.getIssues());
+				}
+			}
+
+			if(validationMessages.anySatisfy(ValidationMessage.errorPredicate()))
+			{
+				logIssues(validationMessages.select(ValidationMessage.errorPredicate()));
+				throw new UnrecoverableException("Errors during loading of model, can not start");
 			}
 
 			var model = builder.build();
@@ -174,17 +203,18 @@ public class Instance
 
 	private static void logIssues(ListIterable<? extends ValidationMessage> m)
 	{
+		logger.error("Found issues with model");
 		m.forEach(msg -> {
 			switch(msg.getLevel())
 			{
 				case ERROR:
-					logger.error(msg.format());
+					logger.error(" * " + msg.format());
 					break;
 				case WARNING:
-					logger.warn(msg.format());
+					logger.warn(" * " + msg.format());
 					break;
 				case INFO:
-					logger.info(msg.format());
+					logger.info(" * " + msg.format());
 					break;
 			}
 		});
