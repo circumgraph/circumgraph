@@ -53,18 +53,42 @@ import org.eclipse.collections.api.set.MutableSet;
 public class ModelBuilderImpl
 	implements Model.Builder
 {
-	private static final ValidationMessageType TYPE_UNKNOWN =
+	private static final ValidationMessageType FIELD_TYPE_UNKNOWN =
 		ValidationMessageType.error()
-			.withCode("model:type-unknown")
+			.withCode("model:field:type-unknown")
 			.withArgument("type")
-			.withMessage("The type {{type}} does not exist")
+			.withArgument("field")
+			.withArgument("fieldType")
+			.withMessage("Field `{{field}}` in `{{fieldType}}` is declared as `{{fieldType}}`, but type does not exist")
 			.build();
 
-	private static final ValidationMessageType TYPE_OUTPUT =
+	private static final ValidationMessageType FIELD_TYPE_OUTPUT =
 		ValidationMessageType.error()
-			.withCode("model:output-type-required")
+			.withCode("model:field:output-type-required")
 			.withArgument("type")
-			.withMessage("The type {{type}} is not an output type")
+			.withArgument("field")
+			.withArgument("fieldType")
+			.withMessage("Field `{{field}}` in `{{fieldType}}` is declared as `{{fieldType}}`, but type is not an output type")
+			.build();
+
+	private static final ValidationMessageType ARGUMENT_TYPE_UNKNOWN =
+		ValidationMessageType.error()
+			.withCode("model:argument:type-unknown")
+			.withArgument("type")
+			.withArgument("field")
+			.withArgument("argument")
+			.withArgument("argumentType")
+			.withMessage("Argument `{{argument}}` of field `{{field}}` in `{{fieldType}}` is declared as `{{argumentType}}`, but type does not exist")
+			.build();
+
+	private static final ValidationMessageType ARGUMENT_TYPE_INPUT =
+		ValidationMessageType.error()
+			.withCode("model:argument:input-type-required")
+			.withArgument("type")
+			.withArgument("field")
+			.withArgument("argument")
+			.withArgument("argumentType")
+			.withMessage("Argument `{{argument}}` of field `{{field}}` in `{{fieldType}}` is declared as `{{argumentType}}`, but type is not an input type")
 			.build();
 
 	private static final ValidationMessageType INVALID_DIRECTIVE =
@@ -616,44 +640,136 @@ public class ModelBuilderImpl
 
 			for(var field : structured.getDirectFields())
 			{
-				validateDirectives(field, validationCollector);
-
-				var fieldType = field.getType();
-				if(fieldType instanceof NonNullDef.Output n)
-				{
-					fieldType = n.getType();
-				}
-
-				if(fieldType instanceof ListDef.Output l)
-				{
-					fieldType = l.getItemType();
-
-					if(fieldType instanceof NonNullDef.Output n)
-					{
-						fieldType = n.getType();
-					}
-				}
-
-				var resolvedType = types.get(fieldType.getName());
-				if(resolvedType == null)
-				{
-					// This type does not exist, report error
-					validationCollector.accept(TYPE_UNKNOWN.toMessage()
-						.withLocation(field)
-						.withArgument("type", fieldType.getName())
-						.build()
-					);
-				}
-				else if(! (resolvedType instanceof OutputTypeDef))
-				{
-					// The type of fields must be output types
-					validationCollector.accept(TYPE_OUTPUT.toMessage()
-						.withLocation(field)
-						.withArgument("type", fieldType.getName())
-						.build()
-					);
-				}
+				validateField(types, structured, field, validationCollector);
 			}
+		}
+	}
+
+	/**
+	 * Validate a {@link FieldDef}.
+	 *
+	 * @param types
+	 * @param structured
+	 * @param field
+	 * @param validationCollector
+	 */
+	private void validateField(
+		TypeFinder types,
+		StructuredDef structured,
+		FieldDef field,
+		Consumer<ValidationMessage> validationCollector
+	)
+	{
+		validateDirectives(field, validationCollector);
+
+		// Validate the type
+		var fieldType = field.getType();
+		if(fieldType instanceof NonNullDef.Output n)
+		{
+			fieldType = n.getType();
+		}
+
+		if(fieldType instanceof ListDef.Output l)
+		{
+			fieldType = l.getItemType();
+
+			if(fieldType instanceof NonNullDef.Output n)
+			{
+				fieldType = n.getType();
+			}
+		}
+
+		var resolvedType = types.get(fieldType.getName());
+		if(resolvedType == null)
+		{
+			// This type does not exist, report error
+			validationCollector.accept(FIELD_TYPE_UNKNOWN.toMessage()
+				.withLocation(field)
+				.withArgument("type", structured.getName())
+				.withArgument("field", field.getName())
+				.withArgument("fieldType", fieldType.getName())
+				.build()
+			);
+		}
+		else if(! (resolvedType instanceof OutputTypeDef))
+		{
+			// The type of fields must be output types
+			validationCollector.accept(FIELD_TYPE_OUTPUT.toMessage()
+				.withLocation(field)
+				.withArgument("type", structured.getName())
+				.withArgument("field", field.getName())
+				.withArgument("fieldType", fieldType.getName())
+				.build()
+			);
+		}
+
+		// Check arguments
+		for(var arg : field.getArguments())
+		{
+			validateArgument(types, structured, field, arg, validationCollector);
+		}
+	}
+
+	/**
+	 * Validate a {@link ArgumentDef}.
+	 *
+	 * @param types
+	 * @param structured
+	 * @param field
+	 * @param argument
+	 * @param validationCollector
+	 */
+	private void validateArgument(
+		TypeFinder types,
+		StructuredDef structured,
+		FieldDef field,
+		ArgumentDef argument,
+		Consumer<ValidationMessage> validationCollector
+	)
+	{
+		validateDirectives(argument, validationCollector);
+
+		// Validate the type
+		var fieldType = argument.getType();
+		if(fieldType instanceof NonNullDef.Input n)
+		{
+			fieldType = n.getType();
+		}
+
+		if(fieldType instanceof ListDef.Input l)
+		{
+			fieldType = l.getItemType();
+
+			if(fieldType instanceof NonNullDef.Input n)
+			{
+				fieldType = n.getType();
+			}
+		}
+
+		var resolvedType = types.get(fieldType.getName());
+		if(resolvedType == null)
+		{
+			// This type does not exist, report error
+			validationCollector.accept(ARGUMENT_TYPE_UNKNOWN.toMessage()
+				.withLocation(argument)
+				.withArgument("type", structured.getName())
+				.withArgument("field", field.getName())
+				.withArgument("argument", argument.getName())
+				.withArgument("argumentType", fieldType.getName())
+				.build()
+			);
+		}
+		else if(! (resolvedType instanceof InputTypeDef))
+		{
+			// The type of arguments must be input types
+			validationCollector.accept(ARGUMENT_TYPE_INPUT.toMessage()
+				.withLocation(field)
+				.withArgument("type", structured.getName())
+				.withArgument("field", field.getName())
+				.withArgument("argument", argument.getName())
+				.withArgument("argumentType", fieldType.getName())
+				.build()
+			);
 		}
 	}
 

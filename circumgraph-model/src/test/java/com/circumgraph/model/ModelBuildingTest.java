@@ -184,8 +184,10 @@ public class ModelBuildingTest
 
 		var msg = m.getIssues().getFirst();
 		assertThat(msg.getLevel(), is(ValidationMessageLevel.ERROR));
-		assertThat(msg.getCode(), is("model:type-unknown"));
-		assertThat(msg.getArguments().get("type"), is("Unknown"));
+		assertThat(msg.getCode(), is("model:field:type-unknown"));
+		assertThat(msg.getArguments().get("type"), is("Test"));
+		assertThat(msg.getArguments().get("field"), is("f1"));
+		assertThat(msg.getArguments().get("fieldType"), is("Unknown"));
 	}
 
 	@Test
@@ -209,8 +211,10 @@ public class ModelBuildingTest
 
 		var msg = m.getIssues().getFirst();
 		assertThat(msg.getLevel(), is(ValidationMessageLevel.ERROR));
-		assertThat(msg.getCode(), is("model:type-unknown"));
-		assertThat(msg.getArguments().get("type"), is("Unknown"));
+		assertThat(msg.getCode(), is("model:field:type-unknown"));
+		assertThat(msg.getArguments().get("type"), is("Test"));
+		assertThat(msg.getArguments().get("field"), is("f1"));
+		assertThat(msg.getArguments().get("fieldType"), is("Unknown"));
 	}
 
 	@Test
@@ -234,8 +238,10 @@ public class ModelBuildingTest
 
 		var msg = m.getIssues().getFirst();
 		assertThat(msg.getLevel(), is(ValidationMessageLevel.ERROR));
-		assertThat(msg.getCode(), is("model:type-unknown"));
-		assertThat(msg.getArguments().get("type"), is("Unknown"));
+		assertThat(msg.getCode(), is("model:field:type-unknown"));
+		assertThat(msg.getArguments().get("type"), is("Test"));
+		assertThat(msg.getArguments().get("field"), is("f1"));
+		assertThat(msg.getArguments().get("fieldType"), is("Unknown"));
 	}
 
 	@Test
@@ -259,10 +265,43 @@ public class ModelBuildingTest
 
 		var msg = m.getIssues().getFirst();
 		assertThat(msg.getLevel(), is(ValidationMessageLevel.ERROR));
-		assertThat(msg.getCode(), is("model:type-unknown"));
-		assertThat(msg.getArguments().get("type"), is("Unknown"));
+		assertThat(msg.getCode(), is("model:field:type-unknown"));
+		assertThat(msg.getArguments().get("type"), is("Test"));
+		assertThat(msg.getArguments().get("field"), is("f1"));
+		assertThat(msg.getArguments().get("fieldType"), is("Unknown"));
 	}
 
+	@Test
+	public void testFieldArgumentInvalidType()
+	{
+		var schema = Schema.create()
+			.addType(ObjectDef.create("Test")
+				.addField(FieldDef.create("f1")
+					.withType(ScalarDef.STRING)
+					.addArgument(ArgumentDef.create("a1")
+						.withType("Unknown")
+						.build()
+					)
+					.build()
+				)
+				.build()
+			)
+			.build();
+
+		var m = assertThrows(ModelValidationException.class, () -> {
+			Model.create()
+				.addSchema(schema)
+				.build();
+		});
+
+		var msg = m.getIssues().getFirst();
+		assertThat(msg.getLevel(), is(ValidationMessageLevel.ERROR));
+		assertThat(msg.getCode(), is("model:argument:type-unknown"));
+		assertThat(msg.getArguments().get("type"), is("Test"));
+		assertThat(msg.getArguments().get("field"), is("f1"));
+		assertThat(msg.getArguments().get("argument"), is("a1"));
+		assertThat(msg.getArguments().get("argumentType"), is("Unknown"));
+	}
 
 	@Test
 	public void testMergeSimple()

@@ -5,6 +5,7 @@ import java.util.Optional;
 import com.circumgraph.model.ArgumentDef;
 import com.circumgraph.model.DirectiveUse;
 import com.circumgraph.model.InputTypeDef;
+import com.circumgraph.model.TypeRef;
 import com.circumgraph.model.validation.SourceLocation;
 
 import org.eclipse.collections.api.factory.Lists;
@@ -177,6 +178,12 @@ public class ArgumentDefImpl
 		}
 
 		@Override
+		public Builder withType(String type)
+		{
+			return withType(TypeRef.create(type));
+		}
+
+		@Override
 		public Builder addDirective(DirectiveUse directive)
 		{
 			return new BuilderImpl(
@@ -221,7 +228,7 @@ public class ArgumentDefImpl
 		public ArgumentDef build()
 		{
 			return new ArgumentDefImpl(
-				sourceLocation,
+				SourceLocation.automatic(sourceLocation),
 				name,
 				description,
 				type,

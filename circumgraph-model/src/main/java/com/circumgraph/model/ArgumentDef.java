@@ -70,6 +70,14 @@ public interface ArgumentDef
 		Builder withType(InputTypeDef type);
 
 		/**
+		 * Set the type of the argument.
+		 *
+		 * @param type
+		 * @return
+		 */
+		Builder withType(String type);
+
+		/**
 		 * Add a directive to the argument.
 		 *
 		 * @param directive
