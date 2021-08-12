@@ -55,9 +55,9 @@ import graphql.language.TypeName;
 import graphql.language.UnionTypeDefinition;
 import graphql.language.Value;
 import graphql.parser.InvalidSyntaxException;
+import graphql.parser.MultiSourceReader;
 import graphql.parser.Parser;
 import graphql.schema.CoercingParseLiteralException;
-import graphql.schema.idl.errors.SchemaProblem;
 
 /**
  * Parsing of a GraphQL schema.
@@ -96,11 +96,32 @@ public class GraphQLSchema
 	 * Create a schema from the given string.
 	 *
 	 * @param schema
+	 *   schema SDL
 	 * @return
+	 *   parsed schema
+	 * @throws ModelValidationException
+	 *   if schema is not valid
 	 */
 	public static GraphQLSchema create(String schema)
 	{
 		return create(new StringReader(schema));
+	}
+
+	/**
+	 * Create a schema from the given string.
+	 *
+	 * @param schema
+	 *   schema SDL
+	 * @param sourceName
+	 *   name of source, commonly a filename
+	 * @return
+	 *   parsed schema
+	 * @throws ModelValidationException
+	 *   if schema is not valid
+	 */
+	public static GraphQLSchema create(String schema, String sourceName)
+	{
+		return create(new StringReader(schema), sourceName);
 	}
 
 	/**
@@ -115,13 +136,35 @@ public class GraphQLSchema
 	 */
 	public static GraphQLSchema create(Reader reader)
 	{
+		return create(reader, null);
+	}
+
+	/**
+	 * Create a schema from the given {@link Reader}.
+	 *
+	 * @param reader
+	 *   reader to parse from
+	 * @param sourceName
+	 *   name of source, commonly a filename
+	 * @return
+	 *   parsed schema
+	 * @throws ModelValidationException
+	 *   if schema is not valid
+	 */
+	@SuppressWarnings("rawtypes")
+	public static GraphQLSchema create(Reader reader, String sourceName)
+	{
 		MutableList<TypeDef> types = Lists.mutable.empty();
 
 		Document doc;
 		try
 		{
 			Parser parser = new Parser();
-			doc = parser.parseDocument(reader);
+			doc = parser.parseDocument(
+				MultiSourceReader.newMultiSourceReader()
+                	.reader(reader, sourceName)
+                	.build()
+			);
 		}
 		catch(InvalidSyntaxException e)
 		{
@@ -132,18 +175,6 @@ public class GraphQLSchema
 					.withArgument("message", e.getMessage())
 					.build()
 				)
-			);
-		}
-		catch(SchemaProblem e)
-		{
-			throw new ModelValidationException(
-				"Unable to parse schema:",
-				Lists.immutable.ofAll(e.getErrors())
-					.collect(err -> SYNTAX_ERROR.toMessage()
-						.withLocation(toSourceLocation(err.getLocations()))
-						.withArgument("message", err.getMessage())
-						.build()
-					)
 			);
 		}
 
@@ -284,6 +315,7 @@ public class GraphQLSchema
 	 * @return
 	 *   converted type
 	 */
+	@SuppressWarnings("rawtypes")
 	private static Iterable<String> createImplements(
 		Iterable<Type> types
 	)
@@ -495,10 +527,7 @@ public class GraphQLSchema
 	{
 		if(loc == null) return SourceLocation.unknown();
 
-		return SourceLocation.create(
-			(loc.getSourceName() == null ? "<source>" : loc.getSourceName())
-			+ ":" + loc.getLine() + ":" + loc.getColumn()
-		);
+		return SourceLocation.line(loc.getSourceName(), loc.getLine(), loc.getColumn());
 	}
 
 	/**

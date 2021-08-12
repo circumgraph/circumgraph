@@ -70,4 +70,36 @@ public interface SourceLocation
 	{
 		return BasicSourceLocation.UNKNOWN;
 	}
+
+	/**
+	 * Get a location representing a line in a given source.
+	 *
+	 * @param sourceName
+	 * @param line
+	 * @return
+	 */
+	static SourceLocation line(String sourceName, int line)
+	{
+		return () -> (sourceName == null ? "<source>" : sourceName)
+			+ "@" + line;
+	}
+
+	/**
+	 * Get a location representing a line and column in a given source.
+	 *
+	 * @param sourceName
+	 * @param line
+	 * @param column
+	 * @return
+	 */
+	static SourceLocation line(String sourceName, int line, int column)
+	{
+		if(column < 0)
+		{
+			return line(sourceName, line);
+		}
+
+		return () -> (sourceName == null ? "<source>" : sourceName)
+			+ "@" + line + ":" + column;
+	}
 }
