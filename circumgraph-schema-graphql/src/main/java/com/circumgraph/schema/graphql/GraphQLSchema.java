@@ -383,6 +383,10 @@ public class GraphQLSchema
 					.withDescription(toDescription(def))
 					.withType(dataType)
 					.addDirectives(createDirectives(arg))
+					.withDefaultValue(arg.getDefaultValue() == null
+						? null
+						: toJavaValue(arg.getDefaultValue())
+					)
 					.build();
 			});
 	}

@@ -38,6 +38,13 @@ public interface ArgumentDef
 	 */
 	String getTypeName();
 
+	/**
+	 * Get the default value.
+	 *
+	 * @return
+	 */
+	Optional<Object> getDefaultValue();
+
 	public static Builder create(String name)
 	{
 		return ArgumentDefImpl.create(name);
@@ -69,6 +76,15 @@ public interface ArgumentDef
 		 * @return
 		 */
 		Builder addDirective(DirectiveUse directive);
+
+		/**
+		 * Set the default of the argument.
+		 *
+		 * @param value
+		 *   default value
+		 * @return
+		 */
+		Builder withDefaultValue(Object value);
 
 		/**
 		 * Build the instance.

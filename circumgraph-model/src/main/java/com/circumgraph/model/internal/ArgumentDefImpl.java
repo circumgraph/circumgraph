@@ -21,10 +21,9 @@ public class ArgumentDefImpl
 
 	private final String name;
 	private final String description;
-
 	private final InputTypeDef type;
-
 	private final ImmutableList<DirectiveUse> directives;
+	private final Object defaultValue;
 
 	private ModelDefs defs;
 
@@ -33,7 +32,8 @@ public class ArgumentDefImpl
 		String name,
 		String description,
 		InputTypeDef type,
-		ImmutableList<DirectiveUse> directives
+		ImmutableList<DirectiveUse> directives,
+		Object defaultValue
 	)
 	{
 		this.sourceLocation = sourceLocation;
@@ -41,6 +41,7 @@ public class ArgumentDefImpl
 		this.description = description;
 		this.type = type;
 		this.directives = directives;
+		this.defaultValue = defaultValue;
 	}
 
 	@Override
@@ -80,6 +81,12 @@ public class ArgumentDefImpl
 	}
 
 	@Override
+	public Optional<Object> getDefaultValue()
+	{
+		return Optional.ofNullable(defaultValue);
+	}
+
+	@Override
 	public void prepare(ModelDefs defs)
 	{
 		this.defs = defs;
@@ -98,7 +105,8 @@ public class ArgumentDefImpl
 			name,
 			null,
 			null,
-			Lists.immutable.empty()
+			Lists.immutable.empty(),
+			null
 		);
 	}
 
@@ -110,13 +118,15 @@ public class ArgumentDefImpl
 		private final String description;
 		private final InputTypeDef type;
 		private final ImmutableList<DirectiveUse> directives;
+		private final Object defaultValue;
 
 		public BuilderImpl(
 			SourceLocation sourceLocation,
 			String name,
 			String description,
 			InputTypeDef type,
-			ImmutableList<DirectiveUse> directives
+			ImmutableList<DirectiveUse> directives,
+			Object defaultValue
 		)
 		{
 			this.sourceLocation = sourceLocation;
@@ -124,6 +134,7 @@ public class ArgumentDefImpl
 			this.description = description;
 			this.type = type;
 			this.directives = directives;
+			this.defaultValue = defaultValue;
 		}
 
 		@Override
@@ -134,7 +145,8 @@ public class ArgumentDefImpl
 				name,
 				description,
 				type,
-				directives
+				directives,
+				defaultValue
 			);
 		}
 
@@ -146,7 +158,8 @@ public class ArgumentDefImpl
 				name,
 				description,
 				type,
-				directives
+				directives,
+				defaultValue
 			);
 		}
 
@@ -158,7 +171,8 @@ public class ArgumentDefImpl
 				name,
 				description,
 				type,
-				directives
+				directives,
+				defaultValue
 			);
 		}
 
@@ -170,7 +184,8 @@ public class ArgumentDefImpl
 				name,
 				description,
 				type,
-				directives.newWith(directive)
+				directives.newWith(directive),
+				defaultValue
 			);
 		}
 
@@ -184,7 +199,21 @@ public class ArgumentDefImpl
 				name,
 				description,
 				type,
-				this.directives.newWithAll(directives)
+				this.directives.newWithAll(directives),
+				defaultValue
+			);
+		}
+
+		@Override
+		public Builder withDefaultValue(Object value)
+		{
+			return new BuilderImpl(
+				sourceLocation,
+				name,
+				description,
+				type,
+				directives,
+				value
 			);
 		}
 
@@ -196,7 +225,8 @@ public class ArgumentDefImpl
 				name,
 				description,
 				type,
-				directives
+				directives,
+				defaultValue
 			);
 		}
 	}
