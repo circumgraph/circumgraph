@@ -14,6 +14,7 @@ public interface StructuredMutation
 	/**
 	 * Get the type of structured data being mutated.
 	 */
+	@Override
 	StructuredDef getDef();
 
 	/**

@@ -24,6 +24,7 @@ public interface ScalarMapper<V>
 	 *
 	 * @return
 	 */
+	@Override
 	GraphQLScalarType getGraphQLType();
 
 	/**

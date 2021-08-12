@@ -78,14 +78,6 @@ public interface ArgumentDef
 		Builder withType(String type);
 
 		/**
-		 * Add a directive to the argument.
-		 *
-		 * @param directive
-		 * @return
-		 */
-		Builder addDirective(DirectiveUse directive);
-
-		/**
 		 * Set the default of the argument.
 		 *
 		 * @param value

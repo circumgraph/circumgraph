@@ -146,12 +146,5 @@ public interface StructuredDef
 		 * @return
 		 */
 		B addFields(Iterable<? extends FieldDef> fields);
-
-		/**
-		 * Build the instance.
-		 *
-		 * @return
-		 */
-		StructuredDef build();
 	}
 }

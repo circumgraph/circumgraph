@@ -12,6 +12,7 @@ public interface StoredObjectRefMutation
 	/**
 	 * Get the type of object being referenced.
 	 */
+	@Override
 	StructuredDef getDef();
 
 	/**

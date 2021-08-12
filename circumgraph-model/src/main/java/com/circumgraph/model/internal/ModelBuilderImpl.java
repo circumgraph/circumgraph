@@ -253,6 +253,7 @@ public class ModelBuilderImpl
 				return types;
 			}
 
+			@Override
 			public TypeDef maybeResolve(String name)
 			{
 				return types.get(name);
