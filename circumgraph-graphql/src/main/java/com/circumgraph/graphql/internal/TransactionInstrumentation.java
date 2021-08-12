@@ -80,7 +80,7 @@ public class TransactionInstrumentation
 		});
 	}
 
-	private class State
+	private static class State
 		implements InstrumentationState
 	{
 		private volatile Transaction tx;
