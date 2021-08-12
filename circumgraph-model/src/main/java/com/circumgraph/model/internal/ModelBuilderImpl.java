@@ -17,6 +17,7 @@ import com.circumgraph.model.ListDef;
 import com.circumgraph.model.Model;
 import com.circumgraph.model.Model.Builder;
 import com.circumgraph.model.ModelValidationException;
+import com.circumgraph.model.NonNullDef;
 import com.circumgraph.model.ObjectDef;
 import com.circumgraph.model.OutputTypeDef;
 import com.circumgraph.model.ScalarDef;
@@ -52,6 +53,20 @@ import org.eclipse.collections.api.set.MutableSet;
 public class ModelBuilderImpl
 	implements Model.Builder
 {
+	private static final ValidationMessageType TYPE_UNKNOWN =
+		ValidationMessageType.error()
+			.withCode("model:type-unknown")
+			.withArgument("type")
+			.withMessage("The type {{type}} does not exist")
+			.build();
+
+	private static final ValidationMessageType TYPE_OUTPUT =
+		ValidationMessageType.error()
+			.withCode("model:output-type-required")
+			.withArgument("type")
+			.withMessage("The type {{type}} is not an output type")
+			.build();
+
 	private static final ValidationMessageType INVALID_DIRECTIVE =
 		ValidationMessageType.error()
 			.withCode("model:invalid-directive")
@@ -602,6 +617,42 @@ public class ModelBuilderImpl
 			for(var field : structured.getDirectFields())
 			{
 				validateDirectives(field, validationCollector);
+
+				var fieldType = field.getType();
+				if(fieldType instanceof NonNullDef.Output n)
+				{
+					fieldType = n.getType();
+				}
+
+				if(fieldType instanceof ListDef.Output l)
+				{
+					fieldType = l.getItemType();
+
+					if(fieldType instanceof NonNullDef.Output n)
+					{
+						fieldType = n.getType();
+					}
+				}
+
+				var resolvedType = types.get(fieldType.getName());
+				if(resolvedType == null)
+				{
+					// This type does not exist, report error
+					validationCollector.accept(TYPE_UNKNOWN.toMessage()
+						.withLocation(field)
+						.withArgument("type", fieldType.getName())
+						.build()
+					);
+				}
+				else if(! (resolvedType instanceof OutputTypeDef))
+				{
+					// The type of fields must be output types
+					validationCollector.accept(TYPE_OUTPUT.toMessage()
+						.withLocation(field)
+						.withArgument("type", fieldType.getName())
+						.build()
+					);
+				}
 			}
 		}
 	}

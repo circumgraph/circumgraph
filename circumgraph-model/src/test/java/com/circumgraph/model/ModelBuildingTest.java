@@ -11,6 +11,7 @@ import java.util.function.Consumer;
 
 import com.circumgraph.model.processing.DirectiveUseProcessor;
 import com.circumgraph.model.validation.ValidationMessage;
+import com.circumgraph.model.validation.ValidationMessageLevel;
 
 import org.junit.jupiter.api.Test;
 
@@ -161,6 +162,107 @@ public class ModelBuildingTest
 		assertThat(f1.getName(), is("t1"));
 		assertThat(f1.getType(), is(ScalarDef.INT));
 	}
+
+	@Test
+	public void testFieldInvalidType()
+	{
+		var schema = Schema.create()
+			.addType(ObjectDef.create("Test")
+				.addField(FieldDef.create("f1")
+					.withType("Unknown")
+					.build()
+				)
+				.build()
+			)
+			.build();
+
+		var m = assertThrows(ModelValidationException.class, () -> {
+			Model.create()
+				.addSchema(schema)
+				.build();
+		});
+
+		var msg = m.getIssues().getFirst();
+		assertThat(msg.getLevel(), is(ValidationMessageLevel.ERROR));
+		assertThat(msg.getCode(), is("model:type-unknown"));
+		assertThat(msg.getArguments().get("type"), is("Unknown"));
+	}
+
+	@Test
+	public void testFieldInvalidTypeInNonNull()
+	{
+		var schema = Schema.create()
+			.addType(ObjectDef.create("Test")
+				.addField(FieldDef.create("f1")
+					.withType(NonNullDef.output("Unknown"))
+					.build()
+				)
+				.build()
+			)
+			.build();
+
+		var m = assertThrows(ModelValidationException.class, () -> {
+			Model.create()
+				.addSchema(schema)
+				.build();
+		});
+
+		var msg = m.getIssues().getFirst();
+		assertThat(msg.getLevel(), is(ValidationMessageLevel.ERROR));
+		assertThat(msg.getCode(), is("model:type-unknown"));
+		assertThat(msg.getArguments().get("type"), is("Unknown"));
+	}
+
+	@Test
+	public void testFieldInvalidTypeInList()
+	{
+		var schema = Schema.create()
+			.addType(ObjectDef.create("Test")
+				.addField(FieldDef.create("f1")
+					.withType(ListDef.output("Unknown"))
+					.build()
+				)
+				.build()
+			)
+			.build();
+
+		var m = assertThrows(ModelValidationException.class, () -> {
+			Model.create()
+				.addSchema(schema)
+				.build();
+		});
+
+		var msg = m.getIssues().getFirst();
+		assertThat(msg.getLevel(), is(ValidationMessageLevel.ERROR));
+		assertThat(msg.getCode(), is("model:type-unknown"));
+		assertThat(msg.getArguments().get("type"), is("Unknown"));
+	}
+
+	@Test
+	public void testFieldInvalidTypeInListNonNull()
+	{
+		var schema = Schema.create()
+			.addType(ObjectDef.create("Test")
+				.addField(FieldDef.create("f1")
+					.withType(ListDef.output(NonNullDef.output("Unknown")))
+					.build()
+				)
+				.build()
+			)
+			.build();
+
+		var m = assertThrows(ModelValidationException.class, () -> {
+			Model.create()
+				.addSchema(schema)
+				.build();
+		});
+
+		var msg = m.getIssues().getFirst();
+		assertThat(msg.getLevel(), is(ValidationMessageLevel.ERROR));
+		assertThat(msg.getCode(), is("model:type-unknown"));
+		assertThat(msg.getArguments().get("type"), is("Unknown"));
+	}
+
 
 	@Test
 	public void testMergeSimple()
