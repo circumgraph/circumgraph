@@ -28,7 +28,7 @@ public interface ValueProvider<V extends Value>
 	/**
 	 * Create a provider for a static value.
 	 *
-	 * @param def
+	 * @param <V>
 	 * @param value
 	 * @return
 	 */

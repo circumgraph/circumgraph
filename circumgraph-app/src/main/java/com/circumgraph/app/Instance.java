@@ -94,7 +94,7 @@ public class Instance
 	 * Load the model from the given directory. This will recursively look for
 	 * `.graphql` and `.gql` files in the directory and load them.
 	 *
-	 * @param dir
+	 * @param config
 	 * @return
 	 */
 	private static Model loadModel(ConfigConfig config)

@@ -79,7 +79,7 @@ public interface ValidationMessage
 	/**
 	 * Create a predicate that matches items with the given level or higher.
 	 *
-	 * @param error
+	 * @param minLevel
 	 * @return
 	 */
 	static Predicate<? super ValidationMessage> predicate(

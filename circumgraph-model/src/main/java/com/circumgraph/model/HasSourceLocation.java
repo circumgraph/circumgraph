@@ -22,7 +22,7 @@ public interface HasSourceLocation
 		 * Set a specific source location of the object. Used for example when
 		 * parsing external schemas.
 		 *
-		 * @param location
+		 * @param sourceLocation
 		 *   the location to use
 		 * @return
 		 *   new instance of build

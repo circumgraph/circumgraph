@@ -60,7 +60,7 @@ public interface Model
 		/**
 		 * Add a schema.
 		 *
-		 * @param builder
+		 * @param schema
 		 * @return
 		 */
 		Builder addSchema(Schema schema);

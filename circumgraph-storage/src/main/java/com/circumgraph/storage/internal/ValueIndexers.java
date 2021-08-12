@@ -59,7 +59,7 @@ public class ValueIndexers
 	/**
 	 * Get indexer used for the given name.
 	 *
-	 * @param def
+	 * @param name
 	 * @return
 	 */
 	public Optional<ValueIndexer> getIndexer(String name)

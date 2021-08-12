@@ -95,7 +95,6 @@ public interface ValidationMessageType
 		 * Set a the human-readable message.
 		 *
 		 * @param message
-		 * @param args
 		 * @return
 		 */
 		Builder withMessage(String message);

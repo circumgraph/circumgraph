@@ -168,7 +168,7 @@ public class StorageImpl
 	 * Take a {@link StructuredDef} and generate a {@link SearchIndexDef} that
 	 * is passed to Silo.
 	 *
-	 * @param indexers
+	 * @param model
 	 * @param def
 	 * @return
 	 */

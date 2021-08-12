@@ -62,7 +62,8 @@ public interface Collection
 	/**
 	 * Update an object.
 	 *
-	 * @param data
+	 * @param id
+	 * @param mutation
 	 * @return
 	 *   the object with mutations applied
 	 */

@@ -21,7 +21,7 @@ public interface ListSetMutation<M extends Mutation>
 	/**
 	 * Create a mutation that will set the given values.
 	 *
-	 * @param <V>
+	 * @param <M>
 	 * @param values
 	 * @return
 	 */
@@ -33,7 +33,7 @@ public interface ListSetMutation<M extends Mutation>
 	/**
 	 * Create a mutation that will set the given values.
 	 *
-	 * @param <V>
+	 * @param <M>
 	 * @param values
 	 * @return
 	 */
