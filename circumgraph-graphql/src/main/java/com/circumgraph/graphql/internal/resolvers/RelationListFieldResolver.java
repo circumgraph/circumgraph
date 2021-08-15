@@ -13,6 +13,7 @@ import com.circumgraph.storage.search.QueryPath;
 
 import org.eclipse.collections.api.factory.Lists;
 
+import graphql.Scalars;
 import graphql.schema.DataFetchingEnvironment;
 import graphql.schema.GraphQLArgument;
 import graphql.schema.GraphQLList;
@@ -49,7 +50,13 @@ public class RelationListFieldResolver
 	@Override
 	public Iterable<? extends GraphQLArgument> getArguments()
 	{
-		return Lists.immutable.empty();
+		return Lists.immutable.of(
+			GraphQLArgument.newArgument()
+				.name("first")
+				.type(Scalars.GraphQLInt)
+				.description("Limit the number of results")
+				.build()
+		);
 	}
 
 	@Override
@@ -67,7 +74,10 @@ public class RelationListFieldResolver
 		StorageContext ctx = env.getContext();
 
 		var query = Query.create()
-			.withPage(Page.infinite())
+			.withPage(env.containsArgument("first")
+				? Page.first(env.getArgument("first"))
+				: Page.infinite()
+			)
 			.addClause(path.toQuery(EqualsMatcher.create(source.getId())));
 
 		if(sort.isPresent())
