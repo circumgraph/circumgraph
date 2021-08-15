@@ -679,6 +679,139 @@ public class ModelBuildingTest
 		);
 	}
 
+	@Test
+	public void testInputObjectScalarField()
+	{
+		var schema = Schema.create()
+			.addType(InputObjectDef.create("Test")
+				.addField(InputFieldDef.create("t1")
+					.withType("Int")
+					.build()
+				)
+				.build()
+			)
+			.build();
+
+		var model = Model.create()
+			.addSchema(schema)
+			.build();
+
+		var t = model.get("Test", InputObjectDef.class).get();
+		assertThat(t.getName(), is("Test"));
+
+		var f1 = t.getField("t1").get();
+		assertThat(f1.getName(), is("t1"));
+		assertThat(f1.getType(), is(ScalarDef.INT));
+	}
+
+	@Test
+	public void testInputFieldInvalidType()
+	{
+		var schema = Schema.create()
+			.addType(InputObjectDef.create("Test")
+				.addField(InputFieldDef.create("f1")
+					.withType("Unknown")
+					.build()
+				)
+				.build()
+			)
+			.build();
+
+		var m = assertThrows(ModelValidationException.class, () -> {
+			Model.create()
+				.addSchema(schema)
+				.build();
+		});
+
+		var msg = m.getIssues().getFirst();
+		assertThat(msg.getLevel(), is(ValidationMessageLevel.ERROR));
+		assertThat(msg.getCode(), is("model:field:type-unknown"));
+		assertThat(msg.getArguments().get("type"), is("Test"));
+		assertThat(msg.getArguments().get("field"), is("f1"));
+		assertThat(msg.getArguments().get("fieldType"), is("Unknown"));
+	}
+
+	@Test
+	public void testInputFieldInvalidTypeInNonNull()
+	{
+		var schema = Schema.create()
+			.addType(InputObjectDef.create("Test")
+				.addField(InputFieldDef.create("f1")
+					.withType(NonNullDef.input("Unknown"))
+					.build()
+				)
+				.build()
+			)
+			.build();
+
+		var m = assertThrows(ModelValidationException.class, () -> {
+			Model.create()
+				.addSchema(schema)
+				.build();
+		});
+
+		var msg = m.getIssues().getFirst();
+		assertThat(msg.getLevel(), is(ValidationMessageLevel.ERROR));
+		assertThat(msg.getCode(), is("model:field:type-unknown"));
+		assertThat(msg.getArguments().get("type"), is("Test"));
+		assertThat(msg.getArguments().get("field"), is("f1"));
+		assertThat(msg.getArguments().get("fieldType"), is("Unknown"));
+	}
+
+	@Test
+	public void testInputFieldInvalidTypeInList()
+	{
+		var schema = Schema.create()
+			.addType(InputObjectDef.create("Test")
+				.addField(InputFieldDef.create("f1")
+					.withType(ListDef.input("Unknown"))
+					.build()
+				)
+				.build()
+			)
+			.build();
+
+		var m = assertThrows(ModelValidationException.class, () -> {
+			Model.create()
+				.addSchema(schema)
+				.build();
+		});
+
+		var msg = m.getIssues().getFirst();
+		assertThat(msg.getLevel(), is(ValidationMessageLevel.ERROR));
+		assertThat(msg.getCode(), is("model:field:type-unknown"));
+		assertThat(msg.getArguments().get("type"), is("Test"));
+		assertThat(msg.getArguments().get("field"), is("f1"));
+		assertThat(msg.getArguments().get("fieldType"), is("Unknown"));
+	}
+
+	@Test
+	public void testInputFieldInvalidTypeInListNonNull()
+	{
+		var schema = Schema.create()
+			.addType(InputObjectDef.create("Test")
+				.addField(InputFieldDef.create("f1")
+					.withType(ListDef.input(NonNullDef.input("Unknown")))
+					.build()
+				)
+				.build()
+			)
+			.build();
+
+		var m = assertThrows(ModelValidationException.class, () -> {
+			Model.create()
+				.addSchema(schema)
+				.build();
+		});
+
+		var msg = m.getIssues().getFirst();
+		assertThat(msg.getLevel(), is(ValidationMessageLevel.ERROR));
+		assertThat(msg.getCode(), is("model:field:type-unknown"));
+		assertThat(msg.getArguments().get("type"), is("Test"));
+		assertThat(msg.getArguments().get("field"), is("f1"));
+		assertThat(msg.getArguments().get("fieldType"), is("Unknown"));
+	}
+
 	static class TestDirectiveOnFieldProcessor
 		implements DirectiveUseProcessor<FieldDef>
 	{

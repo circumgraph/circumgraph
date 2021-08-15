@@ -11,6 +11,8 @@ import com.circumgraph.model.EnumValueDef;
 import com.circumgraph.model.FieldDef;
 import com.circumgraph.model.HasDirectives;
 import com.circumgraph.model.HasSourceLocation;
+import com.circumgraph.model.InputFieldDef;
+import com.circumgraph.model.InputObjectDef;
 import com.circumgraph.model.InputTypeDef;
 import com.circumgraph.model.InterfaceDef;
 import com.circumgraph.model.ListDef;
@@ -69,6 +71,15 @@ public class ModelBuilderImpl
 			.withArgument("field")
 			.withArgument("fieldType")
 			.withMessage("Field `{{field}}` in `{{fieldType}}` is declared as `{{fieldType}}`, but type is not an output type")
+			.build();
+
+	private static final ValidationMessageType FIELD_TYPE_INPUT =
+		ValidationMessageType.error()
+			.withCode("model:field:input-type-required")
+			.withArgument("type")
+			.withArgument("field")
+			.withArgument("fieldType")
+			.withMessage("Field `{{field}}` in `{{fieldType}}` is declared as `{{fieldType}}`, but type is not an input type")
 			.build();
 
 	private static final ValidationMessageType ARGUMENT_TYPE_UNKNOWN =
@@ -294,32 +305,39 @@ public class ModelBuilderImpl
 		TypeDef extension
 	)
 	{
-		if(current instanceof ObjectDef)
+		if(current instanceof ObjectDef d1)
 		{
-			if(extension instanceof ObjectDef)
+			if(extension instanceof ObjectDef d2)
 			{
-				return mergeObject(validationCollector, (ObjectDef) current, (ObjectDef) extension);
+				return mergeObject(validationCollector, d1, d2);
 			}
 		}
-		else if(current instanceof InterfaceDef)
+		else if(current instanceof InterfaceDef d1)
 		{
-			if(extension instanceof InterfaceDef)
+			if(extension instanceof InterfaceDef d2)
 			{
-				return mergeInterface(validationCollector, (InterfaceDef) current, (InterfaceDef) extension);
+				return mergeInterface(validationCollector, d1, d2);
 			}
 		}
-		else if(current instanceof UnionDef)
+		else if(current instanceof UnionDef d1)
 		{
-			if(extension instanceof UnionDef)
+			if(extension instanceof UnionDef d2)
 			{
-				return mergeUnion(validationCollector, (UnionDef) current, (UnionDef) extension);
+				return mergeUnion(validationCollector, d1, d2);
 			}
 		}
-		else if(current instanceof EnumDef)
+		else if(current instanceof EnumDef d1)
 		{
-			if(extension instanceof EnumDef)
+			if(extension instanceof EnumDef d2)
 			{
-				return mergeEnum(validationCollector, (EnumDef) current, (EnumDef) extension);
+				return mergeEnum(validationCollector, d1, d2);
+			}
+		}
+		else if(current instanceof InputObjectDef d1)
+		{
+			if(extension instanceof InputObjectDef d2)
+			{
+				return mergeInputObject(validationCollector, d1, d2);
 			}
 		}
 
@@ -507,6 +525,103 @@ public class ModelBuilderImpl
 			.build();
 	}
 
+	/**
+	 * Merge two {@link InputObjectDef} instances.
+	 *
+	 * @param d1
+	 * @param d2
+	 * @return
+	 */
+	private InputObjectDef mergeInputObject(
+		Consumer<ValidationMessage> validationCollector,
+		InputObjectDef d1,
+		InputObjectDef d2
+	)
+	{
+		return InputObjectDef.create(d1.getName())
+			.withSourceLocation(d1.getSourceLocation())
+			.withDescription(pickFirstNonBlank(d1.getDescription(), d2.getDescription()))
+			.addDirectives(mergeDirectives(validationCollector, d1, d2))
+			.addFields(mergeInputFields(validationCollector, d1, d1.getFields(), d2.getFields()))
+			.build();
+	}
+
+	/**
+	 * Merge two lists of {@link InputFieldDef} together.
+	 *
+	 * @param validationCollector
+	 * @param type
+	 * @param f1
+	 * @param f2
+	 * @return
+	 */
+	private ListIterable<InputFieldDef> mergeInputFields(
+		Consumer<ValidationMessage> validationCollector,
+		TypeDef type,
+		RichIterable<InputFieldDef> f1,
+		RichIterable<InputFieldDef> f2
+	)
+	{
+		MutableMap<String, InputFieldDef> fields = Maps.mutable.empty();
+		Procedure<InputFieldDef> p = field -> {
+			if(fields.containsKey(field.getName()))
+			{
+				fields.put(field.getName(), mergeInputField(
+					validationCollector,
+					type,
+					fields.get(field.getName()),
+					field
+				));
+			}
+			else
+			{
+				fields.put(field.getName(), field);
+			}
+		};
+
+		f1.forEach(p);
+		f2.forEach(p);
+
+		return fields.toList();
+	}
+
+	/**
+	 * Merge two instances of {@link InputFieldDef} together.
+	 *
+	 * @param validationCollector
+	 * @param type
+	 * @param f1
+	 * @param f2
+	 * @return
+	 */
+	private InputFieldDef mergeInputField(
+		Consumer<ValidationMessage> validationCollector,
+		TypeDef type,
+		InputFieldDef f1,
+		InputFieldDef f2
+	)
+	{
+		if(! Objects.equals(f1.getTypeName(), f2.getTypeName()))
+		{
+			validationCollector.accept(INCOMPATIBLE_FIELD_TYPE.toMessage()
+				.withLocation(f2.getSourceLocation())
+				.withArgument("type", type.getName())
+				.withArgument("field", f2.getName())
+				.withArgument("originalLocation", toLocation(f1))
+				.build()
+			);
+
+			return f1;
+		}
+
+		return InputFieldDef.create(f1.getName())
+			.withSourceLocation(f1.getSourceLocation())
+			.withDescription(pickFirstNonBlank(f1.getDescription(), f2.getDescription()))
+			.withType(f1.getType())
+			.addDirectives(mergeDirectives(validationCollector, f1, f2))
+			.build();
+	}
+
 	private ListIterable<DirectiveUse> mergeDirectives(
 		Consumer<ValidationMessage> validationCollector,
 		HasDirectives d1,
@@ -644,6 +759,14 @@ public class ModelBuilderImpl
 				validateField(types, structured, field, validationCollector);
 			}
 		}
+
+		if(type instanceof InputObjectDef i)
+		{
+			for(var field : i.getFields())
+			{
+				validateInputField(types, i, field, validationCollector);
+			}
+		}
 	}
 
 	/**
@@ -769,6 +892,65 @@ public class ModelBuilderImpl
 				.withArgument("field", field.getName())
 				.withArgument("argument", argument.getName())
 				.withArgument("argumentType", fieldType.getName())
+				.build()
+			);
+		}
+	}
+
+	/**
+	 * Validate a {@link InputFieldDef}.
+	 *
+	 * @param types
+	 * @param structured
+	 * @param field
+	 * @param validationCollector
+	 */
+	private void validateInputField(
+		TypeFinder types,
+		InputObjectDef inputObject,
+		InputFieldDef field,
+		Consumer<ValidationMessage> validationCollector
+	)
+	{
+		validateDirectives(field, validationCollector);
+
+		// Validate the type
+		var fieldType = field.getType();
+		if(fieldType instanceof NonNullDef.Input n)
+		{
+			fieldType = n.getType();
+		}
+
+		if(fieldType instanceof ListDef.Input l)
+		{
+			fieldType = l.getItemType();
+
+			if(fieldType instanceof NonNullDef.Input n)
+			{
+				fieldType = n.getType();
+			}
+		}
+
+		var resolvedType = types.get(fieldType.getName());
+		if(resolvedType == null)
+		{
+			// This type does not exist, report error
+			validationCollector.accept(FIELD_TYPE_UNKNOWN.toMessage()
+				.withLocation(field)
+				.withArgument("type", inputObject.getName())
+				.withArgument("field", field.getName())
+				.withArgument("fieldType", fieldType.getName())
+				.build()
+			);
+		}
+		else if(! (resolvedType instanceof InputTypeDef))
+		{
+			// The type of fields must be output types
+			validationCollector.accept(FIELD_TYPE_INPUT.toMessage()
+				.withLocation(field)
+				.withArgument("type", inputObject.getName())
+				.withArgument("field", field.getName())
+				.withArgument("fieldType", fieldType.getName())
 				.build()
 			);
 		}
