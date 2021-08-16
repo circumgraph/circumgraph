@@ -29,14 +29,13 @@ import com.circumgraph.model.TypeDef;
 import com.circumgraph.model.TypeRef;
 import com.circumgraph.model.UnionDef;
 import com.circumgraph.model.processing.DirectiveUseProcessor;
+import com.circumgraph.model.processing.ProcessingEncounter;
 import com.circumgraph.model.processing.TypeDefProcessor;
 import com.circumgraph.model.validation.SourceLocation;
 import com.circumgraph.model.validation.ValidationMessage;
-import com.circumgraph.model.validation.ValidationMessageLevel;
 import com.circumgraph.model.validation.ValidationMessageType;
 
 import org.eclipse.collections.api.RichIterable;
-import org.eclipse.collections.api.block.predicate.Predicate;
 import org.eclipse.collections.api.block.procedure.Procedure;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.factory.Maps;
@@ -194,98 +193,77 @@ public class ModelBuilderImpl
 	}
 
 	@Override
-	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public Model build()
 	{
 		var validationMessages = Lists.mutable.<ValidationMessage>empty();
 		Consumer<ValidationMessage> validation = validationMessages::add;
 
-		// Go through and merge all types
-		MutableMap<String, TypeDef> typeMap = Maps.mutable.empty();
+		var encounter = new ProcessingEncounterImpl(
+			validation
+		);
 
-		for(TypeDef def : types)
+		// Let the encounter receive the initial types
+		for(var def : types)
 		{
-			TypeDef current = typeMap.get(def.getName());
-			if(current == null)
-			{
-				typeMap.put(def.getName(), def);
-			}
-			else
-			{
-				typeMap.put(def.getName(), merge(validation, current, def));
-			}
+			encounter.addType(def);
 		}
 
-		// Create an instance of type finder to deal with lists
-		TypeFinder typeFinder = name -> {
-			if(name.isEmpty())
-			{
-				return null;
-			}
-			else if(name.charAt(0) == '[')
-			{
-				var type = typeMap.get(name.substring(1, name.length() - 1));
-				if(type == null) return null;
-
-				return type instanceof OutputTypeDef
-					? ListDef.output((OutputTypeDef) type)
-					: ListDef.input((InputTypeDef) type);
-			}
-			else
-			{
-				return typeMap.get(name);
-			}
-		};
-
-		// Validate all of the types
-		for(TypeDef type : typeMap)
+		while(true)
 		{
-			validate(
-				typeFinder,
-				type,
-				validation
-			);
+			// Reset the encounter for this processing step
+			encounter.reset();
+
+			// Validate all of the types
+			for(var type : encounter.typeMap)
+			{
+				validate(
+					encounter,
+					type,
+					validation
+				);
+			}
+
+			// Raise an error if any validation error has been found
+			if(validationMessages.anySatisfy(ValidationMessage.errorPredicate()))
+			{
+				throw new ModelValidationException(validationMessages);
+			}
+
+			ImmutableMap<String, TypeDef> types = encounter.typeMap.toImmutable();
+			ModelDefs defs = new ModelDefs()
+			{
+				@Override
+				public RichIterable<? extends TypeDef> getAll()
+				{
+					return types;
+				}
+
+				@Override
+				public TypeDef maybeResolve(String name)
+				{
+					return types.get(name);
+				}
+			};
+
+			for(TypeDef type : types)
+			{
+				HasPreparation.maybePrepare(type, defs);
+			}
+
+			// Process model after preparation
+			process(encounter);
+
+			// Throw an error if processing fails
+			if(validationMessages.anySatisfy(ValidationMessage.errorPredicate()))
+			{
+				throw new ModelValidationException(validationMessages);
+			}
+
+			if(! encounter.modified)
+			{
+				return new ModelImpl(types);
+			}
 		}
-
-		// Raise an error if any validation error has been found
-		Predicate<ValidationMessage> isError = m -> m.getLevel() == ValidationMessageLevel.ERROR;
-		if(validationMessages.anySatisfy(isError))
-		{
-			throw new ModelValidationException(validationMessages);
-		}
-
-		// Prepare and create model
-		ImmutableMap<String, TypeDef> types = typeMap.toImmutable();
-		ModelDefs defs = new ModelDefs()
-		{
-			@Override
-			public RichIterable<? extends TypeDef> getAll()
-			{
-				return types;
-			}
-
-			@Override
-			public TypeDef maybeResolve(String name)
-			{
-				return types.get(name);
-			}
-		};
-
-		for(TypeDef type : types)
-		{
-			HasPreparation.maybePrepare(type, defs);
-		}
-
-		// Process model after preparation
-		process(validation);
-
-		// Throw an error if processing fails
-		if(validationMessages.anySatisfy(isError))
-		{
-			throw new ModelValidationException(validationMessages);
-		}
-
-		return new ModelImpl(types);
 	}
 
 	public static ModelBuilderImpl create()
@@ -1153,36 +1131,48 @@ public class ModelBuilderImpl
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	private void process(Consumer<ValidationMessage> validation)
+	private void process(ProcessingEncounterImpl encounter)
 	{
 		// Process directives
 		for(DirectiveUseProcessor<?> v : directiveUseProcessors)
 		{
-			for(var type : types)
+			for(var type : encounter.typeMap)
 			{
 				if(type instanceof HasDirectives hasDirectives)
 				{
-					processDirective(v, hasDirectives, validation);
+					processDirective(v, hasDirectives, encounter);
 				}
 
 				if(type instanceof StructuredDef structured)
 				{
 					for(FieldDef def : structured.getDirectFields())
 					{
-						processDirective(v, def, validation);
+						processDirective(v, def, encounter);
 					}
+				}
+
+				if(encounter.modified)
+				{
+					// If the schema was modified we need to reprocess
+					return;
 				}
 			}
 		}
 
 		// Process all the types
-		for(var type : types)
+		for(var type : encounter.typeMap)
 		{
 			for(var processor : typeDefProcessors)
 			{
 				if(processor.getType().isAssignableFrom(type.getClass()))
 				{
-					((TypeDefProcessor) processor).process(type, validation);
+					((TypeDefProcessor) processor).process(encounter, type);
+
+					if(encounter.modified)
+					{
+						// If the schema was modified we need to reprocess
+						return;
+					}
 				}
 			}
 		}
@@ -1192,7 +1182,7 @@ public class ModelBuilderImpl
 	private void processDirective(
 		DirectiveUseProcessor<?> processor,
 		HasDirectives hasDirectives,
-		Consumer<ValidationMessage> validation
+		ProcessingEncounter encounter
 	)
 	{
 		if(! processor.getContextType().isAssignableFrom(hasDirectives.getClass()))
@@ -1206,14 +1196,14 @@ public class ModelBuilderImpl
 			return;
 		}
 
-		((DirectiveUseProcessor) processor).process(hasDirectives, directive.get(), validation);
+		((DirectiveUseProcessor) processor).process(encounter, hasDirectives, directive.get());
 	}
 
 	/**
 	 * Helper to used to find types based on their name while also dealing
 	 * with lists.
 	 */
-	interface TypeFinder
+	private interface TypeFinder
 	{
 		/**
 		 * Get the declared type if available.
@@ -1222,5 +1212,118 @@ public class ModelBuilderImpl
 		 * @return
 		 */
 		TypeDef get(String name);
+	}
+
+	private class ProcessingEncounterImpl
+		implements ProcessingEncounter, TypeFinder
+	{
+		private final Consumer<ValidationMessage> validationCollector;
+		private final MutableMap<String, TypeDef> typeMap;
+
+		/**
+		 * Flag that is set if the processing modifies types in any way.
+		 */
+		private boolean modified;
+
+		public ProcessingEncounterImpl(
+			Consumer<ValidationMessage> validationCollector
+		)
+		{
+			this.validationCollector = validationCollector;
+			this.typeMap = Maps.mutable.empty();
+		}
+
+		public void reset()
+		{
+			modified = false;
+		}
+
+		@Override
+		public void report(ValidationMessage message)
+		{
+			this.validationCollector.accept(message);
+		}
+
+		@Override
+		public TypeDef get(String name)
+		{
+			if(name.isEmpty())
+			{
+				return null;
+			}
+			else if(name.charAt(0) == '[')
+			{
+				var type = typeMap.get(name.substring(1, name.length() - 1));
+				if(type == null) return null;
+
+				return type instanceof OutputTypeDef
+					? ListDef.output((OutputTypeDef) type)
+					: ListDef.input((InputTypeDef) type);
+			}
+			else
+			{
+				return typeMap.get(name);
+			}
+		}
+
+		@Override
+		public void addType(TypeDef def)
+		{
+			var current = typeMap.get(def.getName());
+			TypeDef updated;
+			if(current == null)
+			{
+				updated = def;
+			}
+			else
+			{
+				updated = merge(validationCollector, current, def);
+			}
+
+			if(! updated.equals(current))
+			{
+				typeMap.put(def.getName(), updated);
+				modified = true;
+			}
+		}
+
+		@Override
+		public void replaceType(TypeDef type)
+		{
+			var current = typeMap.get(type.getName());
+			if(! type.equals(current))
+			{
+				typeMap.put(type.getName(), type);
+				modified = true;
+			}
+		}
+
+		@Override
+		public void changeOutput(FieldDef field, OutputTypeDef def)
+		{
+			var edited = field.derive()
+				.withType(def)
+				.build();
+
+			var type = field.getDeclaringType().derive()
+				.addField(edited)
+				.build();
+
+			replaceType(type);
+		}
+
+		@Override
+		public void addArgument(FieldDef field, ArgumentDef arg)
+		{
+			var edited = field.derive()
+				.addArgument(arg)
+				.build();
+
+			var type = field.getDeclaringType().derive()
+				.addField(edited)
+				.build();
+
+			replaceType(type);
+		}
 	}
 }

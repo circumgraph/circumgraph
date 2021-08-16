@@ -1,9 +1,6 @@
 package com.circumgraph.model.processing;
 
-import java.util.function.Consumer;
-
 import com.circumgraph.model.TypeDef;
-import com.circumgraph.model.validation.ValidationMessage;
 
 /**
  * Processor for instances of {@link TypeDef}.
@@ -20,13 +17,15 @@ public interface TypeDefProcessor<T>
 	/**
 	 * Process the type.
 	 *
+	 * @param encounter
+	 *   encounter used to report validation issues and modify the schema
 	 * @param type
 	 *   type being processed
 	 * @param validationCollector
 	 *   collector for validation issues that occur during the processing
 	 */
 	void process(
-		T type,
-		Consumer<ValidationMessage> validationCollector
+		ProcessingEncounter encounter,
+		T type
 	);
 }

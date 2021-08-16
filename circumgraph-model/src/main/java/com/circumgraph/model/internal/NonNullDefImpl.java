@@ -65,7 +65,7 @@ public abstract class NonNullDefImpl
 	@Override
 	public int hashCode()
 	{
-		return Objects.hash(type.getName());
+		return Objects.hash(type);
 	}
 
 	@Override
@@ -75,7 +75,7 @@ public abstract class NonNullDefImpl
 		if(obj == null) return false;
 		if(getClass() != obj.getClass()) return false;
 		NonNullDefImpl other = (NonNullDefImpl) obj;
-		return Objects.equals(getType(), other.getType());
+		return Objects.equals(type, other.type);
 	}
 
 	@Override
@@ -98,6 +98,12 @@ public abstract class NonNullDefImpl
 		{
 			return defs == null ? (OutputTypeDef) type : defs.getType(type, OutputTypeDef.class);
 		}
+
+		@Override
+		public String toString()
+		{
+			return "NonNullDef.Output{" + type + "}";
+		}
 	}
 
 	public static class InputImpl
@@ -113,6 +119,12 @@ public abstract class NonNullDefImpl
 		public InputTypeDef getType()
 		{
 			return defs == null ? (InputTypeDef) type : defs.getType(type, InputTypeDef.class);
+		}
+
+		@Override
+		public String toString()
+		{
+			return "NonNullDef.Input{" + type + "}";
 		}
 	}
 }

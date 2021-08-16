@@ -94,6 +94,13 @@ public interface StructuredDef
 	Optional<FieldDef> pickField(String path);
 
 	/**
+	 * Start building a new structured type based on this instance.
+	 *
+	 * @return
+	 */
+	Builder<?> derive();
+
+	/**
 	 * Builder for instances of {@link StructuredDef}.
 	 */
 	interface Builder<B extends Builder<B>>
@@ -146,5 +153,12 @@ public interface StructuredDef
 		 * @return
 		 */
 		B addFields(Iterable<? extends FieldDef> fields);
+
+		/**
+		 * Build the instance.
+		 *
+		 * @return
+		 */
+		StructuredDef build();
 	}
 }

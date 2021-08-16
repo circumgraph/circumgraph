@@ -25,6 +25,13 @@ public interface UnionDef
 	ListIterable<String> getTypeNames();
 
 	/**
+	 * Start building a new union type based on this instance.
+	 *
+	 * @return
+	 */
+	Builder derive();
+
+	/**
 	 * Start building a union type.
 	 *
 	 * @param name

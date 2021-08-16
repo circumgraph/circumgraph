@@ -104,6 +104,19 @@ public class InputFieldDefImpl
 	}
 
 	@Override
+	public Builder derive()
+	{
+		return new BuilderImpl(
+			sourceLocation,
+			name,
+			description,
+			type,
+			directives,
+			defaultValue
+		);
+	}
+
+	@Override
 	public <V> Optional<V> getMetadata(MetadataKey<V> key)
 	{
 		return metadata.getMetadata(key);
@@ -130,7 +143,7 @@ public class InputFieldDefImpl
 	public int hashCode()
 	{
 		return Objects.hash(
-			defaultValue, description, directives, name, sourceLocation, type
+			defaultValue, description, directives, name, type
 		);
 	}
 
@@ -145,7 +158,6 @@ public class InputFieldDefImpl
 			&& Objects.equals(description, other.description)
 			&& Objects.equals(directives, other.directives)
 			&& Objects.equals(name, other.name)
-			&& Objects.equals(sourceLocation, other.sourceLocation)
 			&& Objects.equals(type, other.type);
 	}
 

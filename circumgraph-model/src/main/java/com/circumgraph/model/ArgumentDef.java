@@ -45,6 +45,13 @@ public interface ArgumentDef
 	 */
 	Optional<Object> getDefaultValue();
 
+	/**
+	 * Start building a new argument based on this instance.
+	 *
+	 * @return
+	 */
+	Builder derive();
+
 	public static Builder create(String name)
 	{
 		return ArgumentDefImpl.create(name);

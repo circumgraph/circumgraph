@@ -9,6 +9,9 @@ import com.circumgraph.model.validation.SourceLocation;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
 
+/**
+ * Implementation of {@link ObjectDef}.
+ */
 public class ObjectDefImpl
 	extends StructuredDefImpl
 	implements ObjectDef
@@ -36,6 +39,19 @@ public class ObjectDefImpl
 	public boolean isAssignableFrom(TypeDef other)
 	{
 		return this == other;
+	}
+
+	@Override
+	public BuilderImpl derive()
+	{
+		return new BuilderImpl(
+			sourceLocation,
+			name,
+			description,
+			directFields,
+			implementsTypes,
+			directives
+		);
 	}
 
 	@Override

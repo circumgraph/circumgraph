@@ -39,6 +39,13 @@ public interface InputFieldDef
 	String getTypeName();
 
 	/**
+	 * Start building a new input field based on this instance.
+	 *
+	 * @return
+	 */
+	Builder derive();
+
+	/**
 	 * Start building a new instance of {@link InputFieldDef}.
 	 *
 	 * @param name

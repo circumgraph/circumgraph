@@ -22,6 +22,9 @@ import org.eclipse.collections.api.map.ImmutableMap;
 import org.eclipse.collections.api.map.MutableMap;
 import org.eclipse.collections.api.set.SetIterable;
 
+/**
+ * Implementation of {@link StructuredDef}.
+ */
 public abstract class StructuredDefImpl
 	implements StructuredDef, HasPreparation
 {
@@ -279,7 +282,7 @@ public abstract class StructuredDefImpl
 	public int hashCode()
 	{
 		return Objects
-			.hash(defs, description, directFields, name, implementsTypes, directives);
+			.hash(description, directFields, name, implementsTypes, directives);
 	}
 
 	@Override
@@ -289,8 +292,7 @@ public abstract class StructuredDefImpl
 		if(obj == null) return false;
 		if(getClass() != obj.getClass()) return false;
 		StructuredDefImpl other = (StructuredDefImpl) obj;
-		return Objects.equals(defs, other.defs)
-			&& Objects.equals(description, other.description)
+		return Objects.equals(description, other.description)
 			&& Objects.equals(directFields, other.directFields)
 			&& Objects.equals(name, other.name)
 			&& Objects.equals(implementsTypes, other.implementsTypes)
@@ -386,27 +388,30 @@ public abstract class StructuredDefImpl
 		@Override
 		public B addField(FieldDef field)
 		{
+			var currentField = fields.detect(f -> f.getName().equals(field.getName()));
+			var newFields = (currentField == null ? fields : fields.newWithout(currentField))
+				.newWith(field);
+
 			return create(
 				sourceLocation,
 				id,
 				description,
-				fields.newWith(field),
+				newFields,
 				implementsTypes,
 				directives
 			);
 		}
 
 		@Override
+		@SuppressWarnings("unchecked")
 		public B addFields(Iterable<? extends FieldDef> fields)
 		{
-			return create(
-				sourceLocation,
-				id,
-				description,
-				this.fields.newWithAll(fields),
-				implementsTypes,
-				directives
-			);
+			var result = (B) this;
+			for(var field : fields)
+			{
+				result = result.addField(field);
+			}
+			return result;
 		}
 
 		@Override

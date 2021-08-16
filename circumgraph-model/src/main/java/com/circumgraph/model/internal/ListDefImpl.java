@@ -97,6 +97,12 @@ public abstract class ListDefImpl
 		{
 			return defs == null ? (OutputTypeDef) itemType : defs.getType(itemType, OutputTypeDef.class);
 		}
+
+		@Override
+		public String toString()
+		{
+			return "ListDef.Output{" + itemType + "}";
+		}
 	}
 
 	public static class InputImpl
@@ -112,6 +118,12 @@ public abstract class ListDefImpl
 		public InputTypeDef getItemType()
 		{
 			return defs == null ? (InputTypeDef) itemType : defs.getType(itemType, InputTypeDef.class);
+		}
+
+		@Override
+		public String toString()
+		{
+			return "ListDef.Input{" + itemType + "}";
 		}
 	}
 }

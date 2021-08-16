@@ -97,6 +97,18 @@ public class InputObjectDefImpl
 	}
 
 	@Override
+	public Builder derive()
+	{
+		return new BuilderImpl(
+			sourceLocation,
+			name,
+			description,
+			fields,
+			directives
+		);
+	}
+
+	@Override
 	public void prepare(ModelDefs defs)
 	{
 		this.defs = defs;
@@ -129,7 +141,7 @@ public class InputObjectDefImpl
 	public int hashCode()
 	{
 		return Objects
-			.hash(defs, description, fields, name, directives);
+			.hash(description, fields, name, directives);
 	}
 
 	@Override
@@ -139,8 +151,7 @@ public class InputObjectDefImpl
 		if(obj == null) return false;
 		if(getClass() != obj.getClass()) return false;
 		InputObjectDefImpl other = (InputObjectDefImpl) obj;
-		return Objects.equals(defs, other.defs)
-			&& Objects.equals(description, other.description)
+		return Objects.equals(description, other.description)
 			&& Objects.equals(fields, other.fields)
 			&& Objects.equals(name, other.name)
 			&& Objects.equals(directives, other.directives);

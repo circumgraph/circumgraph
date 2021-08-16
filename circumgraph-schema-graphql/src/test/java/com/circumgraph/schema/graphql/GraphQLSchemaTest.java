@@ -7,8 +7,6 @@ import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import java.util.function.Consumer;
-
 import com.circumgraph.model.DirectiveUse;
 import com.circumgraph.model.EnumDef;
 import com.circumgraph.model.EnumValueDef;
@@ -18,7 +16,6 @@ import com.circumgraph.model.InterfaceDef;
 import com.circumgraph.model.ListDef;
 import com.circumgraph.model.Model;
 import com.circumgraph.model.ModelException;
-import com.circumgraph.model.ModelValidationException;
 import com.circumgraph.model.NonNullDef;
 import com.circumgraph.model.ObjectDef;
 import com.circumgraph.model.ScalarDef;
@@ -28,8 +25,7 @@ import com.circumgraph.model.TypeDef;
 import com.circumgraph.model.TypeRef;
 import com.circumgraph.model.UnionDef;
 import com.circumgraph.model.processing.DirectiveUseProcessor;
-import com.circumgraph.model.validation.ValidationMessage;
-import com.circumgraph.model.validation.ValidationMessageLevel;
+import com.circumgraph.model.processing.ProcessingEncounter;
 
 import org.junit.jupiter.api.Test;
 
@@ -286,7 +282,7 @@ public class GraphQLSchemaTest
 
 		FieldDef f1 = s.getField("title").get();
 		assertThat(f1.getName(), is("title"));
-		assertThat(f1.getType(), is(NonNullDef.output(ScalarDef.STRING)));
+		assertThat(f1.getType(), is(NonNullDef.output("String")));
 	}
 
 	@Test
@@ -320,7 +316,7 @@ public class GraphQLSchemaTest
 
 		FieldDef f1 = s.getField("title").get();
 		assertThat(f1.getName(), is("title"));
-		assertThat(f1.getType(), is(NonNullDef.output(ScalarDef.STRING)));
+		assertThat(f1.getType(), is(NonNullDef.output("String")));
 		assertThat(f1.getDirectives(), contains(
 			DirectiveUse.create("test")
 				.build()
@@ -348,7 +344,7 @@ public class GraphQLSchemaTest
 		assertThat(f1.getType(), is(
 			NonNullDef.output(
 				ListDef.output(
-					NonNullDef.output(ScalarDef.STRING)
+					NonNullDef.output("String")
 				)
 			)
 		));
@@ -398,7 +394,7 @@ public class GraphQLSchemaTest
 
 		FieldDef f1 = def.getField("field").get();
 		assertThat(f1.getName(), is("field"));
-		assertThat(f1.getType(), is(NonNullDef.output(ScalarDef.STRING)));
+		assertThat(f1.getType(), is(NonNullDef.output("String")));
 		assertThat(f1.getDirectives(), contains(
 			DirectiveUse.create("test")
 				.addArgument("v", 100)
@@ -436,9 +432,9 @@ public class GraphQLSchemaTest
 
 		@Override
 		public void process(
+			ProcessingEncounter encounter,
 			HasDirectives location,
-			DirectiveUse directive,
-			Consumer<ValidationMessage> validationCollector
+			DirectiveUse directive
 		)
 		{
 			// Always valid

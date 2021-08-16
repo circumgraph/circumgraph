@@ -1,12 +1,10 @@
 package com.circumgraph.storage.internal.model;
 
-import java.util.function.Consumer;
-
 import com.circumgraph.model.ArgumentUse;
 import com.circumgraph.model.DirectiveUse;
 import com.circumgraph.model.FieldDef;
 import com.circumgraph.model.processing.DirectiveUseProcessor;
-import com.circumgraph.model.validation.ValidationMessage;
+import com.circumgraph.model.processing.ProcessingEncounter;
 import com.circumgraph.model.validation.ValidationMessageType;
 import com.circumgraph.storage.internal.ValueProviders;
 
@@ -61,15 +59,15 @@ public class DefaultDirectiveProcessor
 
 	@Override
 	public void process(
+		ProcessingEncounter encounter,
 		FieldDef location,
-		DirectiveUse directive,
-		Consumer<ValidationMessage> validationCollector
+		DirectiveUse directive
 	)
 	{
 		if(directive.getArguments().isEmpty()
 			|| ! DirectiveUseProcessor.checkOnlyArguments(directive, "provider", "value"))
 		{
-			validationCollector.accept(INVALID_ARGUMENTS
+			encounter.report(INVALID_ARGUMENTS
 				.toMessage()
 				.withLocation(directive.getSourceLocation())
 				.build()
@@ -90,7 +88,7 @@ public class DefaultDirectiveProcessor
 			var actualProvider = valueProviders.get(provider.get());
 			if(! actualProvider.isPresent())
 			{
-				validationCollector.accept(UNKNOWN_PROVIDER.toMessage()
+				encounter.report(UNKNOWN_PROVIDER.toMessage()
 					.withLocation(directive.getSourceLocation())
 					.withArgument("provider", provider.get())
 					.build()
@@ -101,7 +99,7 @@ public class DefaultDirectiveProcessor
 				var instance = actualProvider.get();
 				if(! location.getType().isAssignableFrom(instance.getType()))
 				{
-					validationCollector.accept(INVALID_PROVIDER.toMessage()
+					encounter.report(INVALID_PROVIDER.toMessage()
 						.withLocation(directive.getSourceLocation())
 						.withArgument("provider", provider.get())
 						.withArgument("fieldType", location.getTypeName())
@@ -116,7 +114,7 @@ public class DefaultDirectiveProcessor
 		}
 		else
 		{
-			validationCollector.accept(INVALID_ARGUMENTS.toMessage()
+			encounter.report(INVALID_ARGUMENTS.toMessage()
 				.withLocation(directive.getSourceLocation())
 				.build()
 			);

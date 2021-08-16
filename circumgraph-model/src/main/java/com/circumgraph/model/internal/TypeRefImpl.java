@@ -6,6 +6,9 @@ import java.util.Optional;
 import com.circumgraph.model.TypeDef;
 import com.circumgraph.model.TypeRef;
 
+/**
+ * Implementation of {@link TypeRef}.
+ */
 public class TypeRefImpl
 	implements TypeRef
 {

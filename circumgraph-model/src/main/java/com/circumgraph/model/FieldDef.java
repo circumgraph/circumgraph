@@ -48,11 +48,25 @@ public interface FieldDef
 	ListIterable<ArgumentDef> getArguments();
 
 	/**
+	 * Get an argument of the given name.
+	 *
+	 * @return
+	 */
+	Optional<ArgumentDef> getArgument(String name);
+
+	/**
 	 * Get the type that original declared this type.
 	 *
 	 * @return
 	 */
 	StructuredDef getDeclaringType();
+
+	/**
+	 * Start building a new field based on this instance.
+	 *
+	 * @return
+	 */
+	Builder derive();
 
 	/**
 	 * Start building a new field.

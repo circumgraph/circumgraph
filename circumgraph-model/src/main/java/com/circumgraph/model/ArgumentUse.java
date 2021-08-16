@@ -55,6 +55,13 @@ public interface ArgumentUse
 	OptionalDouble getValueAsDouble();
 
 	/**
+	 * Start building a new argument use based on this instance.
+	 *
+	 * @return
+	 */
+	Builder derive();
+
+	/**
 	 * Start creating a new instance of {@link ArgumentUse}.
 	 *
 	 * @param name

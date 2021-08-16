@@ -1,5 +1,6 @@
 package com.circumgraph.model.internal;
 
+import java.util.Objects;
 import java.util.Optional;
 
 import com.circumgraph.model.ArgumentDef;
@@ -97,6 +98,39 @@ public class ArgumentDefImpl
 	public boolean isReady()
 	{
 		return defs != null;
+	}
+
+	@Override
+	public Builder derive()
+	{
+		return new BuilderImpl(
+			sourceLocation,
+			name,
+			description,
+			type,
+			directives,
+			defaultValue
+		);
+	}
+
+	@Override
+	public int hashCode()
+	{
+		return Objects.hash(defaultValue, description, directives, name, type);
+	}
+
+	@Override
+	public boolean equals(Object obj)
+	{
+		if(this == obj) return true;
+		if(obj == null) return false;
+		if(getClass() != obj.getClass()) return false;
+		ArgumentDefImpl other = (ArgumentDefImpl) obj;
+		return Objects.equals(defaultValue, other.defaultValue)
+			&& Objects.equals(description, other.description)
+			&& Objects.equals(directives, other.directives)
+			&& Objects.equals(name, other.name)
+			&& Objects.equals(type, other.type);
 	}
 
 	public static Builder create(String name)

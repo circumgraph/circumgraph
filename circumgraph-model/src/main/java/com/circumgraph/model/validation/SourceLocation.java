@@ -2,6 +2,8 @@ package com.circumgraph.model.validation;
 
 import com.circumgraph.model.internal.BasicSourceLocation;
 
+import org.eclipse.collections.api.factory.Lists;
+
 /**
  * Representation of a source location.
  */
@@ -13,6 +15,19 @@ public interface SourceLocation
 	 * location.
 	 */
 	String describe();
+
+	/**
+	 * Merge this location with another one. Used when things are modified
+	 * dynamically.
+	 *
+	 * @param other
+	 * @return
+	 */
+	default MergedSourceLocation mergeWith(SourceLocation other)
+	{
+		var merged = Lists.immutable.of(this, other);
+		return () -> merged;
+	}
 
 	/**
 	 * Create a location representing a position in the code. This will attempt

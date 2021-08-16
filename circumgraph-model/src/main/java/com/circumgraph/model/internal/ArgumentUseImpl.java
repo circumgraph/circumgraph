@@ -63,6 +63,15 @@ public class ArgumentUseImpl
 	}
 
 	@Override
+	public Builder derive()
+	{
+		return new BuilderImpl(
+			name,
+			value
+		);
+	}
+
+	@Override
 	public int hashCode()
 	{
 		return Objects.hash(name, value);

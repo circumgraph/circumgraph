@@ -29,6 +29,13 @@ public interface InputObjectDef
 	Optional<InputFieldDef> getField(String name);
 
 	/**
+	 * Start building a new input object type based on this instance.
+	 *
+	 * @return
+	 */
+	Builder derive();
+
+	/**
 	 * Start creating a new instance.
 	 *
 	 * @param name

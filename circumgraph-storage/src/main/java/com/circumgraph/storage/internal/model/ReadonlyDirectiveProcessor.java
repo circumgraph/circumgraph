@@ -1,11 +1,9 @@
 package com.circumgraph.storage.internal.model;
 
-import java.util.function.Consumer;
-
 import com.circumgraph.model.DirectiveUse;
 import com.circumgraph.model.FieldDef;
 import com.circumgraph.model.processing.DirectiveUseProcessor;
-import com.circumgraph.model.validation.ValidationMessage;
+import com.circumgraph.model.processing.ProcessingEncounter;
 import com.circumgraph.model.validation.ValidationMessageType;
 
 /**
@@ -34,14 +32,14 @@ public class ReadonlyDirectiveProcessor
 
 	@Override
 	public void process(
+		ProcessingEncounter encounter,
 		FieldDef location,
-		DirectiveUse directive,
-		Consumer<ValidationMessage> validationCollector
+		DirectiveUse directive
 	)
 	{
 		if(directive.getArguments().isEmpty()) return;
 
-		validationCollector.accept(INVALID_ARGUMENTS.toMessage()
+		encounter.report(INVALID_ARGUMENTS.toMessage()
 			.withLocation(directive.getSourceLocation())
 			.build()
 		);

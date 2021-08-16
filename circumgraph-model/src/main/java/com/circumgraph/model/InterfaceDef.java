@@ -26,6 +26,14 @@ public interface InterfaceDef
 	SetIterable<? extends StructuredDef> getAllImplementors();
 
 	/**
+	 * Start building a new interface type based on this instance.
+	 *
+	 * @return
+	 */
+	@Override
+	Builder derive();
+
+	/**
 	 * Create a builder that will create a {@link InterfaceDef}.
 	 *
 	 * @param name
@@ -47,6 +55,7 @@ public interface InterfaceDef
 		 *
 		 * @return
 		 */
+		@Override
 		InterfaceDef build();
 	}
 }

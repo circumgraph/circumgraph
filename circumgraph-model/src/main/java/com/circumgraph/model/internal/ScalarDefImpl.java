@@ -51,7 +51,7 @@ public class ScalarDefImpl
 	@Override
 	public int hashCode()
 	{
-		return Objects.hash(name);
+		return Objects.hash(name, description);
 	}
 
 	@Override
@@ -61,7 +61,8 @@ public class ScalarDefImpl
 		if(obj == null) return false;
 		if(getClass() != obj.getClass()) return false;
 		ScalarDefImpl other = (ScalarDefImpl) obj;
-		return Objects.equals(name, other.name);
+		return Objects.equals(name, other.name)
+			&& Objects.equals(description, other.description);
 	}
 
 	@Override

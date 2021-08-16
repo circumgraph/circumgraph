@@ -12,6 +12,9 @@ import org.eclipse.collections.api.factory.Sets;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.set.SetIterable;
 
+/**
+ * Implementation of {@link InterfaceDef}.
+ */
 public class InterfaceDefImpl
 	extends StructuredDefImpl
 	implements InterfaceDef
@@ -82,6 +85,19 @@ public class InterfaceDefImpl
 		}
 
 		return false;
+	}
+
+	@Override
+	public BuilderImpl derive()
+	{
+		return new BuilderImpl(
+			sourceLocation,
+			name,
+			description,
+			directFields,
+			implementsTypes,
+			directives
+		);
 	}
 
 	@Override

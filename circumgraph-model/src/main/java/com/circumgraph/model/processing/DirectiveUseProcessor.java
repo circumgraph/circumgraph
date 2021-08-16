@@ -1,12 +1,9 @@
 package com.circumgraph.model.processing;
 
-import java.util.function.Consumer;
-
 import com.circumgraph.model.ArgumentUse;
 import com.circumgraph.model.DirectiveUse;
 import com.circumgraph.model.HasDirectives;
 import com.circumgraph.model.HasMetadata;
-import com.circumgraph.model.validation.ValidationMessage;
 
 import org.eclipse.collections.api.factory.Sets;
 
@@ -34,17 +31,16 @@ public interface DirectiveUseProcessor<T extends HasDirectives>
 	/**
 	 * Process the directive.
 	 *
+	 * @param encounter
 	 * @param location
 	 *   location of the directive
 	 * @param directive
 	 *   the use of the directive
-	 * @param validationCollector
-	 *   collector for validation issues that occur during the processing
 	 */
 	void process(
+		ProcessingEncounter encounter,
 		T location,
-		DirectiveUse directive,
-		Consumer<ValidationMessage> validationCollector
+		DirectiveUse directive
 	);
 
 	/**

@@ -7,10 +7,8 @@ import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import java.util.function.Consumer;
-
 import com.circumgraph.model.processing.DirectiveUseProcessor;
-import com.circumgraph.model.validation.ValidationMessage;
+import com.circumgraph.model.processing.ProcessingEncounter;
 import com.circumgraph.model.validation.ValidationMessageLevel;
 
 import org.junit.jupiter.api.Test;
@@ -829,9 +827,9 @@ public class ModelBuildingTest
 
 		@Override
 		public void process(
+			ProcessingEncounter encounter,
 			FieldDef location,
-			DirectiveUse directive,
-			Consumer<ValidationMessage> validationCollector
+			DirectiveUse directive
 		)
 		{
 			// Always valid

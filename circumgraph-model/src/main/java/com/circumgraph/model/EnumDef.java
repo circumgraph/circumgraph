@@ -17,6 +17,13 @@ public interface EnumDef
 	 */
 	ListIterable<EnumValueDef> getValues();
 
+	/**
+	 * Start building a new enum type based on this instance.
+	 *
+	 * @return
+	 */
+	Builder derive();
+
 	static Builder create(String name)
 	{
 		return EnumDefImpl.create(name);

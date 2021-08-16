@@ -24,6 +24,13 @@ public interface EnumValueDef
 	 */
 	Optional<String> getDescription();
 
+	/**
+	 * Start building a new enum value based on this instance.
+	 *
+	 * @return
+	 */
+	Builder derive();
+
 	static Builder create(String name)
 	{
 		return EnumValueDefImpl.create(name);

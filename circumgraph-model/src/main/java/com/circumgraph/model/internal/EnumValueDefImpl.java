@@ -1,5 +1,6 @@
 package com.circumgraph.model.internal;
 
+import java.util.Objects;
 import java.util.Optional;
 
 import com.circumgraph.model.DirectiveUse;
@@ -10,6 +11,9 @@ import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.ListIterable;
 
+/**
+ * Implementation of {@link EnumValueDef}.
+ */
 public class EnumValueDefImpl
 	implements EnumValueDef
 {
@@ -53,6 +57,35 @@ public class EnumValueDefImpl
 	public ListIterable<DirectiveUse> getDirectives()
 	{
 		return directives;
+	}
+
+	@Override
+	public Builder derive()
+	{
+		return new BuilderImpl(
+			sourceLocation,
+			name,
+			description,
+			directives
+		);
+	}
+
+	@Override
+	public int hashCode()
+	{
+		return Objects.hash(description, directives, name);
+	}
+
+	@Override
+	public boolean equals(Object obj)
+	{
+		if(this == obj) return true;
+		if(obj == null) return false;
+		if(getClass() != obj.getClass()) return false;
+		EnumValueDefImpl other = (EnumValueDefImpl) obj;
+		return Objects.equals(description, other.description)
+			&& Objects.equals(directives, other.directives)
+			&& Objects.equals(name, other.name);
 	}
 
 	public static Builder create(String name)

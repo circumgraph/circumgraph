@@ -93,6 +93,12 @@ public class FieldDefImpl
 	}
 
 	@Override
+	public Optional<ArgumentDef> getArgument(String name)
+	{
+		return arguments.detectOptional(a -> a.getName().equals(name));
+	}
+
+	@Override
 	public StructuredDef getDeclaringType()
 	{
 		return declaringType;
@@ -136,13 +142,25 @@ public class FieldDefImpl
 	}
 
 	@Override
+	public Builder derive()
+	{
+		return new BuilderImpl(
+			sourceLocation,
+			name,
+			description,
+			type,
+			arguments,
+			directives
+		);
+	}
+
+	@Override
 	public String toString()
 	{
 		return "FieldDef{name=" + name
 			+ ", type=" + type
 			+ ", description=" + description
 			+ ", directives=" + directives
-			+ ", sourceLocation=" + sourceLocation
 			+ "}";
 	}
 
@@ -163,7 +181,7 @@ public class FieldDefImpl
 			&& Objects.equals(description, other.description)
 			&& Objects.equals(directives, other.directives)
 			&& Objects.equals(name, other.name)
-			&& Objects.equals(type.getName(), other.type.getName());
+			&& Objects.equals(type, other.type);
 	}
 
 	public static Builder create(String name)
@@ -255,12 +273,16 @@ public class FieldDefImpl
 		@Override
 		public Builder addArgument(ArgumentDef arg)
 		{
+			var currentArg = arguments.detect(f -> f.getName().equals(arg.getName()));
+			var newArguments = (currentArg == null ? arguments : arguments.newWithout(currentArg))
+				.newWith(arg);
+
 			return new BuilderImpl(
 				sourceLocation,
 				name,
 				description,
 				type,
-				arguments.newWith(arg),
+				newArguments,
 				directives
 			);
 		}
@@ -268,14 +290,12 @@ public class FieldDefImpl
 		@Override
 		public Builder addArguments(Iterable<? extends ArgumentDef> args)
 		{
-			return new BuilderImpl(
-				sourceLocation,
-				name,
-				description,
-				type,
-				arguments.newWithAll(args),
-				directives
-			);
+			Builder result = this;
+			for(var arg : args)
+			{
+				result = result.addArgument(arg);
+			}
+			return result;
 		}
 
 		@Override

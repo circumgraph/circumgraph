@@ -1,14 +1,12 @@
 package com.circumgraph.storage.internal.processors;
 
-import java.util.function.Consumer;
-
 import com.circumgraph.model.InterfaceDef;
 import com.circumgraph.model.ListDef;
 import com.circumgraph.model.MetadataKey;
 import com.circumgraph.model.NonNullDef;
 import com.circumgraph.model.StructuredDef;
+import com.circumgraph.model.processing.ProcessingEncounter;
 import com.circumgraph.model.processing.TypeDefProcessor;
-import com.circumgraph.model.validation.ValidationMessage;
 import com.circumgraph.model.validation.ValidationMessageType;
 import com.circumgraph.storage.StorageSchema;
 
@@ -35,19 +33,19 @@ public class InterfaceImplementationProcessor
 
 	@Override
 	public void process(
-		StructuredDef type,
-		Consumer<ValidationMessage> validationCollector
+		ProcessingEncounter encounter,
+		StructuredDef type
 	)
 	{
 		// Only process starting with entities
 		if(! type.findImplements(StorageSchema.ENTITY_NAME)) return;
 
-		processType(type, validationCollector);
+		processType(encounter, type);
 	}
 
 	private void processType(
-		StructuredDef type,
-		Consumer<ValidationMessage> validationCollector
+		ProcessingEncounter encounter,
+		StructuredDef type
 	)
 	{
 		if(type.getMetadata(HAS_PROCESSED).orElse(false))
@@ -78,26 +76,26 @@ public class InterfaceImplementationProcessor
 
 			if(fieldType instanceof StructuredDef s)
 			{
-				processType(s, validationCollector);
+				processType(encounter, s);
 			}
 		}
 
 		// Process if this is an interface
 		if(type instanceof InterfaceDef i)
 		{
-			processInterface(i, validationCollector);
+			processInterface(encounter, i);
 		}
 	}
 
 	private void processInterface(
-		InterfaceDef type,
-		Consumer<ValidationMessage> validationCollector
+		ProcessingEncounter encounter,
+		InterfaceDef type
 	)
 	{
 		var types = type.getImplementors();
 		if(types.isEmpty())
 		{
-			validationCollector.accept(IMPL_REQUIRED.toMessage()
+			encounter.report(IMPL_REQUIRED.toMessage()
 				.withLocation(type)
 				.withArgument("type", type.getName())
 				.build()
@@ -107,7 +105,7 @@ public class InterfaceImplementationProcessor
 		{
 			for(var subType : types)
 			{
-				processType(subType, validationCollector);
+				processType(encounter, subType);
 			}
 		}
 	}

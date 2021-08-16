@@ -1,7 +1,6 @@
 package com.circumgraph.graphql.internal.directives;
 
 import java.util.Optional;
-import java.util.function.Consumer;
 
 import com.circumgraph.graphql.GraphQLModel;
 import com.circumgraph.graphql.internal.resolvers.RelationListFieldResolver;
@@ -12,7 +11,7 @@ import com.circumgraph.model.ListDef;
 import com.circumgraph.model.NonNullDef;
 import com.circumgraph.model.StructuredDef;
 import com.circumgraph.model.processing.DirectiveUseProcessor;
-import com.circumgraph.model.validation.ValidationMessage;
+import com.circumgraph.model.processing.ProcessingEncounter;
 import com.circumgraph.model.validation.ValidationMessageType;
 import com.circumgraph.storage.StorageModel;
 import com.circumgraph.storage.StorageSchema;
@@ -119,14 +118,14 @@ public class RelationDirectiveProcessor
 
 	@Override
 	public void process(
+		ProcessingEncounter encounter,
 		FieldDef location,
-		DirectiveUse directive,
-		Consumer<ValidationMessage> validationCollector
+		DirectiveUse directive
 	)
 	{
 		if(! DirectiveUseProcessor.checkOnlyArguments(directive, "field", "search"))
 		{
-			validationCollector.accept(INVALID_ARGUMENTS.toMessage()
+			encounter.report(INVALID_ARGUMENTS.toMessage()
 				.withLocation(location)
 				.build()
 			);
@@ -136,7 +135,7 @@ public class RelationDirectiveProcessor
 		// Validate that field is declared in an entity
 		if(! location.getDeclaringType().findImplements(StorageSchema.ENTITY_NAME))
 		{
-			validationCollector.accept(TYPE_NOT_ENTITY.toMessage()
+			encounter.report(TYPE_NOT_ENTITY.toMessage()
 				.withLocation(location)
 				.withArgument("type", location.getDeclaringType().getName())
 				.build()
@@ -163,7 +162,7 @@ public class RelationDirectiveProcessor
 
 		if(! (type instanceof StructuredDef) || ! ((StructuredDef) type).findImplements(StorageSchema.ENTITY_NAME))
 		{
-			validationCollector.accept(TYPE_NOT_ENTITY.toMessage()
+			encounter.report(TYPE_NOT_ENTITY.toMessage()
 				.withLocation(location)
 				.withArgument("type", type.getName())
 				.build()
@@ -177,7 +176,7 @@ public class RelationDirectiveProcessor
 		var field = directive.getArgument("field").flatMap(ArgumentUse::getValueAsString);
 		if(! field.isPresent())
 		{
-			validationCollector.accept(INVALID_ARGUMENTS.toMessage()
+			encounter.report(INVALID_ARGUMENTS.toMessage()
 				.withLocation(location)
 				.build()
 			);
@@ -188,7 +187,7 @@ public class RelationDirectiveProcessor
 		var relationField = entity.pickField(fieldName);
 		if(relationField.isEmpty())
 		{
-			validationCollector.accept(FIELD_UNKNOWN.toMessage()
+			encounter.report(FIELD_UNKNOWN.toMessage()
 				.withLocation(location)
 				.withArgument("field", fieldName)
 				.withArgument("type", type.getName())
@@ -201,7 +200,7 @@ public class RelationDirectiveProcessor
 		var relationFieldType = relationField.get().getType();
 		if(location.getDeclaringType().isAssignableFrom(relationFieldType))
 		{
-			validationCollector.accept(FIELD_WRONG_TYPE.toMessage()
+			encounter.report(FIELD_WRONG_TYPE.toMessage()
 				.withLocation(location)
 				.withArgument("field", fieldName)
 				.withArgument("type", type.getName())
@@ -215,7 +214,7 @@ public class RelationDirectiveProcessor
 		// Check that it is indexed
 		if(! StorageModel.isIndexed(relationField.get()))
 		{
-			validationCollector.accept(FIELD_NOT_INDEXED.toMessage()
+			encounter.report(FIELD_NOT_INDEXED.toMessage()
 				.withLocation(location)
 				.withArgument("field", fieldName)
 				.withArgument("type", type.getName())
@@ -227,8 +226,8 @@ public class RelationDirectiveProcessor
 		var path = QueryPath.root(entity).field(fieldName);
 
 		// Set the final resolver
-		GraphQLModel.setFieldResolverFactory(location, encounter -> {
-			var other = encounter.getStorage().get(entity.getName());
+		GraphQLModel.setFieldResolverFactory(location, e -> {
+			var other = e.getStorage().get(entity.getName());
 			return new RelationListFieldResolver(other, path, Optional.empty());
 		});
 	}

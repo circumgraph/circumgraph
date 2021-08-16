@@ -1,12 +1,10 @@
 package com.circumgraph.graphql.internal;
 
-import java.util.function.Consumer;
-
 import com.circumgraph.graphql.FieldResolverFactory;
 import com.circumgraph.graphql.GraphQLModel;
 import com.circumgraph.model.StructuredDef;
+import com.circumgraph.model.processing.ProcessingEncounter;
 import com.circumgraph.model.processing.TypeDefProcessor;
-import com.circumgraph.model.validation.ValidationMessage;
 import com.circumgraph.model.validation.ValidationMessageType;
 import com.circumgraph.storage.StorageModel;
 
@@ -32,8 +30,8 @@ public class DynamicFieldProcessor
 
 	@Override
 	public void process(
-		StructuredDef type,
-		Consumer<ValidationMessage> validationCollector
+		ProcessingEncounter encounter,
+		StructuredDef type
 	)
 	{
 		for(var field : type.getDirectFields())
@@ -42,7 +40,7 @@ public class DynamicFieldProcessor
 				&& GraphQLModel.getFieldResolverFactory(field).isEmpty())
 			{
 				// Dynamic field without a resolver - report an error
-				validationCollector.accept(NO_RESOLVER.toMessage()
+				encounter.report(NO_RESOLVER.toMessage()
 					.withLocation(field)
 					.withArgument("field", field.getName())
 					.withArgument("type", type.getName())

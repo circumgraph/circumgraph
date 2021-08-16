@@ -1,7 +1,5 @@
 package com.circumgraph.storage.internal.model;
 
-import java.util.function.Consumer;
-
 import com.circumgraph.model.DirectiveUse;
 import com.circumgraph.model.FieldDef;
 import com.circumgraph.model.ListDef;
@@ -12,7 +10,7 @@ import com.circumgraph.model.SimpleValueDef;
 import com.circumgraph.model.StructuredDef;
 import com.circumgraph.model.UnionDef;
 import com.circumgraph.model.processing.DirectiveUseProcessor;
-import com.circumgraph.model.validation.ValidationMessage;
+import com.circumgraph.model.processing.ProcessingEncounter;
 import com.circumgraph.model.validation.ValidationMessageType;
 import com.circumgraph.storage.StorageModel;
 import com.circumgraph.storage.StorageSchema;
@@ -83,9 +81,9 @@ public class IndexDirectiveProcessor
 
 	@Override
 	public void process(
+		ProcessingEncounter encounter,
 		FieldDef location,
-		DirectiveUse directive,
-		Consumer<ValidationMessage> validationCollector
+		DirectiveUse directive
 	)
 	{
 		OutputTypeDef fieldType = location.getType();
@@ -118,7 +116,7 @@ public class IndexDirectiveProcessor
 				StorageModel.setIndexed(location, true);
 				if(! directive.getArguments().isEmpty())
 				{
-					validationCollector.accept(INVALID_ARGUMENTS_POLYMORPHIC.toMessage()
+					encounter.report(INVALID_ARGUMENTS_POLYMORPHIC.toMessage()
 						.withLocation(directive.getSourceLocation())
 						.build()
 					);
@@ -128,14 +126,14 @@ public class IndexDirectiveProcessor
 			}
 			else
 			{
-				error(location, directive, validationCollector);
+				error(encounter, location, directive);
 				return;
 			}
 		}
 
 		if(! DirectiveUseProcessor.checkOnlyArguments(directive, "type"))
 		{
-			validationCollector.accept(INVALID_ARGUMENTS.toMessage()
+			encounter.report(INVALID_ARGUMENTS.toMessage()
 				.withLocation(directive.getSourceLocation())
 				.build()
 			);
@@ -156,7 +154,7 @@ public class IndexDirectiveProcessor
 			else if(indexing.hasMultipleIndexers(def))
 			{
 				// Multiple indexers, report error and give the user the ones that can be used
-				validationCollector.accept(MULTIPLE_INDEXERS.toMessage()
+				encounter.report(MULTIPLE_INDEXERS.toMessage()
 					.withLocation(directive.getSourceLocation())
 					.withArgument("fieldType", def.getName())
 					.withArgument("supported", indexing.getSupportedIndexers(def))
@@ -166,7 +164,7 @@ public class IndexDirectiveProcessor
 			else
 			{
 				// Generic error that no indexer is available
-				error(location, directive, validationCollector);
+				error(encounter, location, directive);
 			}
 		}
 		else
@@ -175,7 +173,7 @@ public class IndexDirectiveProcessor
 			var indexer = indexing.getIndexer(typeName);
 			if(indexer.isEmpty())
 			{
-				validationCollector.accept(INVALID_INDEXER.toMessage()
+				encounter.report(INVALID_INDEXER.toMessage()
 					.withLocation(directive.getSourceLocation())
 					.withArgument("indexer", typeName)
 					.build()
@@ -183,7 +181,7 @@ public class IndexDirectiveProcessor
 			}
 			else if(indexer.get().getType() != def)
 			{
-				validationCollector.accept(INDEXER_TYPE_UNSUPPORTED.toMessage()
+				encounter.report(INDEXER_TYPE_UNSUPPORTED.toMessage()
 					.withLocation(directive.getSourceLocation())
 					.withArgument("indexer", typeName)
 					.withArgument("fieldType", location.getType().getName())
@@ -199,12 +197,12 @@ public class IndexDirectiveProcessor
 	}
 
 	private void error(
+		ProcessingEncounter encounter,
 		FieldDef location,
-		DirectiveUse directive,
-		Consumer<ValidationMessage> validationCollector
+		DirectiveUse directive
 	)
 	{
-		validationCollector.accept(TYPE_UNSUPPORTED.toMessage()
+		encounter.report(TYPE_UNSUPPORTED.toMessage()
 			.withLocation(directive.getSourceLocation())
 			.withArgument("fieldType", location.getType().getName())
 			.build()

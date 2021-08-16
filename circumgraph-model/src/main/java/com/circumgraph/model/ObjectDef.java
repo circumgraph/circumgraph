@@ -20,6 +20,14 @@ public interface ObjectDef
 	}
 
 	/**
+	 * Start building a new object type based on this instance.
+	 *
+	 * @return
+	 */
+	@Override
+	Builder derive();
+
+	/**
 	 * Builder for instances of {@link ObjectDef}.
 	 */
 	interface Builder
@@ -30,6 +38,7 @@ public interface ObjectDef
 		 *
 		 * @return
 		 */
+		@Override
 		ObjectDef build();
 	}
 }
