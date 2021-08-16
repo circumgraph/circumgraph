@@ -3,6 +3,8 @@ package com.circumgraph.model;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
+import java.util.Optional;
+
 import com.circumgraph.model.internal.NonNullDefImpl;
 
 import org.junit.jupiter.api.Test;
@@ -27,6 +29,20 @@ public class NonNullDefTest
 			.usingGetClass()
 			.withIgnoredFields("defs")
 			.verify();
+	}
+
+	@Test
+	public void testName()
+	{
+		var t = NonNullDef.output(ScalarDef.STRING);
+		assertThat(t.getName(), is("String!"));
+	}
+
+	@Test
+	public void testDescriptionEmpty()
+	{
+		var t = NonNullDef.output(ScalarDef.STRING);
+		assertThat(t.getDescription(), is(Optional.empty()));
 	}
 
 	@Test
@@ -72,5 +88,20 @@ public class NonNullDefTest
 			NonNullDef.input(ScalarDef.STRING).isAssignableFrom(NonNullDef.output(ScalarDef.STRING)),
 			is(false)
 		);
+	}
+
+	@Test
+	public void testModelResolvesTypes()
+	{
+		var schema = Schema.create()
+			.addType(NonNullDef.output("String"))
+			.build();
+
+		var model = Model.create()
+			.addSchema(schema)
+			.build();
+
+		var t = model.get("String!", NonNullDef.class).get();
+		assertThat(t.getType(), is(ScalarDef.STRING));
 	}
 }
