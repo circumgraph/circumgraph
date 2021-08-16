@@ -54,9 +54,15 @@ public abstract class NonNullDefImpl
 	@Override
 	public boolean isAssignableFrom(TypeDef other)
 	{
-		if(other instanceof NonNullDef)
+		if(other instanceof NonNullDef nonNull)
 		{
-			return this.getType().isAssignableFrom(((NonNullDef) other).getType());
+			if(getClass() != other.getClass())
+			{
+				// Check that both NonNull instances are input/input or output/output
+				return false;
+			}
+
+			return this.getType().isAssignableFrom(nonNull.getType());
 		}
 
 		return this.getType().isAssignableFrom(other);
