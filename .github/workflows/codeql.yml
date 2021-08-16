@@ -35,6 +35,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-maven-
       - name: Build
-        run: mvn compile -B --file pom.xml
+        run: mvn compile -B -ntp --file pom.xml
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v1
