@@ -20,6 +20,7 @@ pom.xml.next
 release.properties
 dependency-reduced-pom.xml
 buildNumber.properties
+.git-versioned-pom.xml
 
 # Node
 node_modules

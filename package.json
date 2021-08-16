@@ -1,6 +1,7 @@
 {
 	"name": "circumgraph",
 	"private": true,
+	"version": "0.1.0",
 	"devDependencies": {
 		"@commitlint/cli": "^12.0.1",
 		"husky": "^5.2.0"
