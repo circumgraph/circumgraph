@@ -31,12 +31,6 @@ jobs:
         password: ${{ secrets.GITHUB_TOKEN }}
         logout: true
 
-    - name: Initialize CodeQL
-      uses: github/codeql-action/init@v1
-      with:
-        languages: java
-        queries: +security-and-quality
-
     - name: Cache local Maven repository
       uses: actions/cache@v2
       with:
@@ -51,9 +45,5 @@ jobs:
       run: mvn test -B --file pom.xml
     - name: Package
       run: mvn package -B -Ddeploy -DskipTests --file pom.xml
-
-    - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v1
-
     - name: Upload to Codecov
       uses: codecov/codecov-action@v2
