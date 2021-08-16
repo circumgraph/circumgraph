@@ -70,11 +70,11 @@ jobs:
         echo ::set-output name=version-tag::$(git describe --tags $(git rev-list --tags --max-count=1))
     - name: Create release
       uses: softprops/action-gh-release@v1
-        with:
-          tag_name: ${{ steps.push.outputs.version-tag }}
-          name: ${{ steps.push.outputs.version-tag }}
-          body_path: CHANGELOG.md
-          prerelease: false
+      with:
+        tag_name: ${{ steps.push.outputs.version-tag }}
+        name: ${{ steps.push.outputs.version-tag }}
+        body_path: CHANGELOG.md
+        prerelease: false
       env:
         GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
     - name: Upload to Codecov
