@@ -105,7 +105,7 @@ public class ModelBuilderImpl
 		ValidationMessageType.error()
 			.withCode("model:invalid-directive")
 			.withArgument("directive")
-			.withMessage("Directive @{{directive}} can not be used at this location")
+			.withMessage("Directive `@{{directive}}` can not be used at this location")
 			.build();
 
 	private static final ValidationMessageType INCOMPATIBLE_TYPES =
@@ -113,7 +113,7 @@ public class ModelBuilderImpl
 			.withCode("model:incompatible-type")
 			.withArgument("type")
 			.withArgument("originalLocation")
-			.withMessage("Could not merge: {{type}} has a different type than previously defined at {{originalLocation}}")
+			.withMessage("Could not merge: `{{type}}` has a different type than previously defined at {{originalLocation}}")
 			.build();
 
 	private static final ValidationMessageType INCOMPATIBLE_FIELD_TYPE =
@@ -122,7 +122,7 @@ public class ModelBuilderImpl
 			.withArgument("type")
 			.withArgument("field")
 			.withArgument("originalLocation")
-			.withMessage("Could not merge: Field {{field}} in {{type}} has a different type than previously defined at {{originalLocation}}")
+			.withMessage("Could not merge: Field `{{field}}` in `{{type}}` has a different type than previously defined at {{originalLocation}}")
 			.build();
 
 	private static final ValidationMessageType INCOMPATIBLE_ARGUMENT_TYPE =
@@ -133,7 +133,7 @@ public class ModelBuilderImpl
 			.withArgument("argument")
 			.withArgument("location")
 			.withArgument("originalLocation")
-			.withMessage("Could not merge: Argument {{argument}} in {{type}}.{{field}} has a different type than previously defined at {{originalLocation}}")
+			.withMessage("Could not merge: Argument `{{argument}}` in `{{type}}.{{field}}` has a different type than previously defined at {{originalLocation}}")
 			.build();
 
 	private static final ValidationMessageType INVALID_IMPLEMENTS =
@@ -141,7 +141,7 @@ public class ModelBuilderImpl
 			.withCode("model:invalid-implements")
 			.withArgument("type")
 			.withArgument("implements")
-			.withMessage("{{type}} can not implement {{implements}}, type is not an interface")
+			.withMessage("`{{type}}` can not implement `{{implements}}`, type is not an interface")
 			.build();
 
 	private static final ValidationMessageType INVALID_IMPLEMENTS_LOOP =
@@ -149,7 +149,7 @@ public class ModelBuilderImpl
 			.withCode("model:invalid-implements-loop")
 			.withArgument("type")
 			.withArgument("implements")
-			.withMessage("{{type}} can not implement {{implements}}, as {{implements}} already implements {{type}} creating a loop")
+			.withMessage("`{{type}}` can not implement `{{implements}}`, as `{{implements}}` already implements `{{type}}` creating a loop")
 			.build();
 
 	private static final ValidationMessageType INCOMPATIBLE_INTERFACE_FIELD_TYPE =
@@ -160,7 +160,7 @@ public class ModelBuilderImpl
 			.withArgument("fieldType")
 			.withArgument("interface")
 			.withArgument("interfaceFieldType")
-			.withMessage("Field {{field}} in {{type}} is {{fieldType}} but was declared as {{interfaceFieldType}} in the implemented interface {{interface}}")
+			.withMessage("Field `{{field}}` in `{{type}}` is `{{fieldType}}` but was declared as `{{interfaceFieldType}}` in the implemented interface `{{interface}}`")
 			.build();
 
 	private final ImmutableSet<TypeDef> types;

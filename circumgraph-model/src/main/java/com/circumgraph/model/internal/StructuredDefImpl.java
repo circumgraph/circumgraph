@@ -15,6 +15,7 @@ import com.circumgraph.model.validation.SourceLocation;
 
 import org.eclipse.collections.api.RichIterable;
 import org.eclipse.collections.api.factory.Lists;
+import org.eclipse.collections.api.factory.Maps;
 import org.eclipse.collections.api.factory.Sets;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.ListIterable;
@@ -108,26 +109,7 @@ public abstract class StructuredDefImpl
 	@Override
 	public boolean findImplements(String name)
 	{
-		var checked = Sets.mutable.<String>empty();
-		var stack = getImplements().toStack();
-		while(! stack.isEmpty())
-		{
-			var def = stack.pop();
-			if(def.getName().equals(name))
-			{
-				return true;
-			}
-
-			for(var subDef : def.getImplements())
-			{
-				if(checked.add(subDef.getName()))
-				{
-					stack.push(subDef);
-				}
-			}
-		}
-
-		return false;
+		return findImplements(t -> Objects.equals(name, t.getName())).isPresent();
 	}
 
 	@Override
@@ -218,12 +200,16 @@ public abstract class StructuredDefImpl
 	{
 		this.defs = defs;
 
-		for(FieldDef field : directFields)
+		// Collect all the indirect fields
+		for(var field : directFields)
 		{
 			HasPreparation.maybePrepare(field, defs);
+			((FieldDefImpl) field).setDeclaringType(this);
 		}
 
-		ensureFields();
+		MutableMap<String, FieldDef> fields = Maps.mutable.empty();
+		collectFields(this, fields);
+		this.fields = fields.toImmutable();
 	}
 
 	@Override
@@ -232,30 +218,13 @@ public abstract class StructuredDefImpl
 		return defs != null;
 	}
 
-	private void ensureFields()
-	{
-		if(fields != null) return;
-
-		for(var field : directFields)
-		{
-			((FieldDefImpl) field).setDeclaringType(this);
-		}
-
-		MutableMap<String, FieldDef> fields = directFields.toMap(FieldDef::getName, v -> v);
-		getImplements().forEach(def -> {
-			HasPreparation.maybePrepare(def, defs);
-
-			collectFields(def, fields);
-		});
-
-		this.fields = fields.toImmutable();
-	}
-
 	private void collectFields(StructuredDef def, MutableMap<String, FieldDef> fields)
 	{
+		HasPreparation.maybePrepare(def, defs);
+
 		for(FieldDef field : def.getDirectFields())
 		{
-			if(fields.contains(field.getName()))
+			if(fields.containsKey(field.getName()))
 			{
 				continue;
 			}
@@ -263,7 +232,9 @@ public abstract class StructuredDefImpl
 			fields.put(field.getName(), field);
 		}
 
-		def.getImplements().forEach(i -> collectFields(i, fields));
+		def.getImplements().forEach(i -> {
+			collectFields(i, fields);
+		});
 	}
 
 	@Override
