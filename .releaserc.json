@@ -3,12 +3,13 @@
 	"plugins": [
 		"@semantic-release/commit-analyzer",
 		"@semantic-release/release-notes-generator",
+		"@semantic-release/changelog",
 		[ "@semantic-release/exec", {
 			"prepareCmd": "mvn versions:set -B -ntp -DgenerateBackupPoms=false -DnewVersion=${nextRelease.version}",
 			"publishCmd": "mvn package -B -ntp -Ddeploy -DskipTests --file pom.xml"
 		} ],
 		[ "@semantic-release/git", {
-			"assets": [ "pom.xml", "*/pom.xml" ]
+			"assets": [ "CHANGELOG.md", "pom.xml", "*/pom.xml" ]
 		} ],
 		"@semantic-release/github"
 	]
