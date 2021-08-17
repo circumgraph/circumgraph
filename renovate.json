@@ -1,5 +1,34 @@
 {
-  "extends": [
-    "config:base"
-  ]
+	"extends": [
+		"config:base"
+	],
+
+	"semanticCommits": "enabled",
+	"semanticCommitType": "build",
+	"semanticCommitScope": "",
+
+	"js": {
+		"semanticCommitType": "build",
+		"semanticCommitScope": ""
+	},
+
+	"major": {
+        "semanticCommitType": "feat",
+		"labels": [ "dependencies" ]
+	},
+	"minor": {
+		"semanticCommitType": "feat",
+		"labels": [ "dependencies" ]
+	},
+	"patch": {
+		"semanticCommitType": "fix",
+		"labels": [ "dependencies" ]
+	},
+
+	"packageRules": [
+		{
+			"matchDepTypes": [ "test" ],
+			"semanticCommitType": "build"
+		}
+	]
 }
