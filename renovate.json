@@ -11,6 +11,10 @@
 
 	"packageRules": [
 		{
+			"matchPackagePrefixes": [ "com.graphql-java:" ],
+			"allowedVersions": "/^[0-9]+\\.[0-9]+(\\.[0-9]+)?$/"
+		},
+		{
 			"matchDatasources": [ "maven" ],
 			"matchUpdateTypes": [ "major", "minor" ],
 			"semanticCommitType": "feat"
@@ -21,11 +25,21 @@
 			"semanticCommitType": "fix"
 		},
 		{
-			"matchDepTypes": [ "test", "plugin" ],
+			"matchDepTypes": [ "test" ],
 			"semanticCommitType": "build"
 		},
 		{
-			"matchDatasources": [ "npm" ],
+			"matchDepTypes": [ "test" ],
+			"semanticCommitType": "build"
+		},
+		{
+			"matchPackagePrefixes": [
+				"org.apache.maven.plugins:",
+				"net.bytebuddy:byte-buddy-maven-plugin",
+				"io.projectreactor:reactor-tools",
+				"com.github.spotbugs:",
+				"org.jacoco"
+			],
 			"semanticCommitType": "build"
 		}
 	]
