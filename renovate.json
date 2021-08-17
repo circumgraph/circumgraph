@@ -15,12 +15,12 @@
 			"allowedVersions": "/^[0-9]+\\.[0-9]+(\\.[0-9]+)?$/"
 		},
 		{
-			"matchDatasources": [ "maven" ],
+			"matchManagers": [ "maven" ],
 			"matchUpdateTypes": [ "major", "minor" ],
 			"semanticCommitType": "feat"
 		},
 		{
-			"matchDatasources": [ "maven" ],
+			"matchManagers": [ "maven" ],
 			"matchUpdateTypes": [ "patch" ],
 			"semanticCommitType": "fix"
 		},
@@ -29,22 +29,20 @@
 			"semanticCommitType": "feat"
 		},
 		{
-			"groupName": "Tests",
 			"matchDepTypes": [ "test" ],
 			"semanticCommitType": "build"
 		},
 		{
 			"groupName": "Development environment",
-			"matchDatasources": [ "npm" ],
+			"matchManagers": [ "npm" ],
 			"semanticCommitType": "build"
 		},
 		{
-			"groupName": "Github Actions",
-			"matchDatasources": [ "github-actions" ],
+			"matchManagers": [ "github-actions" ],
 			"semanticCommitType": "build"
 		},
 		{
-			"groupName": "Maven environment",
+			"groupName": "Build environment",
 			"matchPackagePrefixes": [
 				"org.apache.maven.plugins:",
 				"net.bytebuddy:byte-buddy-maven-plugin",
