@@ -25,20 +25,33 @@
 			"semanticCommitType": "fix"
 		},
 		{
+			"matchPackagePrefixes": [ "io.projectreactor-reactor-bom" ],
+			"semanticCommitType": "feat"
+		},
+		{
+			"groupName": "Tests",
 			"matchDepTypes": [ "test" ],
 			"semanticCommitType": "build"
 		},
 		{
-			"matchDepTypes": [ "test" ],
+			"groupName": "Development environment",
+			"matchDatasources": [ "npm" ],
 			"semanticCommitType": "build"
 		},
 		{
+			"groupName": "Github Actions",
+			"matchDatasources": [ "github-actions" ],
+			"semanticCommitType": "build"
+		},
+		{
+			"groupName": "Maven environment",
 			"matchPackagePrefixes": [
 				"org.apache.maven.plugins:",
 				"net.bytebuddy:byte-buddy-maven-plugin",
 				"io.projectreactor:reactor-tools",
 				"com.github.spotbugs:",
-				"org.jacoco"
+				"org.jacoco",
+				"com.google.cloud.tools:jib-maven-plugin"
 			],
 			"semanticCommitType": "build"
 		}
