@@ -7,27 +7,25 @@
 	"semanticCommitType": "build",
 	"semanticCommitScope": "",
 
-	"js": {
-		"semanticCommitType": "build",
-		"semanticCommitScope": ""
-	},
-
-	"major": {
-        "semanticCommitType": "feat",
-		"labels": [ "dependencies" ]
-	},
-	"minor": {
-		"semanticCommitType": "feat",
-		"labels": [ "dependencies" ]
-	},
-	"patch": {
-		"semanticCommitType": "fix",
-		"labels": [ "dependencies" ]
-	},
+	"labels": [ "dependencies" ],
 
 	"packageRules": [
 		{
-			"matchDepTypes": [ "test" ],
+			"matchDatasources": [ "maven" ],
+			"matchUpdateTypes": [ "major", "minor" ],
+			"semanticCommitType": "feat"
+		},
+		{
+			"matchDatasources": [ "maven" ],
+			"matchUpdateTypes": [ "patch" ],
+			"semanticCommitType": "fix"
+		},
+		{
+			"matchDepTypes": [ "test", "plugin" ],
+			"semanticCommitType": "build"
+		},
+		{
+			"matchDatasources": [ "npm" ],
 			"semanticCommitType": "build"
 		}
 	]
