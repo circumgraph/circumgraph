@@ -1,0 +1,57 @@
+{
+	"extends": [
+		"config:base"
+	],
+
+	"semanticCommits": "enabled",
+	"semanticCommitType": "build",
+	"semanticCommitScope": "",
+
+	"labels": [ "dependencies" ],
+
+	"packageRules": [
+		{
+			"matchPackagePrefixes": [ "com.graphql-java:" ],
+			"allowedVersions": "/^[0-9]+\\.[0-9]+(\\.[0-9]+)?$/"
+		},
+		{
+			"matchManagers": [ "maven" ],
+			"matchUpdateTypes": [ "major", "minor" ],
+			"semanticCommitType": "feat"
+		},
+		{
+			"matchManagers": [ "maven" ],
+			"matchUpdateTypes": [ "patch" ],
+			"semanticCommitType": "fix"
+		},
+		{
+			"matchPackagePrefixes": [ "io.projectreactor-reactor-bom" ],
+			"semanticCommitType": "feat"
+		},
+		{
+			"matchDepTypes": [ "test" ],
+			"semanticCommitType": "build"
+		},
+		{
+			"groupName": "Development environment",
+			"matchManagers": [ "npm" ],
+			"semanticCommitType": "build"
+		},
+		{
+			"matchManagers": [ "github-actions" ],
+			"semanticCommitType": "build"
+		},
+		{
+			"groupName": "Build environment",
+			"matchPackagePrefixes": [
+				"org.apache.maven.plugins:",
+				"net.bytebuddy:byte-buddy-maven-plugin",
+				"io.projectreactor:reactor-tools",
+				"com.github.spotbugs:",
+				"org.jacoco",
+				"com.google.cloud.tools:jib-maven-plugin"
+			],
+			"semanticCommitType": "build"
+		}
+	]
+}
