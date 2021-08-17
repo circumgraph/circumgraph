@@ -3,12 +3,10 @@
 	"private": true,
 	"version": "0.1.0",
 	"devDependencies": {
-		"@commitlint/cli": "12.1.4",
-		"husky": "5.2.0"
+		"@commitlint/cli": "13.1.0",
+		"husky": "7.0.1"
 	},
-	"husky": {
-		"hooks": {
-			"commit-msg": "commitlint -E HUSKY_GIT_PARAMS"
-		}
+	"scripts": {
+		"prepare": "husky install"
 	}
 }
