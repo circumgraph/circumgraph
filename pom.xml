@@ -123,7 +123,7 @@
 			<plugin>
 				<groupId>net.bytebuddy</groupId>
 				<artifactId>byte-buddy-maven-plugin</artifactId>
-				<version>1.11.12</version>
+				<version>1.11.13</version>
 
 				<dependencies>
 					<dependency>
