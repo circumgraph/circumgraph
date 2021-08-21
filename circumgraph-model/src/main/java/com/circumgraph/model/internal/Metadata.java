@@ -63,7 +63,8 @@ public class Metadata
 	/**
 	 * Set some metadata.
 	 *
-	 * @param argument
+	 * @param key
+	 * @param value
 	 * @return
 	 */
 	public <V> Metadata withMetadata(MetadataKey<V> key, V value)

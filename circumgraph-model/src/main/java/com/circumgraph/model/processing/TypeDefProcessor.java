@@ -21,8 +21,6 @@ public interface TypeDefProcessor<T>
 	 *   encounter used to report validation issues and modify the schema
 	 * @param type
 	 *   type being processed
-	 * @param validationCollector
-	 *   collector for validation issues that occur during the processing
 	 */
 	void process(
 		ProcessingEncounter encounter,
