@@ -6,6 +6,7 @@ import java.util.Optional;
 import com.circumgraph.model.DirectiveUse;
 import com.circumgraph.model.InputFieldDef;
 import com.circumgraph.model.InputObjectDef;
+import com.circumgraph.model.MetadataDef;
 import com.circumgraph.model.MetadataKey;
 import com.circumgraph.model.NonNullDef;
 import com.circumgraph.model.TypeDef;
@@ -22,14 +23,14 @@ import org.eclipse.collections.api.list.ListIterable;
 public class InputObjectDefImpl
 	implements InputObjectDef, HasPreparation
 {
-	protected final SourceLocation sourceLocation;
+	private final SourceLocation sourceLocation;
 
-	protected final String name;
-	protected final String description;
-	protected final ImmutableList<DirectiveUse> directives;
-	protected final ImmutableList<InputFieldDef> fields;
+	private final String name;
+	private final String description;
+	private final ImmutableList<DirectiveUse> directives;
+	private final ImmutableList<InputFieldDef> fields;
+	private final Metadata metadata;
 
-	private final MetadataHelper metadata;
 	protected ModelDefs defs;
 
 	public InputObjectDefImpl(
@@ -37,7 +38,8 @@ public class InputObjectDefImpl
 		String name,
 		String description,
 		ImmutableList<DirectiveUse> directives,
-		ImmutableList<InputFieldDef> fields
+		ImmutableList<InputFieldDef> fields,
+		Metadata metadata
 	)
 	{
 		this.sourceLocation = sourceLocation;
@@ -45,8 +47,7 @@ public class InputObjectDefImpl
 		this.description = description;
 		this.fields = fields;
 		this.directives = directives;
-
-		this.metadata = new MetadataHelper();
+		this.metadata = metadata;
 	}
 
 	@Override
@@ -104,7 +105,8 @@ public class InputObjectDefImpl
 			name,
 			description,
 			fields,
-			directives
+			directives,
+			metadata.derive()
 		);
 	}
 
@@ -115,6 +117,7 @@ public class InputObjectDefImpl
 
 		for(InputFieldDef field : fields)
 		{
+			((InputFieldDefImpl) field).setDeclaringType(this);
 			HasPreparation.maybePrepare(field, defs);
 		}
 	}
@@ -132,16 +135,22 @@ public class InputObjectDefImpl
 	}
 
 	@Override
-	public <V> void setMetadata(MetadataKey<V> key, V value)
+	public RichIterable<MetadataDef> getDefinedMetadata()
 	{
-		metadata.setMetadata(key, value);
+		return metadata.getDefinedMetadata();
+	}
+
+	@Override
+	public <V> void setRuntimeMetadata(MetadataKey<V> key, V value)
+	{
+		metadata.setRuntimeMetadata(key, value);
 	}
 
 	@Override
 	public int hashCode()
 	{
 		return Objects
-			.hash(description, fields, name, directives);
+			.hash(description, fields, name, directives, metadata);
 	}
 
 	@Override
@@ -154,7 +163,8 @@ public class InputObjectDefImpl
 		return Objects.equals(description, other.description)
 			&& Objects.equals(fields, other.fields)
 			&& Objects.equals(name, other.name)
-			&& Objects.equals(directives, other.directives);
+			&& Objects.equals(directives, other.directives)
+			&& Objects.equals(metadata, other.metadata);
 	}
 
 	public static Builder create(String name)
@@ -164,27 +174,30 @@ public class InputObjectDefImpl
 			name,
 			null,
 			Lists.immutable.empty(),
-			Lists.immutable.empty()
+			Lists.immutable.empty(),
+			Metadata.empty()
 		);
 	}
 
 	public static class BuilderImpl
 		implements Builder
 	{
-		protected final SourceLocation sourceLocation;
+		private final SourceLocation sourceLocation;
 
-		protected final String id;
-		protected final String description;
+		private final String id;
+		private final String description;
 
-		protected final ImmutableList<InputFieldDef> fields;
-		protected final ImmutableList<DirectiveUse> directives;
+		private final ImmutableList<InputFieldDef> fields;
+		private final ImmutableList<DirectiveUse> directives;
+		private final Metadata metadata;
 
 		public BuilderImpl(
 			SourceLocation sourceLocation,
 			String id,
 			String description,
 			ImmutableList<InputFieldDef> fields,
-			ImmutableList<DirectiveUse> directives
+			ImmutableList<DirectiveUse> directives,
+			Metadata metadata
 		)
 		{
 			this.sourceLocation = sourceLocation;
@@ -192,6 +205,7 @@ public class InputObjectDefImpl
 			this.description = description;
 			this.fields = fields;
 			this.directives = directives;
+			this.metadata = metadata;
 		}
 
 		@Override
@@ -202,32 +216,37 @@ public class InputObjectDefImpl
 				id,
 				description,
 				fields,
-				directives
+				directives,
+				metadata
 			);
 		}
 
 		@Override
 		public Builder addField(InputFieldDef field)
 		{
+			var currentField = fields.detect(f -> f.getName().equals(field.getName()));
+			var newFields = (currentField == null ? fields : fields.newWithout(currentField))
+				.newWith(field);
+
 			return new BuilderImpl(
 				sourceLocation,
 				id,
 				description,
-				fields.newWith(field),
-				directives
+				newFields,
+				directives,
+				metadata
 			);
 		}
 
 		@Override
 		public Builder addFields(Iterable<? extends InputFieldDef> fields)
 		{
-			return new BuilderImpl(
-				sourceLocation,
-				id,
-				description,
-				this.fields.newWithAll(fields),
-				directives
-			);
+			Builder result = this;
+			for(var field : fields)
+			{
+				result = result.addField(field);
+			}
+			return result;
 		}
 
 		@Override
@@ -238,7 +257,8 @@ public class InputObjectDefImpl
 				id,
 				description,
 				fields,
-				directives.newWith(directive)
+				directives.newWith(directive),
+				metadata
 			);
 		}
 
@@ -250,7 +270,8 @@ public class InputObjectDefImpl
 				id,
 				description,
 				fields,
-				this.directives.newWithAll(directives)
+				this.directives.newWithAll(directives),
+				metadata
 			);
 		}
 
@@ -262,7 +283,34 @@ public class InputObjectDefImpl
 				id,
 				description,
 				fields,
-				directives
+				directives,
+				metadata
+			);
+		}
+
+		@Override
+		public <V> Builder withMetadata(MetadataKey<V> key, V value)
+		{
+			return new BuilderImpl(
+				sourceLocation,
+				id,
+				description,
+				fields,
+				directives,
+				metadata.withMetadata(key, value)
+			);
+		}
+
+		@Override
+		public Builder withAllMetadata(Iterable<MetadataDef> defs)
+		{
+			return new BuilderImpl(
+				sourceLocation,
+				id,
+				description,
+				fields,
+				directives,
+				metadata.withAllMetadata(defs)
 			);
 		}
 
@@ -274,7 +322,8 @@ public class InputObjectDefImpl
 				id,
 				description,
 				directives,
-				fields
+				fields,
+				metadata
 			);
 		}
 	}

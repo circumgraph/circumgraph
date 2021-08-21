@@ -95,6 +95,30 @@ public class SchemaNames
 	}
 
 	/**
+	 * Get the name of the field used to store the given type.
+	 *
+	 * @param def
+	 * @return
+	 */
+	public static String toStoreMutationFieldName(StructuredDef def)
+	{
+		// TODO: Support for controlling the type name
+		return "store" + def.getName();
+	}
+
+	/**
+	 * Get the name of the field used to store the given type.
+	 *
+	 * @param def
+	 * @return
+	 */
+	public static String toDeleteMutationFieldName(StructuredDef def)
+	{
+		// TODO: Support for controlling the type name
+		return "delete" + def.getName();
+	}
+
+	/**
 	 * Get the name the mutation input for this type.
 	 *
 	 * @param def

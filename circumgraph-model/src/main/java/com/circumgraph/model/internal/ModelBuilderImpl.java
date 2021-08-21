@@ -3,21 +3,27 @@ package com.circumgraph.model.internal;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 import com.circumgraph.model.ArgumentDef;
+import com.circumgraph.model.Buildable;
+import com.circumgraph.model.Derivable;
 import com.circumgraph.model.DirectiveUse;
 import com.circumgraph.model.EnumDef;
 import com.circumgraph.model.EnumValueDef;
 import com.circumgraph.model.FieldDef;
 import com.circumgraph.model.HasDirectives;
+import com.circumgraph.model.HasMetadata;
 import com.circumgraph.model.HasSourceLocation;
 import com.circumgraph.model.InputFieldDef;
 import com.circumgraph.model.InputObjectDef;
 import com.circumgraph.model.InputTypeDef;
 import com.circumgraph.model.InterfaceDef;
 import com.circumgraph.model.ListDef;
+import com.circumgraph.model.MetadataDef;
 import com.circumgraph.model.Model;
 import com.circumgraph.model.Model.Builder;
+import com.circumgraph.model.ModelException;
 import com.circumgraph.model.ModelValidationException;
 import com.circumgraph.model.NonNullDef;
 import com.circumgraph.model.ObjectDef;
@@ -60,7 +66,7 @@ public class ModelBuilderImpl
 			.withArgument("type")
 			.withArgument("field")
 			.withArgument("fieldType")
-			.withMessage("Field `{{field}}` in `{{fieldType}}` is declared as `{{fieldType}}`, but type does not exist")
+			.withMessage("Field `{{field}}` in `{{type}}` is declared as `{{fieldType}}`, but type does not exist")
 			.build();
 
 	private static final ValidationMessageType FIELD_TYPE_OUTPUT =
@@ -69,7 +75,7 @@ public class ModelBuilderImpl
 			.withArgument("type")
 			.withArgument("field")
 			.withArgument("fieldType")
-			.withMessage("Field `{{field}}` in `{{fieldType}}` is declared as `{{fieldType}}`, but type is not an output type")
+			.withMessage("Field `{{field}}` in `{{type}}` is declared as `{{fieldType}}`, but type is not an output type")
 			.build();
 
 	private static final ValidationMessageType FIELD_TYPE_INPUT =
@@ -78,7 +84,7 @@ public class ModelBuilderImpl
 			.withArgument("type")
 			.withArgument("field")
 			.withArgument("fieldType")
-			.withMessage("Field `{{field}}` in `{{fieldType}}` is declared as `{{fieldType}}`, but type is not an input type")
+			.withMessage("Field `{{field}}` in `{{type}}` is declared as `{{fieldType}}`, but type is not an input type")
 			.build();
 
 	private static final ValidationMessageType ARGUMENT_TYPE_UNKNOWN =
@@ -88,7 +94,7 @@ public class ModelBuilderImpl
 			.withArgument("field")
 			.withArgument("argument")
 			.withArgument("argumentType")
-			.withMessage("Argument `{{argument}}` of field `{{field}}` in `{{fieldType}}` is declared as `{{argumentType}}`, but type does not exist")
+			.withMessage("Argument `{{argument}}` of field `{{field}}` in `{{type}}` is declared as `{{argumentType}}`, but type does not exist")
 			.build();
 
 	private static final ValidationMessageType ARGUMENT_TYPE_INPUT =
@@ -98,7 +104,7 @@ public class ModelBuilderImpl
 			.withArgument("field")
 			.withArgument("argument")
 			.withArgument("argumentType")
-			.withMessage("Argument `{{argument}}` of field `{{field}}` in `{{fieldType}}` is declared as `{{argumentType}}`, but type is not an input type")
+			.withMessage("Argument `{{argument}}` of field `{{field}}` in `{{type}}` is declared as `{{argumentType}}`, but type is not an input type")
 			.build();
 
 	private static final ValidationMessageType INVALID_DIRECTIVE =
@@ -161,6 +167,22 @@ public class ModelBuilderImpl
 			.withArgument("interface")
 			.withArgument("interfaceFieldType")
 			.withMessage("Field `{{field}}` in `{{type}}` is `{{fieldType}}` but was declared as `{{interfaceFieldType}}` in the implemented interface `{{interface}}`")
+			.build();
+
+	private static final ValidationMessageType UNION_TYPE_UNKNOWN =
+		ValidationMessageType.error()
+			.withCode("model:union:unknown-type")
+			.withArgument("type")
+			.withArgument("subType")
+			.withMessage("`{{subType}}` is part of union `{{type}}`, but type is not declared")
+			.build();
+
+	private static final ValidationMessageType UNION_TYPE_STRUCTURED =
+		ValidationMessageType.error()
+			.withCode("model:union:structured-type-required")
+			.withArgument("type")
+			.withArgument("subType")
+			.withMessage("`{{subType}}` is part of union `{{type}}`, but is not a structured type, must be interface or object")
 			.build();
 
 	private final ImmutableSet<TypeDef> types;
@@ -245,10 +267,7 @@ public class ModelBuilderImpl
 				}
 			};
 
-			for(TypeDef type : types)
-			{
-				HasPreparation.maybePrepare(type, defs);
-			}
+			encounter.prepare(defs);
 
 			// Process model after preparation
 			process(encounter);
@@ -283,6 +302,11 @@ public class ModelBuilderImpl
 		TypeDef extension
 	)
 	{
+		if(current.equals(extension))
+		{
+			return current;
+		}
+
 		if(current instanceof ObjectDef d1)
 		{
 			if(extension instanceof ObjectDef d2)
@@ -353,6 +377,7 @@ public class ModelBuilderImpl
 			.addImplementsAll(mergeImplements(validationCollector, d1, d2))
 			.addDirectives(mergeDirectives(validationCollector, d1, d2))
 			.addFields(mergeFields(validationCollector, d1, d1.getDirectFields(), d2.getDirectFields()))
+			.withAllMetadata(mergeMetadata(validationCollector, d1, d2))
 			.build();
 	}
 
@@ -368,6 +393,7 @@ public class ModelBuilderImpl
 			.addImplementsAll(mergeImplements(validationCollector, d1, d2))
 			.addDirectives(mergeDirectives(validationCollector, d1, d2))
 			.addFields(mergeFields(validationCollector, d1, d1.getDirectFields(), d2.getDirectFields()))
+			.withAllMetadata(mergeMetadata(validationCollector, d1, d2))
 			.build();
 	}
 
@@ -438,6 +464,7 @@ public class ModelBuilderImpl
 			.withType(f1.getType())
 			.addArguments(mergeArguments(validationCollector, type, f1, f1.getArguments(), f2.getArguments()))
 			.addDirectives(mergeDirectives(validationCollector, f1, f2))
+			.withAllMetadata(mergeMetadata(validationCollector, f1, f2))
 			.build();
 	}
 
@@ -521,6 +548,7 @@ public class ModelBuilderImpl
 			.withDescription(pickFirstNonBlank(d1.getDescription(), d2.getDescription()))
 			.addDirectives(mergeDirectives(validationCollector, d1, d2))
 			.addFields(mergeInputFields(validationCollector, d1, d1.getFields(), d2.getFields()))
+			.withAllMetadata(mergeMetadata(validationCollector, d1, d2))
 			.build();
 	}
 
@@ -597,6 +625,7 @@ public class ModelBuilderImpl
 			.withDescription(pickFirstNonBlank(f1.getDescription(), f2.getDescription()))
 			.withType(f1.getType())
 			.addDirectives(mergeDirectives(validationCollector, f1, f2))
+			.withAllMetadata(mergeMetadata(validationCollector, f1, f2))
 			.build();
 	}
 
@@ -691,6 +720,18 @@ public class ModelBuilderImpl
 			.build();
 	}
 
+	private RichIterable<MetadataDef> mergeMetadata(
+		Consumer<ValidationMessage> validationCollector,
+		HasMetadata d1,
+		HasMetadata d2
+	)
+	{
+		var result = Lists.mutable.<MetadataDef>empty();
+		result.addAllIterable(d1.getDefinedMetadata());
+		result.addAllIterable(d2.getDefinedMetadata());
+		return result;
+	}
+
 	/**
 	 * Get a description of where the given type has been defined.
 	 *
@@ -737,13 +778,16 @@ public class ModelBuilderImpl
 				validateField(types, structured, field, validationCollector);
 			}
 		}
-
-		if(type instanceof InputObjectDef i)
+		else if(type instanceof InputObjectDef i)
 		{
 			for(var field : i.getFields())
 			{
 				validateInputField(types, i, field, validationCollector);
 			}
+		}
+		else if(type instanceof UnionDef u)
+		{
+			validateUnion(types, u, validationCollector);
 		}
 	}
 
@@ -934,6 +978,43 @@ public class ModelBuilderImpl
 		}
 	}
 
+	private void validateUnion(
+		TypeFinder types,
+		UnionDef union,
+		Consumer<ValidationMessage> validationCollector
+	)
+	{
+		for(var type : union.getTypes())
+		{
+			// Validate the type
+			TypeDef foundType = type;
+			if(type instanceof TypeRef r)
+			{
+				// Resolve the type
+				foundType = types.get(type.getName());
+			}
+
+			if(foundType == null)
+			{
+				validationCollector.accept(UNION_TYPE_UNKNOWN.toMessage()
+					.withLocation(union)
+					.withArgument("type", union.getName())
+					.withArgument("subType", type.getName())
+					.build()
+				);
+			}
+			else if(! (foundType instanceof StructuredDef))
+			{
+				validationCollector.accept(UNION_TYPE_STRUCTURED.toMessage()
+					.withLocation(union)
+					.withArgument("type", union.getName())
+					.withArgument("subType", type.getName())
+					.build()
+				);
+			}
+		}
+	}
+
 	/**
 	 * Validate that all of the directives places on something will be
 	 * processed.
@@ -1043,8 +1124,8 @@ public class ModelBuilderImpl
 					// This interface implements us, but we also implement it
 					validationCollector.accept(INVALID_IMPLEMENTS_LOOP.toMessage()
 						.withLocation((InterfaceDef) implementedAsType)
-						.withArgument("type", name)
-						.withArgument("implements", type.getName())
+						.withArgument("type", implementedName)
+						.withArgument("implements", name)
 						.build()
 					);
 				}
@@ -1136,44 +1217,56 @@ public class ModelBuilderImpl
 		// Process directives
 		for(DirectiveUseProcessor<?> v : directiveUseProcessors)
 		{
-			for(var type : encounter.typeMap)
+			for(var type : encounter.types())
 			{
 				if(type instanceof HasDirectives hasDirectives)
 				{
 					processDirective(v, hasDirectives, encounter);
 				}
 
-				if(type instanceof StructuredDef structured)
+				if(type instanceof StructuredDef structuredDef)
 				{
-					for(FieldDef def : structured.getDirectFields())
+					for(var fieldDef : structuredDef.getDirectFields())
 					{
-						processDirective(v, def, encounter);
+						processDirective(v, fieldDef, encounter);
+
+						for(var arg : fieldDef.getArguments())
+						{
+							processDirective(v, arg, encounter);
+						}
 					}
 				}
-
-				if(encounter.modified)
+				else if(type instanceof InputObjectDef inputObjectDef)
 				{
-					// If the schema was modified we need to reprocess
-					return;
+					for(var field : inputObjectDef.getFields())
+					{
+						processDirective(v, field, encounter);
+					}
 				}
+			}
+
+			if(encounter.modified)
+			{
+				// If the schema was modified we need to reprocess
+				return;
 			}
 		}
 
 		// Process all the types
-		for(var type : encounter.typeMap)
+		for(var processor : typeDefProcessors)
 		{
-			for(var processor : typeDefProcessors)
+			for(var type : encounter.types())
 			{
 				if(processor.getType().isAssignableFrom(type.getClass()))
 				{
 					((TypeDefProcessor) processor).process(encounter, type);
-
-					if(encounter.modified)
-					{
-						// If the schema was modified we need to reprocess
-						return;
-					}
 				}
+			}
+
+			if(encounter.modified)
+			{
+				// If the schema was modified we need to reprocess
+				return;
 			}
 		}
 	}
@@ -1224,6 +1317,7 @@ public class ModelBuilderImpl
 		 * Flag that is set if the processing modifies types in any way.
 		 */
 		private boolean modified;
+		private RichIterable<TypeDef> types;
 
 		public ProcessingEncounterImpl(
 			Consumer<ValidationMessage> validationCollector
@@ -1233,9 +1327,23 @@ public class ModelBuilderImpl
 			this.typeMap = Maps.mutable.empty();
 		}
 
+		public void prepare(ModelDefs defs)
+		{
+			for(TypeDef type : types)
+			{
+				HasPreparation.maybePrepare(type, defs);
+			}
+		}
+
+		public RichIterable<TypeDef> types()
+		{
+			return types;
+		}
+
 		public void reset()
 		{
 			modified = false;
+			this.types = Lists.immutable.ofAll(typeMap);
 		}
 
 		@Override
@@ -1284,6 +1392,8 @@ public class ModelBuilderImpl
 			{
 				typeMap.put(def.getName(), updated);
 				modified = true;
+
+				addReferencedTypes(updated);
 			}
 		}
 
@@ -1295,35 +1405,109 @@ public class ModelBuilderImpl
 			{
 				typeMap.put(type.getName(), type);
 				modified = true;
+
+				addReferencedTypes(type);
 			}
 		}
 
-		@Override
-		public void changeOutput(FieldDef field, OutputTypeDef def)
+		/**
+		 * Inspect a type and add any types it references.
+		 *
+		 * @param def
+		 */
+		private void addReferencedTypes(TypeDef def)
 		{
-			var edited = field.derive()
-				.withType(def)
-				.build();
+			if(def instanceof StructuredDef s)
+			{
+				for(var field : s.getDirectFields())
+				{
+					unroll(field.getType()).ifPresent(this::addType);
 
-			var type = field.getDeclaringType().derive()
-				.addField(edited)
-				.build();
+					for(var arg : field.getArguments())
+					{
+						unroll(arg.getType()).ifPresent(this::addType);
+					}
+				}
+			}
+			else if(def instanceof UnionDef u)
+			{
+				for(var type : u.getTypes())
+				{
+					unroll(type).ifPresent(this::addType);
+				}
+			}
+			else if(def instanceof InputObjectDef i)
+			{
+				for(var field : i.getFields())
+				{
+					unroll(field.getType()).ifPresent(this::addType);
+				}
+			}
+		}
 
-			replaceType(type);
+		/**
+		 * Unroll a type until it's not a non-null, a list or a reference.
+		 *
+		 * @param d
+		 * @return
+		 */
+		private Optional<TypeDef> unroll(TypeDef d)
+		{
+			if(d instanceof NonNullDef n)
+			{
+				return unroll(n.getType());
+			}
+			else if(d instanceof ListDef l)
+			{
+				return unroll(l.getItemType());
+			}
+
+			return d instanceof TypeRef ? Optional.empty() : Optional.ofNullable(d);
 		}
 
 		@Override
-		public void addArgument(FieldDef field, ArgumentDef arg)
+		public <B extends Buildable<?>, D extends Derivable<B>> void edit(
+			D instance,
+			Function<B, B> editor
+		)
 		{
-			var edited = field.derive()
-				.addArgument(arg)
-				.build();
+			B builder = instance.derive();
+			D edited = (D) editor.apply(builder).build();
 
-			var type = field.getDeclaringType().derive()
-				.addField(edited)
-				.build();
+			if(edited instanceof TypeDef def)
+			{
+				replaceType(def);
+			}
+			else if(edited instanceof FieldDef def)
+			{
+				var parent = (StructuredDef) typeMap.get(
+					((FieldDef) instance).getDeclaringType().getName()
+				);
 
-			replaceType(type);
+				replaceType(parent.derive()
+					.addField(def)
+					.build()
+				);
+			}
+			else if(edited instanceof ArgumentDef argDef)
+			{
+				edit(((ArgumentDef) instance).getDeclaringField(), b -> b.addArgument(argDef));
+			}
+			else if(edited instanceof InputFieldDef def)
+			{
+				var parent = (InputObjectDef) typeMap.get(
+					((InputFieldDef) instance).getDeclaringType().getName()
+				);
+
+				replaceType(parent.derive()
+					.addField(def)
+					.build()
+				);
+			}
+			else
+			{
+				throw new ModelException("Unknown type of object, can not edit: " + instance);
+			}
 		}
 	}
 }

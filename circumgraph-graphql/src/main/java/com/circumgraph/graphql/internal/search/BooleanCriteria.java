@@ -2,9 +2,10 @@ package com.circumgraph.graphql.internal.search;
 
 import java.util.Map;
 
-import graphql.Scalars;
-import graphql.schema.GraphQLInputObjectField;
-import graphql.schema.GraphQLInputObjectType;
+import com.circumgraph.model.InputFieldDef;
+import com.circumgraph.model.InputObjectDef;
+import com.circumgraph.model.ScalarDef;
+
 import se.l4.silo.index.EqualsMatcher;
 import se.l4.silo.index.Matcher;
 
@@ -25,28 +26,27 @@ public class BooleanCriteria
 		match if no Boolean is present.
 	""";
 
-	private final GraphQLInputObjectType graphQLType;
+	private final InputObjectDef graphQLType;
 
 	public BooleanCriteria()
 	{
-		this.graphQLType = GraphQLInputObjectType.newInputObject()
-			.name("IDCriteriaInput")
-			.description(DESCRIPTION)
-			.field(GraphQLInputObjectField.newInputObjectField()
-				.name("any")
-				.description("Match if any value is present")
-				.type(Scalars.GraphQLBoolean)
+		this.graphQLType = InputObjectDef.create("IDCriteriaInput")
+			.withDescription(DESCRIPTION)
+			.addField(InputFieldDef.create("any")
+				.withType(ScalarDef.STRING)
+				.withDescription("Match if any value is present")
+				.build()
 			)
-			.field(GraphQLInputObjectField.newInputObjectField()
-				.name("equals")
-				.description("Boolean should equal the given value")
-				.type(Scalars.GraphQLBoolean)
+			.addField(InputFieldDef.create("equals")
+				.withType(ScalarDef.BOOLEAN)
+				.withDescription("Boolean should equal the given value")
+				.build()
 			)
 			.build();
 	}
 
 	@Override
-	public GraphQLInputObjectType getGraphQLType()
+	public InputObjectDef getGraphQLType()
 	{
 		return graphQLType;
 	}

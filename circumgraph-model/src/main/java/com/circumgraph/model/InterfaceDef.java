@@ -9,7 +9,7 @@ import org.eclipse.collections.api.set.SetIterable;
  * {@link ObjectDef objects} can implement.
  */
 public interface InterfaceDef
-	extends StructuredDef
+	extends StructuredDef, Derivable<InterfaceDef.Builder>
 {
 	/**
 	 * Get types that directly implements this interface.
@@ -48,7 +48,7 @@ public interface InterfaceDef
 	 * Builder for instances of {@link InterfaceDef}.
 	 */
 	interface Builder
-		extends StructuredDef.Builder<Builder>
+		extends StructuredDef.Builder<Builder>, Buildable<InterfaceDef>
 	{
 		/**
 		 * Build the instance.

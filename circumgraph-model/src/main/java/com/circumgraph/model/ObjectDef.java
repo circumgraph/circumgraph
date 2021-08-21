@@ -6,7 +6,7 @@ import com.circumgraph.model.internal.ObjectDefImpl;
  * Representation of an object.
  */
 public interface ObjectDef
-	extends StructuredDef
+	extends StructuredDef, Derivable<ObjectDef.Builder>
 {
 	/**
 	 * Start building a new instance of {@link ObjectDef}.
@@ -31,7 +31,7 @@ public interface ObjectDef
 	 * Builder for instances of {@link ObjectDef}.
 	 */
 	interface Builder
-		extends StructuredDef.Builder<Builder>
+		extends StructuredDef.Builder<Builder>, Buildable<ObjectDef>
 	{
 		/**
 		 * Build the instance.

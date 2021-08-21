@@ -1,9 +1,12 @@
 package com.circumgraph.graphql.internal.mutation;
 
 import java.util.Map;
+import java.util.Objects;
 
 import com.circumgraph.graphql.MutationInputMapper;
 import com.circumgraph.graphql.internal.InputUnions;
+import com.circumgraph.model.InputFieldDef;
+import com.circumgraph.model.InputObjectDef;
 import com.circumgraph.model.ListDef;
 import com.circumgraph.model.NonNullDef;
 import com.circumgraph.model.OutputTypeDef;
@@ -12,17 +15,11 @@ import com.circumgraph.storage.mutation.Mutation;
 
 import org.eclipse.collections.api.factory.Lists;
 
-import graphql.schema.GraphQLInputObjectField;
-import graphql.schema.GraphQLInputObjectType;
-import graphql.schema.GraphQLInputType;
-import graphql.schema.GraphQLList;
-import graphql.schema.GraphQLNonNull;
-
 public class ListMutationMapper<V>
 	implements MutationInputMapper<Map<String, Object>>
 {
 	private final ListDef.Output modelDef;
-	private final GraphQLInputObjectType graphQLType;
+	private final InputObjectDef graphQLType;
 	private final MutationInputMapper<V> itemMapper;
 
 	public ListMutationMapper(
@@ -35,22 +32,22 @@ public class ListMutationMapper<V>
 
 		var itemType = modelDef.getItemType();
 		var wasNonNull = false;
-		if(itemType instanceof NonNullDef.Output)
+		if(itemType instanceof NonNullDef.Output n)
 		{
-			itemType = ((NonNullDef.Output) itemType).getType();
+			itemType = n.getType();
 			wasNonNull = true;
 		}
 
-		var builder = GraphQLInputObjectType.newInputObject()
-			.name(itemType.getName() + "ListMutationInput")
-			.description("Mutation of a list of " + itemType.getName())
-			.field(GraphQLInputObjectField.newInputObjectField()
-				.name("set")
-				.description("Values to set")
-				.type(GraphQLList.list(
-					wasNonNull
-						? GraphQLNonNull.nonNull(itemMapper.getGraphQLType())
-						: itemMapper.getGraphQLType()
+		var builder = InputObjectDef.create(itemType.getName() + "ListMutationInput")
+			.withDescription("Mutation of a list of " + itemType.getName())
+			.addField(InputFieldDef.create("set")
+				.withDescription("Values to set")
+				.withType(NonNullDef.input(
+					ListDef.input(
+						wasNonNull
+							? NonNullDef.input(itemMapper.getGraphQLType())
+							: itemMapper.getGraphQLType()
+					)
 				))
 				.build()
 			);
@@ -65,7 +62,7 @@ public class ListMutationMapper<V>
 	}
 
 	@Override
-	public GraphQLInputType getGraphQLType()
+	public InputObjectDef getGraphQLType()
 	{
 		return graphQLType;
 	}
@@ -80,5 +77,23 @@ public class ListMutationMapper<V>
 			Lists.immutable.ofAll((Iterable<V>) set)
 				.collect(itemMapper::toMutation)
 		);
+	}
+
+	@Override
+	public int hashCode()
+	{
+		return Objects.hash(graphQLType, itemMapper, modelDef);
+	}
+
+	@Override
+	public boolean equals(Object obj)
+	{
+		if(this == obj) return true;
+		if(obj == null) return false;
+		if(getClass() != obj.getClass()) return false;
+		ListMutationMapper other = (ListMutationMapper) obj;
+		return Objects.equals(graphQLType, other.graphQLType)
+			&& Objects.equals(itemMapper, other.itemMapper)
+			&& Objects.equals(modelDef, other.modelDef);
 	}
 }

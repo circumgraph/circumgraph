@@ -1,10 +1,13 @@
 package com.circumgraph.graphql.internal.mutation;
 
 import java.util.Map;
+import java.util.Objects;
 
 import com.circumgraph.graphql.MutationInputMapper;
 import com.circumgraph.graphql.internal.SchemaNames;
 import com.circumgraph.model.FieldDef;
+import com.circumgraph.model.InputFieldDef;
+import com.circumgraph.model.InputObjectDef;
 import com.circumgraph.model.OutputTypeDef;
 import com.circumgraph.model.StructuredDef;
 import com.circumgraph.storage.mutation.Mutation;
@@ -14,15 +17,11 @@ import com.circumgraph.storage.mutation.StructuredMutation;
 import org.eclipse.collections.api.map.MapIterable;
 import org.eclipse.collections.impl.tuple.Tuples;
 
-import graphql.schema.GraphQLInputObjectField;
-import graphql.schema.GraphQLInputObjectType;
-import graphql.schema.GraphQLInputType;
-
 public class StructuredValueMutationMapper
 	implements MutationInputMapper<Map<String, Object>>
 {
 	private final StructuredDef modelDef;
-	private final GraphQLInputObjectType graphQLType;
+	private final InputObjectDef graphQLType;
 
 	private final MapIterable<String, MutationInputMapper<?>> fields;
 
@@ -33,19 +32,18 @@ public class StructuredValueMutationMapper
 	{
 		this.modelDef = modelDef;
 
-		GraphQLInputObjectType.Builder builder = GraphQLInputObjectType.newInputObject()
-			.name(SchemaNames.toMutationInputTypeName(modelDef))
-			.description("Mutation for " + modelDef.getName());
+		var builder = InputObjectDef.create(SchemaNames.toMutationInputTypeName(modelDef))
+			.withDescription("Mutation for " + modelDef.getName());
 
 		for(var keyValue : fields.keyValuesView())
 		{
 			var field = keyValue.getOne();
 			var mapper = keyValue.getTwo();
 
-			builder.field(GraphQLInputObjectField.newInputObjectField()
-				.name(SchemaNames.toInputFieldName(field))
-				.description(field.getDescription().orElse(null))
-				.type(mapper.getGraphQLType())
+			builder = builder.addField(InputFieldDef.create(SchemaNames.toInputFieldName(field))
+				.withDescription(field.getDescription().orElse(null))
+				.withType(mapper.getGraphQLType())
+				.build()
 			);
 		}
 
@@ -60,7 +58,7 @@ public class StructuredValueMutationMapper
 	}
 
 	@Override
-	public GraphQLInputType getGraphQLType()
+	public InputObjectDef getGraphQLType()
 	{
 		return graphQLType;
 	}
@@ -90,5 +88,24 @@ public class StructuredValueMutationMapper
 		}
 
 		return builder.build();
+	}
+
+	@Override
+	public int hashCode()
+	{
+		return Objects.hash(fields, graphQLType, modelDef);
+	}
+
+	@Override
+	public boolean equals(Object obj)
+	{
+		if(this == obj) return true;
+		if(obj == null) return false;
+		if(getClass() != obj.getClass()) return false;
+		StructuredValueMutationMapper other =
+			(StructuredValueMutationMapper) obj;
+		return Objects.equals(fields, other.fields)
+			&& Objects.equals(graphQLType, other.graphQLType)
+			&& Objects.equals(modelDef, other.modelDef);
 	}
 }

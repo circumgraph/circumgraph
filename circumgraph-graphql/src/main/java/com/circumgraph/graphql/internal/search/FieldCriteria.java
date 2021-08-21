@@ -3,13 +3,13 @@ package com.circumgraph.graphql.internal.search;
 import java.util.Map;
 
 import com.circumgraph.graphql.internal.InputUnions;
+import com.circumgraph.model.InputFieldDef;
+import com.circumgraph.model.InputObjectDef;
 import com.circumgraph.model.StructuredDef;
 import com.circumgraph.storage.search.QueryPath;
 
 import org.eclipse.collections.api.map.MapIterable;
 
-import graphql.schema.GraphQLInputObjectField;
-import graphql.schema.GraphQLInputObjectType;
 import se.l4.silo.index.search.QueryClause;
 
 /**
@@ -25,7 +25,7 @@ public class FieldCriteria
 		raise an error.
 	""".trim();
 
-	private final GraphQLInputObjectType graphQLType;
+	private final InputObjectDef graphQLType;
 	private final MapIterable<String, Criteria> fields;
 
 	public FieldCriteria(
@@ -36,19 +36,18 @@ public class FieldCriteria
 		this.fields = fields;
 		var name = def.getName() + "FieldCriteriaInput";
 
-		var builder = GraphQLInputObjectType.newInputObject()
-			.name(name)
-			.description("Field criteria for " + def.getName() + ".\n" + TYPE_DESCRIPTION);
+		var builder = InputObjectDef.create(name)
+			.withDescription("Field criteria for " + def.getName() + ".\n" + TYPE_DESCRIPTION);
 
 		for(var pair : fields.keyValuesView())
 		{
 			var fieldName = pair.getOne();
 			var fieldCriteria = pair.getTwo();
 
-			builder.field(GraphQLInputObjectField.newInputObjectField()
-				.name(fieldName)
-				.description("Match a criteria against the " + fieldName + " field")
-				.type(fieldCriteria.getGraphQLType())
+			builder = builder.addField(InputFieldDef.create(fieldName)
+				.withType(fieldCriteria.getGraphQLType())
+				.withDescription("Match a criteria against the " + fieldName + " field")
+				.build()
 			);
 		}
 
@@ -56,7 +55,7 @@ public class FieldCriteria
 	}
 
 	@Override
-	public GraphQLInputObjectType getGraphQLType()
+	public InputObjectDef getGraphQLType()
 	{
 		return graphQLType;
 	}

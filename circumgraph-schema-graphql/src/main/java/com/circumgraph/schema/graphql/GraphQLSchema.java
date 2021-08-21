@@ -39,6 +39,7 @@ import graphql.language.EnumTypeDefinition;
 import graphql.language.EnumValue;
 import graphql.language.FieldDefinition;
 import graphql.language.FloatValue;
+import graphql.language.InputObjectTypeDefinition;
 import graphql.language.IntValue;
 import graphql.language.InterfaceTypeDefinition;
 import graphql.language.ListType;
@@ -197,6 +198,10 @@ public class GraphQLSchema
 			else if(type instanceof UnionTypeDefinition u)
 			{
 				types.add(defineUnion(u));
+			}
+			else if(type instanceof InputObjectTypeDefinition i)
+			{
+
 			}
 			else if(type instanceof TypeDefinition<?> d)
 			{

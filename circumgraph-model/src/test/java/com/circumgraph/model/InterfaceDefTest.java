@@ -3,12 +3,14 @@ package com.circumgraph.model;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.Optional;
 
 import com.circumgraph.model.internal.InterfaceDefImpl;
+import com.circumgraph.model.validation.ValidationMessageLevel;
 
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +18,8 @@ import nl.jqno.equalsverifier.EqualsVerifier;
 
 public class InterfaceDefTest
 {
+	private static MetadataKey<String> KEY = MetadataKey.create("key", String.class);
+
 	@Test
 	public void testEquality()
 	{
@@ -24,10 +28,43 @@ public class InterfaceDefTest
 			.withIgnoredFields(
 				"sourceLocation",
 				"defs",
-				"metadata",
 				"fields"
 			)
 			.verify();
+	}
+
+	@Test
+	public void testEmpty()
+	{
+		var schema = Schema.create()
+			.addType(InterfaceDef.create("Test")
+				.build()
+			)
+			.build();
+
+		var model = Model.create()
+			.addSchema(schema)
+			.build();
+
+		var t = model.get("Test").get();
+		assertThat(t, instanceOf(StructuredDef.class));
+		assertThat(t, instanceOf(InterfaceDef.class));
+		assertThat(t.getName(), is("Test"));
+	}
+
+	@Test
+	public void testWithMetadata()
+	{
+		var t = InterfaceDef.create("name")
+			.withDescription("description")
+			.addField(FieldDef.create("test")
+				.withType(ScalarDef.STRING)
+				.build()
+			)
+			.withMetadata(KEY, "value1")
+			.build();
+
+		assertThat(t.getMetadata(KEY), is(Optional.of("value1")));
 	}
 
 	@Test
@@ -39,6 +76,7 @@ public class InterfaceDefTest
 				.withType(ScalarDef.STRING)
 				.build()
 			)
+			.withMetadata(KEY, "value1")
 			.build();
 
 		var i2 = InterfaceDef.create("name")
@@ -47,6 +85,7 @@ public class InterfaceDefTest
 				.withType(ScalarDef.STRING)
 				.build()
 			)
+			.withMetadata(KEY, "value1")
 			.build();
 
 		var d = i1.derive()
@@ -117,6 +156,93 @@ public class InterfaceDefTest
 		var i1 = model.get("I1").get();
 		var i2 = model.get("I2").get();
 		assertThat(t.getAllImplements(), containsInAnyOrder(i1, i2));
+	}
+
+	@Test
+	public void testInvalidImplements()
+	{
+		var schema = Schema.create()
+			.addType(ObjectDef.create("A")
+				.build()
+			)
+			.addType(InterfaceDef.create("B")
+				.addImplements("A")
+				.build()
+			)
+			.build();
+
+		var e = assertThrows(ModelValidationException.class, () -> {
+			Model.create()
+				.addSchema(schema)
+				.build();
+		});
+
+		var msg = e.getIssues().getFirst();
+		assertThat(msg.getLevel(), is(ValidationMessageLevel.ERROR));
+		assertThat(msg.getCode(), is("model:invalid-implements"));
+		assertThat(msg.getArguments().get("type"), is("B"));
+		assertThat(msg.getArguments().get("implements"), is("A"));
+		assertThat(msg.getMessage(), is("`B` can not implement `A`, type is not an interface"));
+	}
+
+	@Test
+	public void testInvalidInterfaceLoop()
+	{
+		var schema = Schema.create()
+			.addType(InterfaceDef.create("A")
+				.addImplements("B")
+				.build()
+			)
+			.addType(InterfaceDef.create("B")
+				.addImplements("A")
+				.build()
+			)
+			.build();
+
+		var e = assertThrows(ModelValidationException.class, () -> {
+			Model.create()
+				.addSchema(schema)
+				.build();
+		});
+
+		var msg = e.getIssues().getFirst();
+		assertThat(msg.getLevel(), is(ValidationMessageLevel.ERROR));
+		assertThat(msg.getCode(), is("model:invalid-implements-loop"));
+		assertThat(msg.getArguments().get("type"), is("B"));
+		assertThat(msg.getArguments().get("implements"), is("A"));
+		assertThat(msg.getMessage(), is("`B` can not implement `A`, as `A` already implements `B` creating a loop"));
+	}
+
+	@Test
+	public void testInvalidInterfaceLoopIndirect()
+	{
+		var schema = Schema.create()
+			.addType(InterfaceDef.create("A")
+				.addImplements("B")
+				.build()
+			)
+			.addType(InterfaceDef.create("B")
+				.addImplements("C")
+				.build()
+			)
+			.addType(InterfaceDef.create("C")
+				.addImplements("A")
+				.build()
+			)
+			.build();
+
+		var e = assertThrows(ModelValidationException.class, () -> {
+			Model.create()
+				.addSchema(schema)
+				.build();
+		});
+
+		var msg = e.getIssues().getFirst();
+		assertThat(msg.getLevel(), is(ValidationMessageLevel.ERROR));
+		assertThat(msg.getCode(), is("model:invalid-implements-loop"));
+		assertThat(msg.getArguments().get("type"), is("C"));
+		assertThat(msg.getArguments().get("implements"), is("A"));
+		assertThat(msg.getMessage(), is("`C` can not implement `A`, as `A` already implements `C` creating a loop"));
 	}
 
 	@Test

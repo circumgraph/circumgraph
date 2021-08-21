@@ -25,7 +25,8 @@ public class InterfaceDefImpl
 		String description,
 		ImmutableList<TypeDef> implementsTypes,
 		ImmutableList<DirectiveUse> directives,
-		ImmutableList<FieldDef> fields
+		ImmutableList<FieldDef> fields,
+		Metadata metadata
 	)
 	{
 		super(
@@ -34,7 +35,8 @@ public class InterfaceDefImpl
 			description,
 			implementsTypes,
 			directives,
-			fields
+			fields,
+			metadata
 		);
 	}
 
@@ -96,7 +98,8 @@ public class InterfaceDefImpl
 			description,
 			directFields,
 			implementsTypes,
-			directives
+			directives,
+			metadata.derive()
 		);
 	}
 
@@ -114,7 +117,8 @@ public class InterfaceDefImpl
 			null,
 			Lists.immutable.empty(),
 			Lists.immutable.empty(),
-			Lists.immutable.empty()
+			Lists.immutable.empty(),
+			Metadata.empty()
 		);
 	}
 
@@ -128,7 +132,8 @@ public class InterfaceDefImpl
 			String description,
 			ImmutableList<FieldDef> fields,
 			ImmutableList<TypeDef> implementsTypes,
-			ImmutableList<DirectiveUse> directives
+			ImmutableList<DirectiveUse> directives,
+			Metadata metadata
 		)
 		{
 			super(
@@ -137,7 +142,8 @@ public class InterfaceDefImpl
 				description,
 				fields,
 				implementsTypes,
-				directives
+				directives,
+				metadata
 			);
 		}
 
@@ -148,7 +154,8 @@ public class InterfaceDefImpl
 			String description,
 			ImmutableList<FieldDef> fields,
 			ImmutableList<TypeDef> implementsTypes,
-			ImmutableList<DirectiveUse> directives
+			ImmutableList<DirectiveUse> directives,
+			Metadata metadata
 		)
 		{
 			return new BuilderImpl(
@@ -157,7 +164,8 @@ public class InterfaceDefImpl
 				description,
 				fields,
 				implementsTypes,
-				directives
+				directives,
+				metadata
 			);
 		}
 
@@ -170,7 +178,8 @@ public class InterfaceDefImpl
 				description,
 				implementsTypes,
 				directives,
-				fields
+				fields,
+				metadata
 			);
 		}
 	}

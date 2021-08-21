@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import com.circumgraph.model.ArgumentDef;
 import com.circumgraph.model.DirectiveUse;
+import com.circumgraph.model.FieldDef;
 import com.circumgraph.model.InputTypeDef;
 import com.circumgraph.model.TypeRef;
 import com.circumgraph.model.validation.SourceLocation;
@@ -26,6 +27,8 @@ public class ArgumentDefImpl
 	private final InputTypeDef type;
 	private final ImmutableList<DirectiveUse> directives;
 	private final Object defaultValue;
+
+	private FieldDef declaringField;
 
 	private ModelDefs defs;
 
@@ -89,6 +92,17 @@ public class ArgumentDefImpl
 	}
 
 	@Override
+	public FieldDef getDeclaringField()
+	{
+		return declaringField;
+	}
+
+	public void setDeclaringField(FieldDef declaringField)
+	{
+		this.declaringField = declaringField;
+	}
+
+	@Override
 	public void prepare(ModelDefs defs)
 	{
 		this.defs = defs;
@@ -131,6 +145,18 @@ public class ArgumentDefImpl
 			&& Objects.equals(directives, other.directives)
 			&& Objects.equals(name, other.name)
 			&& Objects.equals(type, other.type);
+	}
+
+	@Override
+	public String toString()
+	{
+		return "ArgumentDefImpl{"
+			+ "name=" + name
+			+ ", type=" + type
+			+ ", defaultValue=" + defaultValue
+			+ ", description=" + description
+			+ ", directives=" + directives
+			+ "}";
 	}
 
 	public static Builder create(String name)

@@ -3,12 +3,14 @@ package com.circumgraph.model;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.Optional;
 
 import com.circumgraph.model.internal.ObjectDefImpl;
+import com.circumgraph.model.validation.ValidationMessageLevel;
 
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +18,8 @@ import nl.jqno.equalsverifier.EqualsVerifier;
 
 public class ObjectDefTest
 {
+	private static MetadataKey<String> KEY = MetadataKey.create("key", String.class);
+
 	@Test
 	public void testEquality()
 	{
@@ -24,10 +28,43 @@ public class ObjectDefTest
 			.withIgnoredFields(
 				"sourceLocation",
 				"defs",
-				"metadata",
 				"fields"
 			)
 			.verify();
+	}
+
+	@Test
+	public void testEmpty()
+	{
+		var schema = Schema.create()
+			.addType(ObjectDef.create("Test")
+				.build()
+			)
+			.build();
+
+		var model = Model.create()
+			.addSchema(schema)
+			.build();
+
+		var t = model.get("Test").get();
+		assertThat(t, instanceOf(StructuredDef.class));
+		assertThat(t, instanceOf(ObjectDef.class));
+		assertThat(t.getName(), is("Test"));
+	}
+
+	@Test
+	public void testWithMetadata()
+	{
+		var t = ObjectDef.create("name")
+			.withDescription("description")
+			.addField(FieldDef.create("test")
+				.withType(ScalarDef.STRING)
+				.build()
+			)
+			.withMetadata(KEY, "value1")
+			.build();
+
+		assertThat(t.getMetadata(KEY), is(Optional.of("value1")));
 	}
 
 	@Test
@@ -39,6 +76,7 @@ public class ObjectDefTest
 				.withType(ScalarDef.STRING)
 				.build()
 			)
+			.withMetadata(KEY, "value1")
 			.build();
 
 		var o2 = ObjectDef.create("name")
@@ -47,6 +85,7 @@ public class ObjectDefTest
 				.withType(ScalarDef.STRING)
 				.build()
 			)
+			.withMetadata(KEY, "value1")
 			.build();
 
 		var d = o1.derive()
@@ -117,6 +156,33 @@ public class ObjectDefTest
 		var i1 = model.get("I1").get();
 		var i2 = model.get("I2").get();
 		assertThat(t.getAllImplements(), containsInAnyOrder(i1, i2));
+	}
+
+	@Test
+	public void testInvalidImplements()
+	{
+		var schema = Schema.create()
+			.addType(ObjectDef.create("A")
+				.build()
+			)
+			.addType(ObjectDef.create("B")
+				.addImplements("A")
+				.build()
+			)
+			.build();
+
+		var e = assertThrows(ModelValidationException.class, () -> {
+			Model.create()
+				.addSchema(schema)
+				.build();
+		});
+
+		var msg = e.getIssues().getFirst();
+		assertThat(msg.getLevel(), is(ValidationMessageLevel.ERROR));
+		assertThat(msg.getCode(), is("model:invalid-implements"));
+		assertThat(msg.getArguments().get("type"), is("B"));
+		assertThat(msg.getArguments().get("implements"), is("A"));
+		assertThat(msg.getMessage(), is("`B` can not implement `A`, type is not an interface"));
 	}
 
 	@Test
@@ -230,5 +296,45 @@ public class ObjectDefTest
 		assertThat(args.get("fieldType"), is("Int"));
 		assertThat(args.get("interface"), is("I1"));
 		assertThat(args.get("interfaceFieldType"), is("String"));
+	}
+
+	@Test
+	public void testMergeSimple()
+	{
+		var schema = Schema.create()
+			.addType(ObjectDef.create("Test")
+				.addField(FieldDef.create("f1")
+					.withType(ScalarDef.STRING)
+					.build()
+				)
+				.build()
+			)
+			.addType(ObjectDef.create("Test")
+				.addField(FieldDef.create("f2")
+					.withType(ScalarDef.STRING)
+					.build()
+				)
+				.build()
+			)
+			.build();
+
+		var model = Model.create()
+			.addSchema(schema)
+			.build();
+
+		var t = model.get("Test").get();
+		assertThat(t, instanceOf(StructuredDef.class));
+		assertThat(t, instanceOf(ObjectDef.class));
+		assertThat(t.getName(), is("Test"));
+
+		var def = StructuredDef.class.cast(t);
+		assertThat(def.getFields(), contains(
+			FieldDef.create("f1")
+				.withType(ScalarDef.STRING)
+				.build(),
+			FieldDef.create("f2")
+				.withType(ScalarDef.STRING)
+				.build()
+		));
 	}
 }

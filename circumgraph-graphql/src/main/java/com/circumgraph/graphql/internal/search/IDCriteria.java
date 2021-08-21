@@ -2,12 +2,13 @@ package com.circumgraph.graphql.internal.search;
 
 import java.util.Map;
 
-import graphql.Scalars;
-import graphql.schema.GraphQLInputObjectField;
-import graphql.schema.GraphQLInputObjectType;
+import com.circumgraph.graphql.internal.StorageIds;
+import com.circumgraph.model.InputFieldDef;
+import com.circumgraph.model.InputObjectDef;
+import com.circumgraph.model.ScalarDef;
+
 import se.l4.silo.index.EqualsMatcher;
 import se.l4.silo.index.Matcher;
-import se.l4.ylem.ids.LongIdCodec;
 
 /**
  * Criteria for ID.
@@ -26,32 +27,27 @@ public class IDCriteria
 		match if no ID is present.
 	""";
 
-	private final LongIdCodec<String> idCodec;
+	private final InputObjectDef graphQLType;
 
-	private final GraphQLInputObjectType graphQLType;
-
-	public IDCriteria(LongIdCodec<String> idCodec)
+	public IDCriteria()
 	{
-		this.idCodec = idCodec;
-
-		this.graphQLType = GraphQLInputObjectType.newInputObject()
-			.name("IDCriteriaInput")
-			.description(DESCRIPTION)
-			.field(GraphQLInputObjectField.newInputObjectField()
-				.name("any")
-				.description("Match if any value is present")
-				.type(Scalars.GraphQLBoolean)
+		this.graphQLType = InputObjectDef.create("IDCriteriaInput")
+			.withDescription(DESCRIPTION)
+			.addField(InputFieldDef.create("any")
+				.withType(ScalarDef.BOOLEAN)
+				.withDescription("Match if any value is present")
+				.build()
 			)
-			.field(GraphQLInputObjectField.newInputObjectField()
-				.name("equals")
-				.description("ID should equal the given value")
-				.type(Scalars.GraphQLID)
+			.addField(InputFieldDef.create("equals")
+				.withType(ScalarDef.ID)
+				.withDescription("ID should equal the given value")
+				.build()
 			)
 			.build();
 	}
 
 	@Override
-	public GraphQLInputObjectType getGraphQLType()
+	public InputObjectDef getGraphQLType()
 	{
 		return graphQLType;
 	}
@@ -69,7 +65,7 @@ public class IDCriteria
 
 			try
 			{
-				return EqualsMatcher.create(idCodec.decode(value));
+				return EqualsMatcher.create(StorageIds.decode(value));
 			}
 			catch(RuntimeException e)
 			{

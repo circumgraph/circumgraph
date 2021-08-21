@@ -1,8 +1,12 @@
 package com.circumgraph.graphql;
 
-import com.circumgraph.graphql.internal.DynamicFieldProcessor;
-import com.circumgraph.graphql.internal.directives.RelationDirectiveProcessor;
+import com.circumgraph.graphql.internal.processors.MutationProcessor;
+import com.circumgraph.graphql.internal.processors.OutputProcessor;
+import com.circumgraph.graphql.internal.processors.QueryProcessor;
+import com.circumgraph.graphql.internal.processors.RelationDirectiveProcessor;
+import com.circumgraph.graphql.internal.search.SearchQueryGenerator;
 import com.circumgraph.model.Schema;
+import com.circumgraph.model.TypeDef;
 import com.circumgraph.model.processing.DirectiveUseProcessor;
 import com.circumgraph.model.processing.TypeDefProcessor;
 
@@ -26,7 +30,15 @@ public class GraphQLAPISchema
 	public Iterable<? extends TypeDefProcessor<?>> getTypeDefProcessors()
 	{
 		return Lists.immutable.of(
-			new DynamicFieldProcessor()
+			new OutputProcessor(),
+			new QueryProcessor(new SearchQueryGenerator()),
+			new MutationProcessor()
 		);
+	}
+
+	@Override
+	public Iterable<? extends TypeDef> getTypes()
+	{
+		return Lists.immutable.of();
 	}
 }

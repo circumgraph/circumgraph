@@ -1,7 +1,6 @@
 package com.circumgraph.graphql;
 
 import com.circumgraph.model.ScalarDef;
-import com.circumgraph.storage.SimpleValue;
 import com.circumgraph.storage.mutation.ScalarValueMutation;
 
 import graphql.schema.GraphQLScalarType;
@@ -10,7 +9,6 @@ import graphql.schema.GraphQLScalarType;
  * Mapper for scalars defined via {@link ScalarDef}.
  */
 public interface ScalarMapper<V>
-	extends OutputMapper<SimpleValue>
 {
 	/**
 	 * Get how this scalar is defined in the model.
@@ -24,7 +22,6 @@ public interface ScalarMapper<V>
 	 *
 	 * @return
 	 */
-	@Override
 	GraphQLScalarType getGraphQLType();
 
 	/**

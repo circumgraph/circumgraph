@@ -2,9 +2,10 @@ package com.circumgraph.graphql.internal.search;
 
 import java.util.Map;
 
-import graphql.Scalars;
-import graphql.schema.GraphQLInputObjectField;
-import graphql.schema.GraphQLInputObjectType;
+import com.circumgraph.model.InputFieldDef;
+import com.circumgraph.model.InputObjectDef;
+import com.circumgraph.model.ScalarDef;
+
 import se.l4.silo.index.AnyMatcher;
 import se.l4.silo.index.EqualsMatcher;
 import se.l4.silo.index.Matcher;
@@ -35,62 +36,60 @@ public class FloatCriteria
 		by setting `minInclusive` and `maxInclusive` to `false`.
 	""";
 
-	private final GraphQLInputObjectType graphQLType;
+	private final InputObjectDef graphQLType;
 
 	public FloatCriteria()
 	{
-		this.graphQLType = GraphQLInputObjectType.newInputObject()
-			.name("FloatCriteriaInput")
-			.description(DESCRIPTION)
-			.field(GraphQLInputObjectField.newInputObjectField()
-				.name("any")
-				.description("Match if any value is present")
-				.type(Scalars.GraphQLBoolean)
+		this.graphQLType = InputObjectDef.create("FloatCriteriaInput")
+			.withDescription(DESCRIPTION)
+			.addField(InputFieldDef.create("any")
+				.withType(ScalarDef.BOOLEAN)
+				.withDescription("Match if any value is present")
+				.build()
 			)
-			.field(GraphQLInputObjectField.newInputObjectField()
-				.name("equals")
-				.description("Float should equal the given value")
-				.type(Scalars.GraphQLFloat)
+			.addField(InputFieldDef.create("equals")
+				.withType(ScalarDef.FLOAT)
+				.withDescription("Float should equal the given value")
+				.build()
 			)
-			.field(GraphQLInputObjectField.newInputObjectField()
-				.name("range")
-				.description("Float should be within the given range")
-				.type(createRange())
+			.addField(InputFieldDef.create("range")
+				.withType(createRange())
+				.withDescription("Float should be within the given range")
+				.build()
 			)
 			.build();
 	}
 
 
-	private static GraphQLInputObjectType createRange()
+	private static InputObjectDef createRange()
 	{
-		return GraphQLInputObjectType.newInputObject()
-			.name("FloatRangeCriteriaInput")
-			.description(RANGE_DESCRIPTION)
-			.field(GraphQLInputObjectField.newInputObjectField()
-				.name("min")
-				.description("Minimum value that should match, inclusive by default")
-				.type(Scalars.GraphQLFloat)
+		return InputObjectDef.create("FloatRangeCriteriaInput")
+			.withDescription(RANGE_DESCRIPTION)
+			.addField(InputFieldDef.create("min")
+				.withType(ScalarDef.FLOAT)
+				.withDescription("Minimum value that should match, inclusive by default")
+				.build()
 			)
-			.field(GraphQLInputObjectField.newInputObjectField()
-				.name("minInclusive")
-				.description("If the minimum value should inclusive or exclusive")
-				.type(Scalars.GraphQLBoolean)
+			.addField(InputFieldDef.create("minInclusive")
+				.withType(ScalarDef.BOOLEAN)
+				.withDescription("If the minimum value should inclusive or exclusive")
+				.build()
 			)
-			.field(GraphQLInputObjectField.newInputObjectField()
-				.name("max")
-				.description("Maximum value that should match, inclusive by default")
-				.type(Scalars.GraphQLFloat)
+			.addField(InputFieldDef.create("max")
+				.withType(ScalarDef.FLOAT)
+				.withDescription("Maximum value that should match, inclusive by default")
+				.build()
 			)
-			.field(GraphQLInputObjectField.newInputObjectField()
-				.name("maxInclusive")
-				.description("If the maximum value should be inclusive or exclusive")
-				.type(Scalars.GraphQLBoolean)
+			.addField(InputFieldDef.create("maxInclusive")
+				.withType(ScalarDef.BOOLEAN)
+				.withDescription("If the maximum value should be inclusive or exclusive")
+				.build()
 			)
 			.build();
 	}
 
 	@Override
-	public GraphQLInputObjectType getGraphQLType()
+	public InputObjectDef getGraphQLType()
 	{
 		return graphQLType;
 	}
