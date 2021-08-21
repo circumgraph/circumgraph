@@ -98,13 +98,16 @@ public interface StructuredDef
 	 *
 	 * @return
 	 */
+	@Override
 	Builder<?> derive();
 
 	/**
 	 * Builder for instances of {@link StructuredDef}.
 	 */
 	interface Builder<B extends Builder<B>>
-		extends HasDirectives.Builder<B>, HasSourceLocation.Builder<B>
+		extends HasDirectives.Builder<B>,
+			HasSourceLocation.Builder<B>,
+			HasMetadata.Builder<B>
 	{
 		/**
 		 * Add that this structured data implements the given type.
@@ -159,6 +162,7 @@ public interface StructuredDef
 		 *
 		 * @return
 		 */
+		@Override
 		StructuredDef build();
 	}
 }

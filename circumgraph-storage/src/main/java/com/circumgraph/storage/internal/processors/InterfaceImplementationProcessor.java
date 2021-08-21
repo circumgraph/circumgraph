@@ -54,7 +54,7 @@ public class InterfaceImplementationProcessor
 			return;
 		}
 		// Mark as processed
-		type.setMetadata(HAS_PROCESSED, true);
+		type.setRuntimeMetadata(HAS_PROCESSED, true);
 
 		for(var field : type.getFields())
 		{

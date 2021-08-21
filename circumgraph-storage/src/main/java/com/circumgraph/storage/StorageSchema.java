@@ -11,11 +11,11 @@ import com.circumgraph.model.processing.DirectiveUseProcessor;
 import com.circumgraph.model.processing.TypeDefProcessor;
 import com.circumgraph.storage.internal.ValueIndexers;
 import com.circumgraph.storage.internal.ValueProviders;
-import com.circumgraph.storage.internal.model.DefaultDirectiveProcessor;
-import com.circumgraph.storage.internal.model.IndexDirectiveProcessor;
-import com.circumgraph.storage.internal.model.ReadonlyDirectiveProcessor;
-import com.circumgraph.storage.internal.model.SortableDirectiveProcessor;
+import com.circumgraph.storage.internal.processors.DefaultDirectiveProcessor;
+import com.circumgraph.storage.internal.processors.IndexDirectiveProcessor;
 import com.circumgraph.storage.internal.processors.InterfaceImplementationProcessor;
+import com.circumgraph.storage.internal.processors.ReadonlyDirectiveProcessor;
+import com.circumgraph.storage.internal.processors.SortableDirectiveProcessor;
 
 import org.eclipse.collections.api.factory.Lists;
 

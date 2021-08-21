@@ -2,10 +2,11 @@ package com.circumgraph.graphql.internal.search;
 
 import java.util.Map;
 
-import graphql.Scalars;
-import graphql.schema.GraphQLInputObjectField;
-import graphql.schema.GraphQLInputObjectType;
-import graphql.schema.GraphQLNonNull;
+import com.circumgraph.model.InputFieldDef;
+import com.circumgraph.model.InputObjectDef;
+import com.circumgraph.model.NonNullDef;
+import com.circumgraph.model.ScalarDef;
+
 import se.l4.silo.index.Matcher;
 import se.l4.silo.index.search.query.UserQuery;
 
@@ -19,41 +20,40 @@ public class StringFullTextCriteria
 		needs to be present for the criteria to be valid.
 	""";
 
-	private final GraphQLInputObjectType graphQLType;
+	private final InputObjectDef graphQLType;
 
 	public StringFullTextCriteria()
 	{
-		this.graphQLType = GraphQLInputObjectType.newInputObject()
-			.name("StringFullTextCriteriaInput")
-			.description(DESCRIPTION)
-			.field(GraphQLInputObjectField.newInputObjectField()
-				.name("any")
-				.description("Match if any value is present")
-				.type(Scalars.GraphQLBoolean)
+		this.graphQLType = InputObjectDef.create("StringFullTextCriteriaInput")
+			.withDescription(DESCRIPTION)
+			.addField(InputFieldDef.create("any")
+				.withType(ScalarDef.BOOLEAN)
+				.withDescription("Match if any value is present")
+				.build()
 			)
-			.field(GraphQLInputObjectField.newInputObjectField()
-				.name("match")
-				.description("Match against full text of field")
-				.type(GraphQLInputObjectType.newInputObject()
-					.name("StringMatchCriteriaInput")
-					.field(GraphQLInputObjectField.newInputObjectField()
-						.name("query")
-						.description("The query to match against")
-						.type(GraphQLNonNull.nonNull(Scalars.GraphQLString))
+			.addField(InputFieldDef.create("match")
+				.withDescription("Match against full text of field")
+				.withType(InputObjectDef.create("StringMatchCriteriaInput")
+					.addField(InputFieldDef.create("query")
+						.withType(NonNullDef.input(ScalarDef.STRING))
+						.withDescription("The query to match against")
+						.build()
 					)
-					.field(GraphQLInputObjectField.newInputObjectField()
-						.name("typeAhead")
-						.description("If this is a type-ahead query")
-						.type(Scalars.GraphQLBoolean)
-						.defaultValue(false)
+					.addField(InputFieldDef.create("typeAhead")
+						.withType(ScalarDef.BOOLEAN)
+						.withDefaultValue(false)
+						.withDescription("If this is a type-ahead query")
+						.build()
 					)
+					.build()
 				)
+				.build()
 			)
 			.build();
 	}
 
 	@Override
-	public GraphQLInputObjectType getGraphQLType()
+	public InputObjectDef getGraphQLType()
 	{
 		return graphQLType;
 	}

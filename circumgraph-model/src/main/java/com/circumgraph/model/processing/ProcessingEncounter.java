@@ -1,8 +1,12 @@
 package com.circumgraph.model.processing;
 
+import java.util.function.Function;
+
 import com.circumgraph.model.ArgumentDef;
+import com.circumgraph.model.Buildable;
+import com.circumgraph.model.Derivable;
 import com.circumgraph.model.FieldDef;
-import com.circumgraph.model.OutputTypeDef;
+import com.circumgraph.model.InputFieldDef;
 import com.circumgraph.model.TypeDef;
 import com.circumgraph.model.validation.ValidationMessage;
 
@@ -36,22 +40,16 @@ public interface ProcessingEncounter
 	void replaceType(TypeDef type);
 
 	/**
-	 * Change the output type of a field.
+	 * Edit something in the model. Can be used to edit {@link TypeDef types},
+	 * {@link FieldDef fields}, {@link ArgumentDef arguments} and
+	 * {@link InputFieldDef input fields}.
 	 *
-	 * @param field
-	 *   field to modify
-	 * @param def
-	 *   the new output type of the field
+	 * @param <B>
+	 * @param <D>
+	 * @param editor
 	 */
-	void changeOutput(FieldDef field, OutputTypeDef def);
-
-	/**
-	 * Add an argument to a field.
-	 *
-	 * @param field
-	 *   field to modify
-	 * @param arg
-	 *   argument to add
-	 */
-	void addArgument(FieldDef field, ArgumentDef arg);
+	<B extends Buildable<?>, D extends Derivable<B>> void edit(
+		D instance,
+		Function<B, B> editor
+	);
 }

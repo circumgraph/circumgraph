@@ -28,7 +28,12 @@ public class StorageModel
 		DYNAMIC
 	}
 
-	private static MetadataKey<FieldType> FIELD_TYPE = MetadataKey.create("storage:field-type", FieldType.class);
+	/**
+	 * Key for the type a {@link FieldDef} is. Set this to override a field
+	 * being stored.
+	 */
+	public static MetadataKey<FieldType> FIELD_TYPE = MetadataKey.create("storage:field-type", FieldType.class);
+
 	private static MetadataKey<ValueIndexer> FIELD_INDEXER = MetadataKey.create("storage:field-indexer", ValueIndexer.class);
 	private static MetadataKey<Boolean> FIELD_INDEXED = MetadataKey.create("storage:field-indexed", Boolean.class);
 	private static MetadataKey<Boolean> FIELD_SORTABLE = MetadataKey.create("storage:field-sortable", Boolean.class);
@@ -82,7 +87,7 @@ public class StorageModel
 	 */
 	public static void setType(FieldDef field, FieldType type)
 	{
-		field.setMetadata(FIELD_TYPE, type);
+		field.setRuntimeMetadata(FIELD_TYPE, type);
 	}
 
 	/**
@@ -108,7 +113,7 @@ public class StorageModel
 	 */
 	public static void setIndexed(FieldDef field, boolean v)
 	{
-		field.setMetadata(FIELD_INDEXED, v);
+		field.setRuntimeMetadata(FIELD_INDEXED, v);
 	}
 
 	/**
@@ -134,7 +139,7 @@ public class StorageModel
 	public static void setIndexer(FieldDef field, ValueIndexer type)
 	{
 		setIndexed(field, true);
-		field.setMetadata(FIELD_INDEXER, type);
+		field.setRuntimeMetadata(FIELD_INDEXER, type);
 	}
 
 	/**
@@ -156,7 +161,7 @@ public class StorageModel
 	 */
 	public static void setSortable(FieldDef field, boolean sortable)
 	{
-		field.setMetadata(FIELD_SORTABLE, sortable);
+		field.setRuntimeMetadata(FIELD_SORTABLE, sortable);
 	}
 
 	/**
@@ -178,6 +183,6 @@ public class StorageModel
 	 */
 	public static void setHighlightable(FieldDef field, boolean sortable)
 	{
-		field.setMetadata(FIELD_HIGHLIGHTABLE, sortable);
+		field.setRuntimeMetadata(FIELD_HIGHLIGHTABLE, sortable);
 	}
 }

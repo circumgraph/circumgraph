@@ -1,14 +1,16 @@
-package com.circumgraph.graphql.internal.directives;
+package com.circumgraph.graphql.internal.processors;
 
 import java.util.Optional;
 
 import com.circumgraph.graphql.GraphQLModel;
-import com.circumgraph.graphql.internal.resolvers.RelationListFieldResolver;
+import com.circumgraph.graphql.internal.resolvers.RelationListFieldResolverFactory;
+import com.circumgraph.model.ArgumentDef;
 import com.circumgraph.model.ArgumentUse;
 import com.circumgraph.model.DirectiveUse;
 import com.circumgraph.model.FieldDef;
 import com.circumgraph.model.ListDef;
 import com.circumgraph.model.NonNullDef;
+import com.circumgraph.model.ScalarDef;
 import com.circumgraph.model.StructuredDef;
 import com.circumgraph.model.processing.DirectiveUseProcessor;
 import com.circumgraph.model.processing.ProcessingEncounter;
@@ -75,6 +77,11 @@ public class RelationDirectiveProcessor
 		.withMessage("@relation only supports field and search as arguments")
 		.build();
 
+	private static final ValidationMessageType INVALID_FIELD_ARGUMENTS = ValidationMessageType.error()
+		.withCode("graphql:@relation:invalid-field-arguments")
+		.withMessage("Field with @relation can not have arguments")
+		.build();
+
 	private static final ValidationMessageType TYPE_NOT_ENTITY = ValidationMessageType.error()
 		.withCode("graphql:@relation:type-not-entity")
 		.withArgument("type")
@@ -123,6 +130,12 @@ public class RelationDirectiveProcessor
 		DirectiveUse directive
 	)
 	{
+		if(GraphQLModel.getFieldResolverFactory(location).isPresent())
+		{
+			// Already a resolver available, skip updating
+			return;
+		}
+
 		if(! DirectiveUseProcessor.checkOnlyArguments(directive, "field", "search"))
 		{
 			encounter.report(INVALID_ARGUMENTS.toMessage()
@@ -224,11 +237,15 @@ public class RelationDirectiveProcessor
 		}
 
 		var path = QueryPath.root(entity).field(fieldName);
-
-		// Set the final resolver
-		GraphQLModel.setFieldResolverFactory(location, e -> {
-			var other = e.getStorage().get(entity.getName());
-			return new RelationListFieldResolver(other, path, Optional.empty());
-		});
+		encounter.edit(location, builder -> builder
+			.addArgument(ArgumentDef.create("first")
+				.withType(ScalarDef.INT)
+				.build()
+			)
+			.withMetadata(
+				GraphQLModel.FIELD_RESOLVER_FACTORY,
+				new RelationListFieldResolverFactory(entity.getName(), path, Optional.empty())
+			)
+		);
 	}
 }

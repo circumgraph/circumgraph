@@ -1,5 +1,7 @@
 package com.circumgraph.model;
 
+import java.util.Objects;
+
 import com.circumgraph.model.internal.NonNullDefImpl;
 
 /**
@@ -50,6 +52,7 @@ public interface NonNullDef
 	 */
 	static NonNullDef.Output output(String type)
 	{
+		Objects.requireNonNull(type);
 		return new NonNullDefImpl.OutputImpl(TypeRef.create(type));
 	}
 
@@ -61,6 +64,7 @@ public interface NonNullDef
 	 */
 	static NonNullDef.Output output(OutputTypeDef type)
 	{
+		Objects.requireNonNull(type);
 		return new NonNullDefImpl.OutputImpl(type);
 	}
 
@@ -72,6 +76,7 @@ public interface NonNullDef
 	 */
 	static NonNullDef.Input input(String type)
 	{
+		Objects.requireNonNull(type);
 		return new NonNullDefImpl.InputImpl(TypeRef.create(type));
 	}
 
@@ -83,6 +88,7 @@ public interface NonNullDef
 	 */
 	static NonNullDef.Input input(InputTypeDef type)
 	{
+		Objects.requireNonNull(type);
 		return new NonNullDefImpl.InputImpl(type);
 	}
 }

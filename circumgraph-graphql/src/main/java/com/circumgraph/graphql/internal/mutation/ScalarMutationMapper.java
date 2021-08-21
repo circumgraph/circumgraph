@@ -1,12 +1,13 @@
 package com.circumgraph.graphql.internal.mutation;
 
+import java.util.Objects;
+
 import com.circumgraph.graphql.MutationInputMapper;
 import com.circumgraph.graphql.ScalarMapper;
+import com.circumgraph.model.InputTypeDef;
 import com.circumgraph.model.OutputTypeDef;
 import com.circumgraph.storage.mutation.Mutation;
 import com.circumgraph.storage.mutation.ScalarValueMutation;
-
-import graphql.schema.GraphQLInputType;
 
 /**
  * Mapper used for scalars.
@@ -30,9 +31,9 @@ public class ScalarMutationMapper
 	}
 
 	@Override
-	public GraphQLInputType getGraphQLType()
+	public InputTypeDef getGraphQLType()
 	{
-		return scalar.getGraphQLType();
+		return scalar.getModelDef();
 	}
 
 	@Override
@@ -42,5 +43,21 @@ public class ScalarMutationMapper
 			scalar.getModelDef(),
 			scalar.fromInput(value)
 		);
+	}
+
+	@Override
+	public int hashCode()
+	{
+		return Objects.hash(scalar);
+	}
+
+	@Override
+	public boolean equals(Object obj)
+	{
+		if(this == obj) return true;
+		if(obj == null) return false;
+		if(getClass() != obj.getClass()) return false;
+		ScalarMutationMapper other = (ScalarMutationMapper) obj;
+		return Objects.equals(scalar, other.scalar);
 	}
 }

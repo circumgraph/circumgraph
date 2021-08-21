@@ -6,9 +6,12 @@ import java.util.Optional;
 import com.circumgraph.model.DirectiveUse;
 import com.circumgraph.model.EnumDef;
 import com.circumgraph.model.EnumValueDef;
+import com.circumgraph.model.MetadataDef;
+import com.circumgraph.model.MetadataKey;
 import com.circumgraph.model.TypeDef;
 import com.circumgraph.model.validation.SourceLocation;
 
+import org.eclipse.collections.api.RichIterable;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.ListIterable;
@@ -24,13 +27,15 @@ public class EnumDefImpl
 	private final String description;
 	private final ImmutableList<EnumValueDef> values;
 	private final ImmutableList<DirectiveUse> directives;
+	private final Metadata metadata;
 
 	public EnumDefImpl(
 		SourceLocation sourceLocation,
 		String name,
 		String description,
 		ImmutableList<EnumValueDef> values,
-		ImmutableList<DirectiveUse> directives
+		ImmutableList<DirectiveUse> directives,
+		Metadata metadata
 	)
 	{
 		this.sourceLocation = sourceLocation;
@@ -38,6 +43,7 @@ public class EnumDefImpl
 		this.description = description;
 		this.values = values;
 		this.directives = directives;
+		this.metadata = metadata;
 	}
 
 	@Override
@@ -71,6 +77,24 @@ public class EnumDefImpl
 	}
 
 	@Override
+	public <V> Optional<V> getMetadata(MetadataKey<V> key)
+	{
+		return metadata.getMetadata(key);
+	}
+
+	@Override
+	public RichIterable<MetadataDef> getDefinedMetadata()
+	{
+		return metadata.getDefinedMetadata();
+	}
+
+	@Override
+	public <V> void setRuntimeMetadata(MetadataKey<V> key, V value)
+	{
+		metadata.setRuntimeMetadata(key, value);
+	}
+
+	@Override
 	public boolean isAssignableFrom(TypeDef other)
 	{
 		return this == other;
@@ -84,14 +108,15 @@ public class EnumDefImpl
 			name,
 			description,
 			values,
-			directives
+			directives,
+			metadata.derive()
 		);
 	}
 
 	@Override
 	public int hashCode()
 	{
-		return Objects.hash(description, directives, name, values);
+		return Objects.hash(description, directives, name, values, metadata);
 	}
 
 	@Override
@@ -104,7 +129,8 @@ public class EnumDefImpl
 		return Objects.equals(description, other.description)
 			&& Objects.equals(directives, other.directives)
 			&& Objects.equals(name, other.name)
-			&& Objects.equals(values, other.values);
+			&& Objects.equals(values, other.values)
+			&& Objects.equals(metadata, other.metadata);
 	}
 
 	public static Builder create(String name)
@@ -114,7 +140,8 @@ public class EnumDefImpl
 			name,
 			null,
 			Lists.immutable.empty(),
-			Lists.immutable.empty()
+			Lists.immutable.empty(),
+			Metadata.empty()
 		);
 	}
 
@@ -126,13 +153,15 @@ public class EnumDefImpl
 		private final String description;
 		private final ImmutableList<EnumValueDef> values;
 		private final ImmutableList<DirectiveUse> directives;
+		private final Metadata metadata;
 
 		public BuilderImpl(
 			SourceLocation sourceLocation,
 			String name,
 			String description,
 			ImmutableList<EnumValueDef> values,
-			ImmutableList<DirectiveUse> directives
+			ImmutableList<DirectiveUse> directives,
+			Metadata metadata
 		)
 		{
 			this.sourceLocation = sourceLocation;
@@ -140,6 +169,7 @@ public class EnumDefImpl
 			this.description = description;
 			this.values = values;
 			this.directives = directives;
+			this.metadata = metadata;
 		}
 
 		@Override
@@ -150,7 +180,8 @@ public class EnumDefImpl
 				name,
 				description,
 				values,
-				directives
+				directives,
+				metadata
 			);
 		}
 
@@ -162,7 +193,8 @@ public class EnumDefImpl
 				name,
 				description,
 				values,
-				directives
+				directives,
+				metadata
 			);
 		}
 
@@ -174,7 +206,8 @@ public class EnumDefImpl
 				name,
 				description,
 				values,
-				directives.newWith(directive)
+				directives.newWith(directive),
+				metadata
 			);
 		}
 
@@ -188,7 +221,8 @@ public class EnumDefImpl
 				name,
 				description,
 				values,
-				this.directives.newWithAll(directives)
+				this.directives.newWithAll(directives),
+				metadata
 			);
 		}
 
@@ -200,7 +234,8 @@ public class EnumDefImpl
 				name,
 				description,
 				values.newWith(value),
-				directives
+				directives,
+				metadata
 			);
 		}
 
@@ -212,7 +247,34 @@ public class EnumDefImpl
 				name,
 				description,
 				this.values.newWithAll(values),
-				directives
+				directives,
+				metadata
+			);
+		}
+
+		@Override
+		public <V> Builder withMetadata(MetadataKey<V> key, V value)
+		{
+			return new BuilderImpl(
+				sourceLocation,
+				name,
+				description,
+				values,
+				directives,
+				metadata.withMetadata(key, value)
+			);
+		}
+
+		@Override
+		public Builder withAllMetadata(Iterable<MetadataDef> defs)
+		{
+			return new BuilderImpl(
+				sourceLocation,
+				name,
+				description,
+				values,
+				directives,
+				metadata.withAllMetadata(defs)
 			);
 		}
 
@@ -224,7 +286,8 @@ public class EnumDefImpl
 				name,
 				description,
 				values,
-				directives
+				directives,
+				metadata
 			);
 		}
 	}

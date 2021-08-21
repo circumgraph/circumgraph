@@ -8,7 +8,7 @@ import com.circumgraph.model.internal.InputFieldDefImpl;
  * Field within a {@link InputObjectDef}.
  */
 public interface InputFieldDef
-	extends HasDirectives, HasSourceLocation, HasMetadata
+	extends Derivable<InputFieldDef.Builder>, HasDirectives, HasSourceLocation, HasMetadata
 {
 	/**
 	 * Get the name of the input field.
@@ -39,10 +39,25 @@ public interface InputFieldDef
 	String getTypeName();
 
 	/**
+	 * Get the default value for this field.
+	 *
+	 * @return
+	 */
+	Optional<Object> getDefaultValue();
+
+	/**
+	 * Get the type that original declared this type.
+	 *
+	 * @return
+	 */
+	InputObjectDef getDeclaringType();
+
+	/**
 	 * Start building a new input field based on this instance.
 	 *
 	 * @return
 	 */
+	@Override
 	Builder derive();
 
 	/**
@@ -57,7 +72,10 @@ public interface InputFieldDef
 	}
 
 	interface Builder
-		extends HasDirectives.Builder<Builder>, HasSourceLocation.Builder<Builder>
+		extends Buildable<InputFieldDef>,
+			HasDirectives.Builder<Builder>,
+			HasSourceLocation.Builder<Builder>,
+			HasMetadata.Builder<Builder>
 	{
 		/**
 		 * Set the description of this field.
@@ -96,6 +114,7 @@ public interface InputFieldDef
 		 *
 		 * @return
 		 */
+		@Override
 		InputFieldDef build();
 	}
 }

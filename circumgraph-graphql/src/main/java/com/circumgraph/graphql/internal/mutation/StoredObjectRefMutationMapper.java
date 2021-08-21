@@ -1,44 +1,38 @@
 package com.circumgraph.graphql.internal.mutation;
 
 import java.util.Map;
+import java.util.Objects;
 
 import com.circumgraph.graphql.MutationInputMapper;
 import com.circumgraph.graphql.internal.InputUnions;
 import com.circumgraph.graphql.internal.SchemaNames;
+import com.circumgraph.graphql.internal.StorageIds;
+import com.circumgraph.model.InputFieldDef;
+import com.circumgraph.model.InputObjectDef;
+import com.circumgraph.model.NonNullDef;
 import com.circumgraph.model.OutputTypeDef;
+import com.circumgraph.model.ScalarDef;
 import com.circumgraph.model.StructuredDef;
 import com.circumgraph.storage.mutation.Mutation;
 import com.circumgraph.storage.mutation.StoredObjectRefMutation;
 
-import graphql.Scalars;
-import graphql.schema.GraphQLInputObjectField;
-import graphql.schema.GraphQLInputObjectType;
-import graphql.schema.GraphQLInputType;
-import se.l4.ylem.ids.LongIdCodec;
-
 public class StoredObjectRefMutationMapper
 	implements MutationInputMapper<Map<String, Object>>
 {
-	private final LongIdCodec<String> idCodec;
-
 	private final StructuredDef modelDef;
-	private final GraphQLInputObjectType graphQLType;
+	private final InputObjectDef graphQLType;
 
 	public StoredObjectRefMutationMapper(
-		LongIdCodec<String> idCodec,
 		StructuredDef modelDef
 	)
 	{
 		this.modelDef = modelDef;
-		this.idCodec = idCodec;
 
-		this.graphQLType = GraphQLInputObjectType.newInputObject()
-			.name(SchemaNames.toRefInputTypeName(modelDef))
-			.description("Reference to a " + modelDef.getName())
-			.field(GraphQLInputObjectField.newInputObjectField()
-				.name("id")
-				.description("Identifier of object to reference")
-				.type(Scalars.GraphQLID)
+		this.graphQLType = InputObjectDef.create(SchemaNames.toRefInputTypeName(modelDef))
+			.withDescription("Reference to a " + modelDef.getName())
+			.addField(InputFieldDef.create("id")
+				.withType(NonNullDef.input(ScalarDef.ID))
+				.withDescription("Identifier of object to reference")
 				.build()
 			)
 			.build();
@@ -51,7 +45,7 @@ public class StoredObjectRefMutationMapper
 	}
 
 	@Override
-	public GraphQLInputType getGraphQLType()
+	public InputObjectDef getGraphQLType()
 	{
 		return graphQLType;
 	}
@@ -61,12 +55,25 @@ public class StoredObjectRefMutationMapper
 	{
 		InputUnions.validate(graphQLType, value);
 
-		var id = value.get("id");
-		if(id == null)
-		{
-			throw new RuntimeException();
-		}
+		var id = (String) value.get("id");
+		return StoredObjectRefMutation.create(modelDef, StorageIds.decode(id));
+	}
 
-		return StoredObjectRefMutation.create(modelDef, idCodec.decode(id.toString()));
+	@Override
+	public int hashCode()
+	{
+		return Objects.hash(graphQLType, modelDef);
+	}
+
+	@Override
+	public boolean equals(Object obj)
+	{
+		if(this == obj) return true;
+		if(obj == null) return false;
+		if(getClass() != obj.getClass()) return false;
+		StoredObjectRefMutationMapper other =
+			(StoredObjectRefMutationMapper) obj;
+		return Objects.equals(graphQLType, other.graphQLType)
+			&& Objects.equals(modelDef, other.modelDef);
 	}
 }

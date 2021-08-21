@@ -1,5 +1,7 @@
 package com.circumgraph.model;
 
+import java.util.Objects;
+
 import com.circumgraph.model.internal.ListDefImpl;
 
 /**
@@ -50,6 +52,7 @@ public interface ListDef
 	 */
 	static ListDef.Output output(String type)
 	{
+		Objects.requireNonNull(type);
 		return new ListDefImpl.OutputImpl(TypeRef.create(type));
 	}
 
@@ -61,6 +64,7 @@ public interface ListDef
 	 */
 	static ListDef.Output output(OutputTypeDef type)
 	{
+		Objects.requireNonNull(type);
 		return new ListDefImpl.OutputImpl(type);
 	}
 
@@ -72,6 +76,7 @@ public interface ListDef
 	 */
 	static ListDef.Input input(String type)
 	{
+		Objects.requireNonNull(type);
 		return new ListDefImpl.InputImpl(TypeRef.create(type));
 	}
 
@@ -83,6 +88,7 @@ public interface ListDef
 	 */
 	static ListDef.Input input(InputTypeDef type)
 	{
+		Objects.requireNonNull(type);
 		return new ListDefImpl.InputImpl(type);
 	}
 }

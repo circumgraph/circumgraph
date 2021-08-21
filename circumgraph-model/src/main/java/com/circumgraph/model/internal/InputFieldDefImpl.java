@@ -5,12 +5,15 @@ import java.util.Optional;
 
 import com.circumgraph.model.DirectiveUse;
 import com.circumgraph.model.InputFieldDef;
+import com.circumgraph.model.InputObjectDef;
 import com.circumgraph.model.InputTypeDef;
+import com.circumgraph.model.MetadataDef;
 import com.circumgraph.model.MetadataKey;
 import com.circumgraph.model.TypeRef;
 import com.circumgraph.model.validation.ModelValidation;
 import com.circumgraph.model.validation.SourceLocation;
 
+import org.eclipse.collections.api.RichIterable;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.ListIterable;
@@ -28,9 +31,10 @@ public class InputFieldDefImpl
 
 	private final InputTypeDef type;
 	private final ImmutableList<DirectiveUse> directives;
-
-	private final MetadataHelper metadata;
 	private final Object defaultValue;
+	private final Metadata metadata;
+
+	private InputObjectDef declaringType;
 
 	private ModelDefs defs;
 
@@ -40,7 +44,8 @@ public class InputFieldDefImpl
 		String description,
 		InputTypeDef type,
 		ImmutableList<DirectiveUse> directives,
-		Object defaultValue
+		Object defaultValue,
+		Metadata metadata
 	)
 	{
 		this.sourceLocation = sourceLocation;
@@ -49,8 +54,7 @@ public class InputFieldDefImpl
 		this.type = type;
 		this.directives = directives;
 		this.defaultValue = defaultValue;
-
-		this.metadata = new MetadataHelper();
+		this.metadata = metadata;
 	}
 
 	@Override
@@ -84,11 +88,17 @@ public class InputFieldDefImpl
 	}
 
 	@Override
+	public Optional<Object> getDefaultValue()
+	{
+		return Optional.ofNullable(defaultValue);
+	}
+
+	@Override
 	public void prepare(ModelDefs defs)
 	{
 		this.defs = defs;
 
-		HasPreparation.maybePrepare(getType(), defs);
+		HasPreparation.prepareUnnamed(type, defs);
 	}
 
 	@Override
@@ -104,6 +114,17 @@ public class InputFieldDefImpl
 	}
 
 	@Override
+	public InputObjectDef getDeclaringType()
+	{
+		return declaringType;
+	}
+
+	public void setDeclaringType(InputObjectDef declaringType)
+	{
+		this.declaringType = declaringType;
+	}
+
+	@Override
 	public Builder derive()
 	{
 		return new BuilderImpl(
@@ -112,7 +133,8 @@ public class InputFieldDefImpl
 			description,
 			type,
 			directives,
-			defaultValue
+			defaultValue,
+			metadata.derive()
 		);
 	}
 
@@ -123,9 +145,15 @@ public class InputFieldDefImpl
 	}
 
 	@Override
-	public <V> void setMetadata(MetadataKey<V> key, V value)
+	public RichIterable<MetadataDef> getDefinedMetadata()
 	{
-		metadata.setMetadata(key, value);
+		return metadata.getDefinedMetadata();
+	}
+
+	@Override
+	public <V> void setRuntimeMetadata(MetadataKey<V> key, V value)
+	{
+		metadata.setRuntimeMetadata(key, value);
 	}
 
 	@Override
@@ -143,7 +171,12 @@ public class InputFieldDefImpl
 	public int hashCode()
 	{
 		return Objects.hash(
-			defaultValue, description, directives, name, type
+			defaultValue,
+			description,
+			directives,
+			name,
+			type,
+			metadata
 		);
 	}
 
@@ -158,7 +191,8 @@ public class InputFieldDefImpl
 			&& Objects.equals(description, other.description)
 			&& Objects.equals(directives, other.directives)
 			&& Objects.equals(name, other.name)
-			&& Objects.equals(type, other.type);
+			&& Objects.equals(type, other.type)
+			&& Objects.equals(metadata, other.metadata);
 	}
 
 	public static Builder create(String name)
@@ -171,7 +205,8 @@ public class InputFieldDefImpl
 			null,
 			null,
 			Lists.immutable.empty(),
-			null
+			null,
+			Metadata.empty()
 		);
 	}
 
@@ -184,6 +219,7 @@ public class InputFieldDefImpl
 		private final InputTypeDef type;
 		private final ImmutableList<DirectiveUse> directives;
 		private final Object defaultValue;
+		private final Metadata metadata;
 
 		public BuilderImpl(
 			SourceLocation sourceLocation,
@@ -191,7 +227,8 @@ public class InputFieldDefImpl
 			String description,
 			InputTypeDef type,
 			ImmutableList<DirectiveUse> directives,
-			Object defaultValue
+			Object defaultValue,
+			Metadata metadata
 		)
 		{
 			this.sourceLocation = sourceLocation;
@@ -200,6 +237,7 @@ public class InputFieldDefImpl
 			this.type = type;
 			this.directives = directives;
 			this.defaultValue = defaultValue;
+			this.metadata = metadata;
 		}
 
 		@Override
@@ -211,7 +249,8 @@ public class InputFieldDefImpl
 				description,
 				type,
 				directives,
-				defaultValue
+				defaultValue,
+				metadata
 			);
 		}
 
@@ -224,7 +263,8 @@ public class InputFieldDefImpl
 				description,
 				type,
 				directives,
-				defaultValue
+				defaultValue,
+				metadata
 			);
 		}
 
@@ -243,7 +283,8 @@ public class InputFieldDefImpl
 				description,
 				type,
 				directives,
-				defaultValue
+				defaultValue,
+				metadata
 			);
 		}
 
@@ -256,7 +297,8 @@ public class InputFieldDefImpl
 				description,
 				type,
 				directives.newWith(directive),
-				defaultValue
+				defaultValue,
+				metadata
 			);
 		}
 
@@ -271,7 +313,8 @@ public class InputFieldDefImpl
 				description,
 				type,
 				this.directives.newWithAll(directives),
-				defaultValue
+				defaultValue,
+				metadata
 			);
 		}
 
@@ -284,7 +327,36 @@ public class InputFieldDefImpl
 				description,
 				type,
 				directives,
-				defaultValue
+				defaultValue,
+				metadata
+			);
+		}
+
+		@Override
+		public <V> Builder withMetadata(MetadataKey<V> key, V value)
+		{
+			return new BuilderImpl(
+				sourceLocation,
+				name,
+				description,
+				type,
+				directives,
+				defaultValue,
+				metadata.withMetadata(key, value)
+			);
+		}
+
+		@Override
+		public Builder withAllMetadata(Iterable<MetadataDef> defs)
+		{
+			return new BuilderImpl(
+				sourceLocation,
+				name,
+				description,
+				type,
+				directives,
+				defaultValue,
+				metadata.withAllMetadata(defs)
 			);
 		}
 
@@ -299,7 +371,8 @@ public class InputFieldDefImpl
 				description,
 				type,
 				directives,
-				defaultValue
+				defaultValue,
+				metadata
 			);
 		}
 	}

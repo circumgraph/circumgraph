@@ -1,9 +1,8 @@
 package com.circumgraph.graphql;
 
+import com.circumgraph.model.InputTypeDef;
 import com.circumgraph.model.OutputTypeDef;
 import com.circumgraph.storage.mutation.Mutation;
-
-import graphql.schema.GraphQLInputType;
 
 /**
  * Handler for different types of input.
@@ -22,7 +21,7 @@ public interface MutationInputMapper<V>
 	 *
 	 * @return
 	 */
-	GraphQLInputType getGraphQLType();
+	InputTypeDef getGraphQLType();
 
 	/**
 	 * Convert the given value into a {@link Mutation}.

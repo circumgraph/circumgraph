@@ -1,12 +1,10 @@
-package com.circumgraph.graphql.internal.scalars;
+package com.circumgraph.graphql.scalars;
 
 import com.circumgraph.graphql.ScalarMapper;
 import com.circumgraph.model.ScalarDef;
-import com.circumgraph.storage.SimpleValue;
 
 import graphql.Scalars;
 import graphql.schema.GraphQLScalarType;
-import se.l4.silo.Transaction;
 
 public class IntScalar
 	implements ScalarMapper<Integer>
@@ -27,11 +25,5 @@ public class IntScalar
 	public Integer fromInput(Object inputValue)
 	{
 		return ((Number) inputValue).intValue();
-	}
-
-	@Override
-	public Object toOutput(Transaction tx, SimpleValue value)
-	{
-		return value == null ? null : value.get();
 	}
 }

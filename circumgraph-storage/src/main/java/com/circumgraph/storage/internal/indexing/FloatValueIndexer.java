@@ -26,4 +26,18 @@ public class FloatValueIndexer
 	{
 		return SearchFieldType.forDouble().build();
 	}
+
+	@Override
+	public int hashCode()
+	{
+		return getClass().hashCode();
+	}
+
+	@Override
+	public boolean equals(Object obj)
+	{
+		if(this == obj) return true;
+		if(obj == null) return false;
+		return getClass() == obj.getClass();
+	}
 }

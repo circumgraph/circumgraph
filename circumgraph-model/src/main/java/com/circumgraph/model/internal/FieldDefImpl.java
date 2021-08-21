@@ -6,6 +6,7 @@ import java.util.Optional;
 import com.circumgraph.model.ArgumentDef;
 import com.circumgraph.model.DirectiveUse;
 import com.circumgraph.model.FieldDef;
+import com.circumgraph.model.MetadataDef;
 import com.circumgraph.model.MetadataKey;
 import com.circumgraph.model.OutputTypeDef;
 import com.circumgraph.model.StructuredDef;
@@ -13,6 +14,7 @@ import com.circumgraph.model.TypeRef;
 import com.circumgraph.model.validation.ModelValidation;
 import com.circumgraph.model.validation.SourceLocation;
 
+import org.eclipse.collections.api.RichIterable;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.ListIterable;
@@ -31,8 +33,7 @@ public class FieldDefImpl
 	private final OutputTypeDef type;
 	private final ImmutableList<ArgumentDef> arguments;
 	private final ImmutableList<DirectiveUse> directives;
-
-	private final MetadataHelper metadata;
+	private final Metadata metadata;
 
 	private ModelDefs defs;
 	private StructuredDef declaringType;
@@ -43,7 +44,8 @@ public class FieldDefImpl
 		String description,
 		OutputTypeDef type,
 		ImmutableList<ArgumentDef> arguments,
-		ImmutableList<DirectiveUse> directives
+		ImmutableList<DirectiveUse> directives,
+		Metadata metadata
 	)
 	{
 		this.sourceLocation = sourceLocation;
@@ -52,8 +54,7 @@ public class FieldDefImpl
 		this.type = type;
 		this.arguments = arguments;
 		this.directives = directives;
-
-		this.metadata = new MetadataHelper();
+		this.metadata = metadata;
 	}
 
 	@Override
@@ -114,7 +115,13 @@ public class FieldDefImpl
 	{
 		this.defs = defs;
 
-		HasPreparation.maybePrepare(getType(), defs);
+		HasPreparation.prepareUnnamed(type, defs);
+
+		for(var arg : arguments)
+		{
+			((ArgumentDefImpl) arg).setDeclaringField(this);
+			HasPreparation.maybePrepare(arg, defs);
+		}
 	}
 
 	@Override
@@ -136,9 +143,15 @@ public class FieldDefImpl
 	}
 
 	@Override
-	public <V> void setMetadata(MetadataKey<V> key, V value)
+	public RichIterable<MetadataDef> getDefinedMetadata()
 	{
-		metadata.setMetadata(key, value);
+		return metadata.getDefinedMetadata();
+	}
+
+	@Override
+	public <V> void setRuntimeMetadata(MetadataKey<V> key, V value)
+	{
+		metadata.setRuntimeMetadata(key, value);
 	}
 
 	@Override
@@ -150,7 +163,8 @@ public class FieldDefImpl
 			description,
 			type,
 			arguments,
-			directives
+			directives,
+			metadata.derive()
 		);
 	}
 
@@ -159,6 +173,7 @@ public class FieldDefImpl
 	{
 		return "FieldDef{name=" + name
 			+ ", type=" + type
+			+ ", arguments=" + arguments
 			+ ", description=" + description
 			+ ", directives=" + directives
 			+ "}";
@@ -167,7 +182,7 @@ public class FieldDefImpl
 	@Override
 	public int hashCode()
 	{
-		return Objects.hash(arguments, description, directives, name, type);
+		return Objects.hash(arguments, description, directives, name, type, metadata);
 	}
 
 	@Override
@@ -181,7 +196,8 @@ public class FieldDefImpl
 			&& Objects.equals(description, other.description)
 			&& Objects.equals(directives, other.directives)
 			&& Objects.equals(name, other.name)
-			&& Objects.equals(type, other.type);
+			&& Objects.equals(type, other.type)
+			&& Objects.equals(metadata, other.metadata);
 	}
 
 	public static Builder create(String name)
@@ -194,7 +210,8 @@ public class FieldDefImpl
 			null,
 			null,
 			Lists.immutable.empty(),
-			Lists.immutable.empty()
+			Lists.immutable.empty(),
+			Metadata.empty()
 		);
 	}
 
@@ -207,6 +224,7 @@ public class FieldDefImpl
 		private final OutputTypeDef type;
 		private final ImmutableList<ArgumentDef> arguments;
 		private final ImmutableList<DirectiveUse> directives;
+		private final Metadata metadata;
 
 		public BuilderImpl(
 			SourceLocation sourceLocation,
@@ -214,7 +232,8 @@ public class FieldDefImpl
 			String description,
 			OutputTypeDef type,
 			ImmutableList<ArgumentDef> arguments,
-			ImmutableList<DirectiveUse> directives
+			ImmutableList<DirectiveUse> directives,
+			Metadata metadata
 		)
 		{
 			this.sourceLocation = sourceLocation;
@@ -223,6 +242,7 @@ public class FieldDefImpl
 			this.type = type;
 			this.arguments = arguments;
 			this.directives = directives;
+			this.metadata = metadata;
 		}
 
 		@Override
@@ -234,7 +254,8 @@ public class FieldDefImpl
 				description,
 				type,
 				arguments,
-				directives
+				directives,
+				metadata
 			);
 		}
 
@@ -247,7 +268,8 @@ public class FieldDefImpl
 				description,
 				type,
 				arguments,
-				directives
+				directives,
+				metadata
 			);
 		}
 
@@ -266,7 +288,8 @@ public class FieldDefImpl
 				description,
 				type,
 				arguments,
-				directives
+				directives,
+				metadata
 			);
 		}
 
@@ -283,7 +306,8 @@ public class FieldDefImpl
 				description,
 				type,
 				newArguments,
-				directives
+				directives,
+				metadata
 			);
 		}
 
@@ -307,7 +331,8 @@ public class FieldDefImpl
 				description,
 				type,
 				arguments,
-				directives.newWith(directive)
+				directives.newWith(directive),
+				metadata
 			);
 		}
 
@@ -322,7 +347,36 @@ public class FieldDefImpl
 				description,
 				type,
 				arguments,
-				this.directives.newWithAll(directives)
+				this.directives.newWithAll(directives),
+				metadata
+			);
+		}
+
+		@Override
+		public <V> Builder withMetadata(MetadataKey<V> key, V value)
+		{
+			return new BuilderImpl(
+				sourceLocation,
+				name,
+				description,
+				type,
+				arguments,
+				directives,
+				metadata.withMetadata(key, value)
+			);
+		}
+
+		@Override
+		public Builder withAllMetadata(Iterable<MetadataDef> defs)
+		{
+			return new BuilderImpl(
+				sourceLocation,
+				name,
+				description,
+				type,
+				arguments,
+				directives,
+				metadata.withAllMetadata(defs)
 			);
 		}
 
@@ -337,7 +391,8 @@ public class FieldDefImpl
 				description,
 				type,
 				arguments,
-				directives
+				directives,
+				metadata
 			);
 		}
 	}

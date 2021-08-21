@@ -4,11 +4,14 @@ import java.util.Objects;
 import java.util.Optional;
 
 import com.circumgraph.model.DirectiveUse;
+import com.circumgraph.model.MetadataDef;
+import com.circumgraph.model.MetadataKey;
 import com.circumgraph.model.OutputTypeDef;
 import com.circumgraph.model.TypeDef;
 import com.circumgraph.model.UnionDef;
 import com.circumgraph.model.validation.SourceLocation;
 
+import org.eclipse.collections.api.RichIterable;
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
 import org.eclipse.collections.api.list.ListIterable;
@@ -24,6 +27,7 @@ public class UnionDefImpl
 	private final String description;
 	private final ImmutableList<OutputTypeDef> types;
 	private final ImmutableList<DirectiveUse> directives;
+	private final Metadata metadata;
 
 	private ModelDefs defs;
 
@@ -32,7 +36,8 @@ public class UnionDefImpl
 		String name,
 		String description,
 		ImmutableList<OutputTypeDef> types,
-		ImmutableList<DirectiveUse> directives
+		ImmutableList<DirectiveUse> directives,
+		Metadata metadata
 	)
 	{
 		this.sourceLocation = sourceLocation;
@@ -40,6 +45,7 @@ public class UnionDefImpl
 		this.description = description;
 		this.types = types;
 		this.directives = directives;
+		this.metadata = metadata;
 	}
 
 	@Override
@@ -63,7 +69,7 @@ public class UnionDefImpl
 	@Override
 	public ListIterable<OutputTypeDef> getTypes()
 	{
-		return types.collect(s -> defs.getType(s, OutputTypeDef.class));
+		return types.collect(s -> defs == null ? s : defs.getType(s, OutputTypeDef.class));
 	}
 
 	@Override
@@ -91,6 +97,24 @@ public class UnionDefImpl
 	}
 
 	@Override
+	public <V> Optional<V> getMetadata(MetadataKey<V> key)
+	{
+		return metadata.getMetadata(key);
+	}
+
+	@Override
+	public RichIterable<MetadataDef> getDefinedMetadata()
+	{
+		return metadata.getDefinedMetadata();
+	}
+
+	@Override
+	public <V> void setRuntimeMetadata(MetadataKey<V> key, V value)
+	{
+		metadata.setRuntimeMetadata(key, value);
+	}
+
+	@Override
 	public boolean isAssignableFrom(TypeDef other)
 	{
 		if(other instanceof UnionDef)
@@ -112,7 +136,7 @@ public class UnionDefImpl
 	@Override
 	public int hashCode()
 	{
-		return Objects.hash(description, directives, name, types);
+		return Objects.hash(description, directives, name, types, metadata);
 	}
 
 	@Override
@@ -125,7 +149,8 @@ public class UnionDefImpl
 		return Objects.equals(description, other.description)
 			&& Objects.equals(directives, other.directives)
 			&& Objects.equals(name, other.name)
-			&& Objects.equals(types, other.types);
+			&& Objects.equals(types, other.types)
+			&& Objects.equals(metadata, other.metadata);
 	}
 
 	@Override
@@ -136,7 +161,8 @@ public class UnionDefImpl
 			name,
 			description,
 			types,
-			directives
+			directives,
+			metadata.derive()
 		);
 	}
 
@@ -147,7 +173,8 @@ public class UnionDefImpl
 			name,
 			null,
 			Lists.immutable.empty(),
-			Lists.immutable.empty()
+			Lists.immutable.empty(),
+			Metadata.empty()
 		);
 	}
 
@@ -159,13 +186,15 @@ public class UnionDefImpl
 		private final String description;
 		private final ImmutableList<OutputTypeDef> types;
 		private final ImmutableList<DirectiveUse> directives;
+		private final Metadata metadata;
 
 		public BuilderImpl(
 			SourceLocation sourceLocation,
 			String name,
 			String description,
 			ImmutableList<OutputTypeDef> types,
-			ImmutableList<DirectiveUse> directives
+			ImmutableList<DirectiveUse> directives,
+			Metadata metadata
 		)
 		{
 			this.sourceLocation = sourceLocation;
@@ -173,6 +202,7 @@ public class UnionDefImpl
 			this.description = description;
 			this.types = types;
 			this.directives = directives;
+			this.metadata = metadata;
 		}
 
 		@Override
@@ -183,7 +213,8 @@ public class UnionDefImpl
 				name,
 				description,
 				types,
-				directives
+				directives,
+				metadata
 			);
 		}
 
@@ -195,7 +226,8 @@ public class UnionDefImpl
 				name,
 				description,
 				types,
-				directives
+				directives,
+				metadata
 			);
 		}
 
@@ -207,7 +239,8 @@ public class UnionDefImpl
 				name,
 				description,
 				types,
-				directives.newWith(directive)
+				directives.newWith(directive),
+				metadata
 			);
 		}
 
@@ -221,7 +254,8 @@ public class UnionDefImpl
 				name,
 				description,
 				types,
-				this.directives.newWithAll(directives)
+				this.directives.newWithAll(directives),
+				metadata
 			);
 		}
 
@@ -233,7 +267,8 @@ public class UnionDefImpl
 				name,
 				description,
 				types.newWith(value),
-				directives
+				directives,
+				metadata
 			);
 		}
 
@@ -245,7 +280,34 @@ public class UnionDefImpl
 				name,
 				description,
 				this.types.newWithAll(types),
-				directives
+				directives,
+				metadata
+			);
+		}
+
+		@Override
+		public <V> Builder withMetadata(MetadataKey<V> key, V value)
+		{
+			return new BuilderImpl(
+				sourceLocation,
+				name,
+				description,
+				types,
+				directives,
+				metadata.withMetadata(key, value)
+			);
+		}
+
+		@Override
+		public Builder withAllMetadata(Iterable<MetadataDef> defs)
+		{
+			return new BuilderImpl(
+				sourceLocation,
+				name,
+				description,
+				types,
+				directives,
+				metadata.withAllMetadata(defs)
 			);
 		}
 
@@ -253,11 +315,12 @@ public class UnionDefImpl
 		public UnionDef build()
 		{
 			return new UnionDefImpl(
-				sourceLocation,
+				SourceLocation.automatic(sourceLocation),
 				name,
 				description,
 				types,
-				directives
+				directives,
+				metadata
 			);
 		}
 	}

@@ -15,7 +15,8 @@ public class ArgumentDefTest
 			.usingGetClass()
 			.withIgnoredFields(
 				"sourceLocation",
-				"defs"
+				"defs",
+				"declaringField"
 			)
 			.verify();
 	}

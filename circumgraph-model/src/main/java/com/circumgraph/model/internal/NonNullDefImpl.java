@@ -42,7 +42,7 @@ public abstract class NonNullDefImpl
 	{
 		this.defs = defs;
 
-		HasPreparation.maybePrepare(getType(), defs);
+		HasPreparation.prepareUnnamed(type, defs);
 	}
 
 	@Override

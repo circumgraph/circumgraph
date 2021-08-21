@@ -1,29 +1,19 @@
 package com.circumgraph.graphql;
 
+import java.util.List;
+
+import com.circumgraph.graphql.internal.FieldResolverAdapter;
 import com.circumgraph.graphql.internal.InterfaceResolver;
-import com.circumgraph.graphql.internal.SchemaNames;
 import com.circumgraph.graphql.internal.TransactionInstrumentation;
-import com.circumgraph.graphql.internal.datafetchers.CollectionDeleteMutation;
-import com.circumgraph.graphql.internal.datafetchers.CollectionGetByIdFetcher;
-import com.circumgraph.graphql.internal.datafetchers.CollectionStoreMutation;
-import com.circumgraph.graphql.internal.datafetchers.FieldResolverAdapter;
-import com.circumgraph.graphql.internal.mutation.ListMutationMapper;
-import com.circumgraph.graphql.internal.mutation.PolymorphicMutationMapper;
-import com.circumgraph.graphql.internal.mutation.ScalarMutationMapper;
-import com.circumgraph.graphql.internal.mutation.StoredObjectRefMutationMapper;
-import com.circumgraph.graphql.internal.mutation.StructuredValueMutationMapper;
-import com.circumgraph.graphql.internal.output.ListOutputMapper;
-import com.circumgraph.graphql.internal.output.NonNullOutputMapper;
-import com.circumgraph.graphql.internal.output.StoredObjectRefOutputMapper;
-import com.circumgraph.graphql.internal.output.StructuredValueOutputMapper;
-import com.circumgraph.graphql.internal.resolvers.StoredValueFieldResolver;
-import com.circumgraph.graphql.internal.scalars.BooleanScalar;
-import com.circumgraph.graphql.internal.scalars.FloatScalar;
-import com.circumgraph.graphql.internal.scalars.IDScalar;
-import com.circumgraph.graphql.internal.scalars.IntScalar;
-import com.circumgraph.graphql.internal.scalars.StringScalar;
-import com.circumgraph.graphql.internal.search.SearchQueryGenerator;
+import com.circumgraph.graphql.scalars.BooleanScalar;
+import com.circumgraph.graphql.scalars.FloatScalar;
+import com.circumgraph.graphql.scalars.IDScalar;
+import com.circumgraph.graphql.scalars.IntScalar;
+import com.circumgraph.graphql.scalars.StringScalar;
+import com.circumgraph.model.EnumDef;
 import com.circumgraph.model.FieldDef;
+import com.circumgraph.model.InputObjectDef;
+import com.circumgraph.model.InputTypeDef;
 import com.circumgraph.model.InterfaceDef;
 import com.circumgraph.model.ListDef;
 import com.circumgraph.model.Model;
@@ -35,61 +25,48 @@ import com.circumgraph.model.ScalarDef;
 import com.circumgraph.model.StructuredDef;
 import com.circumgraph.model.TypeDef;
 import com.circumgraph.model.UnionDef;
-import com.circumgraph.storage.Collection;
 import com.circumgraph.storage.Storage;
-import com.circumgraph.storage.StorageModel;
-import com.circumgraph.storage.StorageSchema;
 
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.factory.Maps;
 import org.eclipse.collections.api.map.ImmutableMap;
-import org.eclipse.collections.api.map.MutableMap;
 
 import graphql.GraphQL;
-import graphql.Scalars;
-import graphql.schema.DataFetcher;
-import graphql.schema.DataFetchingEnvironment;
 import graphql.schema.FieldCoordinates;
 import graphql.schema.GraphQLArgument;
 import graphql.schema.GraphQLCodeRegistry;
+import graphql.schema.GraphQLEnumType;
+import graphql.schema.GraphQLEnumValueDefinition;
 import graphql.schema.GraphQLFieldDefinition;
+import graphql.schema.GraphQLInputObjectField;
+import graphql.schema.GraphQLInputObjectType;
+import graphql.schema.GraphQLInputType;
 import graphql.schema.GraphQLInterfaceType;
+import graphql.schema.GraphQLList;
 import graphql.schema.GraphQLNonNull;
 import graphql.schema.GraphQLObjectType;
+import graphql.schema.GraphQLOutputType;
 import graphql.schema.GraphQLSchema;
+import graphql.schema.GraphQLType;
 import graphql.schema.GraphQLTypeReference;
 import graphql.schema.GraphQLUnionType;
-import se.l4.ylem.ids.Base62LongIdCodec;
-import se.l4.ylem.ids.LongIdCodec;
 
 public class GraphQLGenerator
 {
 	private final Storage storage;
-	private final DataFetcher<?> entityGet;
-
-	private final ImmutableMap<ScalarDef, ScalarMapper<?>> scalars;
-	private final LongIdCodec<String> idCodec;
-
-	private final MutableMap<OutputTypeDef, MutationInputMapper<?>> mutationMappers;
-
 	private final GraphQLCreationEncounter encounter;
+	private final ImmutableMap<ScalarDef, ScalarMapper<?>> scalars;
 
 	public GraphQLGenerator(Storage storage)
 	{
 		this.storage = storage;
 
-		idCodec = new Base62LongIdCodec();
-		entityGet = new CollectionGetByIdFetcher(idCodec);
-
-		// TODO: Allow dynamic loading of scalars
 		scalars = Maps.immutable.<ScalarDef, ScalarMapper<?>>empty()
 			.newWithKeyValue(ScalarDef.BOOLEAN, new BooleanScalar())
 			.newWithKeyValue(ScalarDef.FLOAT, new FloatScalar())
-			.newWithKeyValue(ScalarDef.ID, new IDScalar(idCodec))
+			.newWithKeyValue(ScalarDef.ID, new IDScalar())
 			.newWithKeyValue(ScalarDef.INT, new IntScalar())
 			.newWithKeyValue(ScalarDef.STRING, new StringScalar());
-
-		mutationMappers = Maps.mutable.empty();
 
 		encounter = new GraphQLCreationEncounter()
 		{
@@ -121,371 +98,226 @@ public class GraphQLGenerator
 
 		Model model = storage.getModel();
 
-		for(TypeDef type : model.getTypes())
+		for(var def : model.getTypes())
 		{
-			generateType(type, schema, registry);
-		}
+			var type = generateType(registry, def);
+			schema.additionalType(type);
 
-		// Type returned when deleting something
-		schema.additionalType(GraphQLObjectType.newObject()
-			.name("DeleteResult")
-			.field(GraphQLFieldDefinition.newFieldDefinition()
-				.name("success")
-				.type(GraphQLNonNull.nonNull(Scalars.GraphQLBoolean))
-			)
-			.build()
-		);
-
-		registry.dataFetcher(
-			FieldCoordinates.coordinates("DeleteResult", "success"),
-			(DataFetchingEnvironment env) -> env.getContext()
-		);
-
-		var searchGenerator = new SearchQueryGenerator(model, registry, idCodec);
-
-		// Generate the query and mutation root objects
-		GraphQLObjectType.Builder queryBuilder = GraphQLObjectType.newObject()
-			.name("Query");
-		GraphQLObjectType.Builder mutationBuilder = GraphQLObjectType.newObject()
-			.name("Mutation");
-
-		for(var collection : storage.getCollections())
-		{
-			generateQuery(collection, schema, registry, searchGenerator, queryBuilder);
-			generateMutation(collection, schema, registry, mutationBuilder);
+			if(type instanceof GraphQLObjectType o)
+			{
+				if(o.getName().equals("Query"))
+				{
+					schema.query(o);
+				}
+				else if(o.getName().equals("Mutation"))
+				{
+					schema.mutation(o);
+				}
+			}
 		}
 
 		return schema
-			.query(queryBuilder)
-			.mutation(mutationBuilder)
 			.codeRegistry(registry.build())
 			.build();
 	}
 
-	private void generateType(
-		TypeDef t,
-		GraphQLSchema.Builder schema,
-		GraphQLCodeRegistry.Builder registry
+	/**
+	 * Generate a type for the given schema
+	 * @param schema
+	 * @param registry
+	 * @param def
+	 */
+	private GraphQLType generateType(
+		GraphQLCodeRegistry.Builder registry,
+		TypeDef def
 	)
 	{
-		if(t instanceof ScalarDef)
+		if(def instanceof ScalarDef)
 		{
-			var scalar = scalars.get(t);
+			var scalar = scalars.get(def);
 			if(scalar == null)
 			{
-				throw new ModelException("Unsupported scalar: " + t.getName());
+				throw new ModelException("Unsupported scalar: " + def.getName());
 			}
+
+			return scalar.getGraphQLType();
 		}
-		else if(t instanceof ObjectDef)
+		else if(def instanceof ObjectDef objectDef)
 		{
-			ObjectDef def = (ObjectDef) t;
-
 			GraphQLObjectType.Builder builder = GraphQLObjectType.newObject()
-				.name(def.getName())
-				.description(def.getDescription().orElse(null));
+				.name(objectDef.getName())
+				.description(objectDef.getDescription().orElse(null))
+				.fields(generateFields(registry, objectDef));
 
-			for(FieldDef field : def.getFields())
-			{
-				var resolver = GraphQLModel.getFieldResolverFactory(field);
-				var type = StorageModel.getFieldType(field);
-
-				if(type == StorageModel.FieldType.DYNAMIC && resolver.isEmpty())
-				{
-					throw new ModelException("GraphQL generation failed, dynamic field but no resolver");
-				}
-
-				FieldResolver actualResolver = resolver.isPresent()
-					? resolver.get().create(encounter)
-					: new StoredValueFieldResolver<>(
-						field.getName(),
-						resolveOutputType(field.getType())
-					);
-
-				GraphQLFieldDefinition fieldDef = GraphQLFieldDefinition.newFieldDefinition()
-					.name(field.getName())
-					.description(field.getDescription().orElse(null))
-					.type(actualResolver.getGraphQLType())
-					.arguments(Lists.mutable.ofAll(actualResolver.getArguments()))
-					.build();
-
-				builder.field(fieldDef);
-
-				registry.dataFetcher(
-					FieldCoordinates.coordinates(def.getName(), field.getName()),
-					new FieldResolverAdapter(actualResolver)
-				);
-			}
-
-			for(var i : def.getAllImplements())
+			for(var i : objectDef.getAllImplements())
 			{
 				builder.withInterface(new GraphQLTypeReference(i.getName()));
 			}
 
-			schema.additionalType(builder.build());
+			return builder.build();
 		}
-		else if(t instanceof InterfaceDef)
+		else if(def instanceof InterfaceDef interfaceDef)
 		{
-			InterfaceDef def = (InterfaceDef) t;
+			var builder = GraphQLInterfaceType.newInterface()
+				.name(interfaceDef.getName())
+				.description(interfaceDef.getDescription().orElse(null))
+				.fields(generateFields(registry, interfaceDef));
 
-			GraphQLInterfaceType.Builder builder = GraphQLInterfaceType.newInterface()
-				.name(def.getName())
-				.description(def.getDescription().orElse(null));
-
-			for(FieldDef field : def.getFields())
-			{
-				var fieldMapper = resolveOutputType(field.getType());
-
-				GraphQLFieldDefinition fieldDef = GraphQLFieldDefinition.newFieldDefinition()
-					.name(field.getName())
-					.description(field.getDescription().orElse(null))
-					.type(fieldMapper.getGraphQLType())
-					.build();
-
-				builder.field(fieldDef);
-			}
-
-			for(var i : def.getAllImplements())
+			for(var i : interfaceDef.getAllImplements())
 			{
 				builder.withInterface(new GraphQLTypeReference(i.getName()));
 			}
 
 			GraphQLInterfaceType type = builder.build();
-			schema.additionalType(type);
-
 			registry.typeResolver(type, new InterfaceResolver());
+			return type;
 		}
-		else if(t instanceof UnionDef)
+		else if(def instanceof UnionDef unionDef)
 		{
-			var def = (UnionDef) t;
+			var builder = GraphQLUnionType.newUnionType()
+				.name(unionDef.getName())
+				.description(unionDef.getDescription().orElse(null));
 
-			GraphQLUnionType.Builder builder = GraphQLUnionType.newUnionType()
-				.name(def.getName())
-				.description(def.getDescription().orElse(null));
-
-			for(var subDef : def.getTypes())
+			for(var subDef : unionDef.getTypes())
 			{
 				builder.possibleType(GraphQLTypeReference.typeRef(subDef.getName()));
 			}
 
 			var type = builder.build();
-			schema.additionalType(type);
 			registry.typeResolver(type, new InterfaceResolver());
+			return type;
 		}
-	}
+		else if(def instanceof EnumDef enumDef)
+		{
+			var builder = GraphQLEnumType.newEnum()
+				.name(enumDef.getName())
+				.description(enumDef.getDescription().orElse(null));
 
-	private OutputMapper<?> resolveOutputType(OutputTypeDef type)
-	{
-		if(type instanceof NonNullDef.Output)
-		{
-			return new NonNullOutputMapper<>(
-				resolveOutputType(((NonNullDef.Output) type).getType())
-			);
-		}
-		else if(type instanceof ListDef.Output)
-		{
-			var listDef = (ListDef.Output) type;
-			return new ListOutputMapper(
-				listDef,
-				resolveOutputType(listDef.getItemType())
-			);
-		}
-		else if(type instanceof ScalarDef)
-		{
-			var scalarDef = (ScalarDef) type;
-			return scalars.get(scalarDef);
-		}
-		else if(type instanceof StructuredDef)
-		{
-			var structuredDef = (StructuredDef) type;
-			if(structuredDef.findImplements(StorageSchema.ENTITY_NAME))
+			for(var value : enumDef.getValues())
 			{
-				// Reference to another entity
-				return new StoredObjectRefOutputMapper(
-					storage.get(structuredDef.getName())
+				builder.value(GraphQLEnumValueDefinition.newEnumValueDefinition()
+					.name(value.getName())
+					.description(value.getDescription().orElse(null))
+					.value(value.getMetadata(GraphQLModel.ENUM_VALUE).orElse(null))
+					.build()
 				);
 			}
 
-			return new StructuredValueOutputMapper(structuredDef);
+			return builder.build();
 		}
-		else if(type instanceof UnionDef)
+		else if(def instanceof InputObjectDef inputObjectDef)
 		{
-			var unionDef = (UnionDef) type;
-			return new StructuredValueOutputMapper(unionDef);
-		}
+			var builder = GraphQLInputObjectType.newInputObject()
+				.name(inputObjectDef.getName())
+				.description(inputObjectDef.getDescription().orElse(null));
 
-		throw new ModelException("Can not map the given type to GraphQL: " + type);
-	}
+			for(var field : inputObjectDef.getFields())
+			{
+				builder.field(GraphQLInputObjectField.newInputObjectField()
+					.name(field.getName())
+					.description(field.getDescription().orElse(null))
+					.type(resolveInputType(field.getType()))
+					.defaultValue(field.getDefaultValue().orElse(null))
+					.build()
+				);
+			}
 
-	private void generateQuery(
-		Collection entity,
-		GraphQLSchema.Builder schema,
-		GraphQLCodeRegistry.Builder registry,
-		SearchQueryGenerator searchQuery,
-		GraphQLObjectType.Builder queryBuilder
-	)
-	{
-		String queryObjectName = SchemaNames.toQueryObjectName(entity.getDefinition());
-		String queryFieldName = SchemaNames.toQueryFieldName(entity.getDefinition());
-
-		GraphQLObjectType.Builder query = GraphQLObjectType.newObject()
-			.name(queryObjectName)
-			.field(GraphQLFieldDefinition.newFieldDefinition()
-				.name("get")
-				.type(GraphQLTypeReference.typeRef(entity.getDefinition().getName()))
-				.argument(GraphQLArgument.newArgument()
-					.name("id")
-					.type(GraphQLNonNull.nonNull(Scalars.GraphQLID))
-				)
-				.build()
-			);
-
-		searchQuery.generateSearchQuery(entity, queryObjectName, query);
-
-		registry.dataFetcher(
-			FieldCoordinates.coordinates(queryObjectName, "get"),
-			entityGet
-		);
-
-		// Generate the query field
-		queryBuilder.field(GraphQLFieldDefinition.newFieldDefinition()
-			.name(queryFieldName)
-			.type(query)
-			.build()
-		);
-
-		registry.dataFetcher(
-			FieldCoordinates.coordinates("Query", queryFieldName),
-			(DataFetcher) env -> entity
-		);
-	}
-
-	private void generateMutation(
-		Collection entity,
-		GraphQLSchema.Builder schema,
-		GraphQLCodeRegistry.Builder registry,
-		GraphQLObjectType.Builder mutationBuilder
-	)
-	{
-		var mapper = (MutationInputMapper) generateStructuredMutationInput(entity.getDefinition(), false);
-		var name = entity.getDefinition().getName();
-
-		mutationBuilder.field(GraphQLFieldDefinition.newFieldDefinition()
-			.name("store" + name)
-			.description("Create or update an object of type " + name)
-			.type(GraphQLNonNull.nonNull(GraphQLTypeReference.typeRef(entity.getDefinition().getName())))
-			.argument(GraphQLArgument.newArgument()
-				.name("id")
-				.description("Identifier of object to update, no id will store a new object")
-				.type(Scalars.GraphQLID)
-			)
-			.argument(GraphQLArgument.newArgument()
-				.name("mutation")
-				.description("Mutation to apply")
-				.type(GraphQLNonNull.nonNull(mapper.getGraphQLType()))
-			)
-		);
-
-		registry.dataFetcher(
-			FieldCoordinates.coordinates("Mutation", "store" + name),
-			new CollectionStoreMutation(entity, idCodec, mapper)
-		);
-
-		mutationBuilder.field(GraphQLFieldDefinition.newFieldDefinition()
-			.name("delete" + name)
-			.description("Delete an object of type " + name)
-			.type(GraphQLTypeReference.typeRef("DeleteResult"))
-			.argument(GraphQLArgument.newArgument()
-				.name("id")
-				.description("Identifier of object to delete")
-				.type(GraphQLNonNull.nonNull(Scalars.GraphQLID))
-			)
-		);
-
-		registry.dataFetcher(
-			FieldCoordinates.coordinates("Mutation", "delete" + name),
-			new CollectionDeleteMutation(entity, idCodec)
-		);
-	}
-
-	private MutationInputMapper<?> generateMutationInput(OutputTypeDef def)
-	{
-		if(def instanceof NonNullDef.Output)
-		{
-			// Unwrap null values
-			def = ((NonNullDef.Output) def).getType();
-		}
-
-		// Check if this mutation mapper has already been generated
-		var mapper = mutationMappers.get(def);
-		if(mapper != null)
-		{
-			return mapper;
-		}
-
-		if(def instanceof ScalarDef)
-		{
-			mapper = new ScalarMutationMapper((ScalarMapper) scalars.get(def));
-		}
-		else if(def instanceof StructuredDef)
-		{
-			mapper = generateStructuredMutationInput((StructuredDef) def, true);
-		}
-		else if(def instanceof ListDef.Output)
-		{
-			var listDef = (ListDef.Output) def;
-			mapper = new ListMutationMapper(
-				listDef,
-				generateMutationInput(listDef.getItemType())
-			);
-		}
-		else if(def instanceof UnionDef)
-		{
-			var unionDef = (UnionDef) def;
-			mapper = new PolymorphicMutationMapper(
-				unionDef,
-				unionDef.getTypes().collect(subDef -> generateMutationInput(subDef))
-			);
+			return builder.build();
 		}
 		else
 		{
-			throw new ModelException("Unable to model " + def + " as an input type");
+			throw new ModelException("Unsupported type encountered: " + def);
 		}
-
-		mutationMappers.put(def, mapper);
-		return mapper;
 	}
 
-	private MutationInputMapper<?> generateStructuredMutationInput(
-		StructuredDef def,
-		boolean allowReferences
+	/**
+	 * Generate fields for a {@link StructuredDef}.
+	 *
+	 * @param registry
+	 *   registry where {@link graphql.schema.DataFetcher} is registered
+	 * @param structuredDef
+	 *   definition to generate fields for
+	 * @return
+	 *   generated fields
+	 */
+	private List<GraphQLFieldDefinition> generateFields(
+		GraphQLCodeRegistry.Builder registry,
+		StructuredDef structuredDef
 	)
 	{
-		if(allowReferences && def.findImplements(StorageSchema.ENTITY_NAME))
+		var result = Lists.mutable.<GraphQLFieldDefinition>empty();
+
+		for(var field : structuredDef.getFields())
 		{
-			return generateReferenceInput(def);
+			var resolverFactory = GraphQLModel.getFieldResolverFactory(field).get();
+			var actualResolver = resolverFactory.create(encounter);
+
+			result.add(GraphQLFieldDefinition.newFieldDefinition()
+				.name(field.getName())
+				.description(field.getDescription().orElse(null))
+				.type(resolveOutputType(field.getType()))
+				.arguments(generateArguments(field))
+				.build()
+			);
+
+			registry.dataFetcher(
+				FieldCoordinates.coordinates(structuredDef.getName(), field.getName()),
+				new FieldResolverAdapter(storage, actualResolver)
+			);
 		}
 
-		if(def instanceof InterfaceDef i)
-		{
-			var mappers =  i.getImplementors()
-				.collect(d -> generateStructuredMutationInput(d, false));
-
-			return new PolymorphicMutationMapper(def, mappers);
-		}
-		else if(def instanceof ObjectDef)
-		{
-			var objectDef = (ObjectDef) def;
-			var fields = objectDef.getFields()
-				.toMap(k -> k, k -> generateMutationInput(k.getType()));
-
-			return new StructuredValueMutationMapper(objectDef, fields);
-		}
-
-		throw new ModelException("Unable to model " + def + " as an input type");
+		return result;
 	}
 
-	private MutationInputMapper<?> generateReferenceInput(StructuredDef def)
+	private List<GraphQLArgument> generateArguments(
+		FieldDef field
+	)
 	{
-		return new StoredObjectRefMutationMapper(idCodec, def);
+		var result = Lists.mutable.<GraphQLArgument>empty();
+
+		for(var argument : field.getArguments())
+		{
+			var builder = GraphQLArgument.newArgument()
+				.name(argument.getName())
+				.description(argument.getDescription().orElse(null))
+				.type(resolveInputType(argument.getType()));
+
+			if(argument.getDefaultValue().isPresent())
+			{
+				builder.defaultValue(argument.getDefaultValue().get());
+			}
+
+			result.add(builder.build());
+		}
+
+		return result;
+	}
+
+	private GraphQLOutputType resolveOutputType(OutputTypeDef def)
+	{
+		if(def instanceof NonNullDef.Output n)
+		{
+			return GraphQLNonNull.nonNull(resolveOutputType(n.getType()));
+		}
+		else if(def instanceof ListDef.Output l)
+		{
+			return GraphQLList.list(resolveOutputType(l.getItemType()));
+		}
+
+		return GraphQLTypeReference.typeRef(def.getName());
+	}
+
+	private GraphQLInputType resolveInputType(InputTypeDef def)
+	{
+		if(def instanceof NonNullDef.Input n)
+		{
+			return GraphQLNonNull.nonNull(resolveInputType(n.getType()));
+		}
+		else if(def instanceof ListDef.Input l)
+		{
+			return GraphQLList.list(resolveInputType(l.getItemType()));
+		}
+
+		return GraphQLTypeReference.typeRef(def.getName());
 	}
 }

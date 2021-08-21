@@ -8,7 +8,7 @@ import org.eclipse.collections.api.list.ListIterable;
  * Definition of a enum.
  */
 public interface EnumDef
-	extends SimpleValueDef, HasDirectives, HasSourceLocation
+	extends SimpleValueDef, Derivable<EnumDef.Builder>, HasDirectives, HasSourceLocation, HasMetadata
 {
 	/**
 	 * Get the values of this enum.
@@ -22,6 +22,7 @@ public interface EnumDef
 	 *
 	 * @return
 	 */
+	@Override
 	Builder derive();
 
 	static Builder create(String name)
@@ -30,7 +31,10 @@ public interface EnumDef
 	}
 
 	interface Builder
-		extends HasDirectives.Builder<Builder>, HasSourceLocation.Builder<Builder>
+		extends Buildable<EnumDef>,
+			HasDirectives.Builder<Builder>,
+			HasSourceLocation.Builder<Builder>,
+			HasMetadata.Builder<Builder>
 	{
 		/**
 		 * Set the description of this enum.
@@ -61,6 +65,7 @@ public interface EnumDef
 		 *
 		 * @return
 		 */
+		@Override
 		EnumDef build();
 	}
 }

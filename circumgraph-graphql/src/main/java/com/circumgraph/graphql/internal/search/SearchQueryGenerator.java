@@ -1,25 +1,27 @@
 package com.circumgraph.graphql.internal.search;
 
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-
+import com.circumgraph.graphql.FieldResolver;
+import com.circumgraph.graphql.GraphQLModel;
 import com.circumgraph.graphql.internal.SchemaNames;
-import com.circumgraph.graphql.internal.StorageContext;
+import com.circumgraph.graphql.internal.resolvers.CollectionSearchResolver;
+import com.circumgraph.model.ArgumentDef;
+import com.circumgraph.model.EnumDef;
+import com.circumgraph.model.EnumValueDef;
 import com.circumgraph.model.FieldDef;
+import com.circumgraph.model.InputFieldDef;
+import com.circumgraph.model.InputObjectDef;
 import com.circumgraph.model.InterfaceDef;
-import com.circumgraph.model.Model;
+import com.circumgraph.model.ListDef;
 import com.circumgraph.model.NonNullDef;
+import com.circumgraph.model.ObjectDef;
 import com.circumgraph.model.OutputTypeDef;
+import com.circumgraph.model.ScalarDef;
 import com.circumgraph.model.StructuredDef;
-import com.circumgraph.storage.Collection;
 import com.circumgraph.storage.StorageModel;
 import com.circumgraph.storage.search.Edge;
-import com.circumgraph.storage.search.Page;
 import com.circumgraph.storage.search.PageCursor;
 import com.circumgraph.storage.search.PageCursors;
 import com.circumgraph.storage.search.PageInfo;
-import com.circumgraph.storage.search.Query;
 import com.circumgraph.storage.search.QueryPath;
 import com.circumgraph.storage.search.SearchResult;
 
@@ -27,97 +29,66 @@ import org.eclipse.collections.api.factory.Maps;
 import org.eclipse.collections.api.map.ImmutableMap;
 import org.eclipse.collections.api.map.MutableMap;
 
-import graphql.Scalars;
-import graphql.schema.DataFetcher;
-import graphql.schema.DataFetchingEnvironment;
-import graphql.schema.FieldCoordinates;
-import graphql.schema.GraphQLArgument;
-import graphql.schema.GraphQLCodeRegistry;
-import graphql.schema.GraphQLEnumType;
-import graphql.schema.GraphQLEnumValueDefinition;
-import graphql.schema.GraphQLFieldDefinition;
-import graphql.schema.GraphQLInputObjectField;
-import graphql.schema.GraphQLInputObjectType;
-import graphql.schema.GraphQLList;
-import graphql.schema.GraphQLNonNull;
-import graphql.schema.GraphQLObjectType;
-import graphql.schema.GraphQLOutputType;
-import graphql.schema.GraphQLTypeReference;
-import se.l4.silo.index.FieldSort;
-import se.l4.ylem.ids.LongIdCodec;
-
 /**
  * Generator for a search query within the GraphQL schema.
  */
 public class SearchQueryGenerator
 {
-	private static final DataFetcher<?> TOTAL_COUNT_FETCHER = (env) -> {
+	private static final FieldResolver TOTAL_COUNT_FETCHER = (env) -> {
 		SearchResult ctx = env.getSource();
 		return ctx.getTotalCount();
 	};
 
-	private static final DataFetcher<?> TOTAL_COUNT_ESTIMATED_FETCHER = (env) -> {
+	private static final FieldResolver TOTAL_COUNT_ESTIMATED_FETCHER = (env) -> {
 		SearchResult ctx = env.getSource();
 		return ctx.isTotalCountEstimated();
 	};
 
-	private static final DataFetcher<?> PAGE_INFO_FETCHER = (env) -> {
+	private static final FieldResolver PAGE_INFO_FETCHER = (env) -> {
 		SearchResult ctx = env.getSource();
 		return ctx.getPageInfo();
 	};
 
-	private static final DataFetcher<?> PAGE_CURSORS_FETCHER = (env) -> {
+	private static final FieldResolver PAGE_CURSORS_FETCHER = (env) -> {
 		var max = env.getArgumentOrDefault("max", 11);
 		SearchResult ctx = env.getSource();
 		return ctx.getPageCursors(max);
 	};
 
-	private static final DataFetcher<?> EDGES_FETCHER = (env) -> {
+	private static final FieldResolver EDGES_FETCHER = (env) -> {
 		SearchResult ctx = env.getSource();
 		return ctx.getEdges();
 	};
 
-	private static final DataFetcher<?> NODES_FETCHER = (env) -> {
+	private static final FieldResolver NODES_FETCHER = (env) -> {
 		SearchResult ctx = env.getSource();
 		return ctx.getNodes();
 	};
 
-	private static final DataFetcher<?> EDGE_SCORE_FETCHER = (env) -> {
+	private static final FieldResolver EDGE_SCORE_FETCHER = (env) -> {
 		Edge ctx = env.getSource();
 		return ctx.getScore();
 	};
 
-	private static final DataFetcher<?> EDGE_CURSOR_FETCHER = (env) -> {
+	private static final FieldResolver EDGE_CURSOR_FETCHER = (env) -> {
 		Edge ctx = env.getSource();
 		return CursorEncoding.encode(ctx.getCursor());
 	};
 
-	private static final DataFetcher<?> EDGE_NODE_FETCHER = (env) -> {
+	private static final FieldResolver EDGE_NODE_FETCHER = (env) -> {
 		Edge ctx = env.getSource();
 		return ctx.getNode();
 	};
 
-	private final Model model;
-
-	private final GraphQLCodeRegistry.Builder codeRegistry;
-
 	private final MutableMap<String, Criteria> indexerToCriteria;
 
-	private final GraphQLOutputType pageInfoType;
-	private final GraphQLOutputType pageCursorsType;
+	private final OutputTypeDef pageInfoType;
+	private final OutputTypeDef pageCursorsType;
 
-	public SearchQueryGenerator(
-		Model model,
-
-		GraphQLCodeRegistry.Builder codeRegistry,
-		LongIdCodec<String> idCodec
-	)
+	public SearchQueryGenerator()
 	{
-		this.model = model;
-		this.codeRegistry = codeRegistry;
-
 		indexerToCriteria = Maps.mutable.empty();
-		indexerToCriteria.put("ID", new IDCriteria(idCodec));
+		indexerToCriteria.put("ID", new IDCriteria());
 		indexerToCriteria.put("INT", new IntCriteria());
 		indexerToCriteria.put("FLOAT", new FloatCriteria());
 		indexerToCriteria.put("BOOLEAN", new BooleanCriteria());
@@ -132,117 +103,84 @@ public class SearchQueryGenerator
 		this.pageCursorsType = generatePageCursors();
 	}
 
-	private GraphQLOutputType generatePageInfo()
+	private OutputTypeDef generatePageInfo()
 	{
-		var type = GraphQLObjectType.newObject()
-			.name("PageInfo")
-			.description("Information about the current page")
-			.field(GraphQLFieldDefinition.newFieldDefinition()
-				.name("hasNextPage")
-				.description("If there is a page available after this one")
-				.type(GraphQLNonNull.nonNull(Scalars.GraphQLBoolean))
+		return ObjectDef.create("PageInfo")
+			.withDescription("Information about the current page")
+			.addField(FieldDef.create("hasNextPage")
+				.withType(NonNullDef.output(ScalarDef.BOOLEAN))
+				.withDescription("If there is a page available after this one")
+				.withMetadata(GraphQLModel.FIELD_RESOLVER, env -> {
+					PageInfo pageInfo = env.getSource();
+					return pageInfo.hasNextPage();
+				})
+				.build()
 			)
-			.field(GraphQLFieldDefinition.newFieldDefinition()
-				.name("hasPreviousPage")
-				.description("If there is a page available before this one")
-				.type(GraphQLNonNull.nonNull(Scalars.GraphQLBoolean))
+			.addField(FieldDef.create("hasPreviousPage")
+				.withType(NonNullDef.output(ScalarDef.BOOLEAN))
+				.withDescription("If there is a page available before this one")
+				.withMetadata(GraphQLModel.FIELD_RESOLVER, env -> {
+					PageInfo pageInfo = env.getSource();
+					return pageInfo.hasPreviousPage();
+				})
+				.build()
 			)
-			.field(GraphQLFieldDefinition.newFieldDefinition()
-				.name("startCursor")
-				.description("Cursor representing the start of the result")
-				.type(GraphQLNonNull.nonNull(Scalars.GraphQLString))
+			.addField(FieldDef.create("startCursor")
+				.withType(NonNullDef.output(ScalarDef.STRING))
+				.withDescription("Cursor representing the start of the result")
+				.withMetadata(GraphQLModel.FIELD_RESOLVER, env -> {
+					PageInfo pageInfo = env.getSource();
+					return CursorEncoding.encode(pageInfo.getStartCursor());
+				})
+				.build()
 			)
-			.field(GraphQLFieldDefinition.newFieldDefinition()
-				.name("endCursor")
-				.description("Cursor representing the end of the result")
-				.type(GraphQLNonNull.nonNull(Scalars.GraphQLString))
+			.addField(FieldDef.create("endCursor")
+				.withType(NonNullDef.output(ScalarDef.STRING))
+				.withDescription("Cursor representing the end of the result")
+				.withMetadata(GraphQLModel.FIELD_RESOLVER, env -> {
+					PageInfo pageInfo = env.getSource();
+					return CursorEncoding.encode(pageInfo.getEndCursor());
+				})
+				.build()
 			)
 			.build();
-
-		codeRegistry.dataFetcher(
-			FieldCoordinates.coordinates("PageInfo", "hasNextPage"),
-			(DataFetchingEnvironment env) -> {
-				PageInfo pageInfo = env.getSource();
-				return pageInfo.hasNextPage();
-			}
-		);
-
-		codeRegistry.dataFetcher(
-			FieldCoordinates.coordinates("PageInfo", "hasPreviousPage"),
-			(DataFetchingEnvironment env) -> {
-				PageInfo pageInfo = env.getSource();
-				return pageInfo.hasPreviousPage();
-			}
-		);
-
-		codeRegistry.dataFetcher(
-			FieldCoordinates.coordinates("PageInfo", "startCursor"),
-			(DataFetchingEnvironment env) -> {
-				PageInfo pageInfo = env.getSource();
-				return CursorEncoding.encode(pageInfo.getStartCursor());
-			}
-		);
-
-		codeRegistry.dataFetcher(
-			FieldCoordinates.coordinates("PageInfo", "endCursor"),
-			(DataFetchingEnvironment env) -> {
-				PageInfo pageInfo = env.getSource();
-				return CursorEncoding.encode(pageInfo.getEndCursor());
-			}
-		);
-
-		return type;
 	}
 
-	private GraphQLOutputType generatePageCursors()
+	private OutputTypeDef generatePageCursors()
 	{
-		var pageCursorType = GraphQLObjectType.newObject()
-			.name("PageCursor")
-			.description("Cursor information for a specific page")
-			.field(GraphQLFieldDefinition.newFieldDefinition()
-				.name("cursor")
-				.description("Cursor for this page")
-				.type(GraphQLNonNull.nonNull(Scalars.GraphQLString))
+		var pageCursorType = ObjectDef.create("PageCursor")
+			.withDescription("Cursor information for a specific page")
+			.addField(FieldDef.create("cursor")
+				.withType(NonNullDef.output(ScalarDef.STRING))
+				.withDescription("Cursor for this page")
+				.withMetadata(GraphQLModel.FIELD_RESOLVER, env -> {
+					PageCursor pageCursor = env.getSource();
+					return CursorEncoding.encode(pageCursor.getCursor());
+				})
+				.build()
 			)
-			.field(GraphQLFieldDefinition.newFieldDefinition()
-				.name("pageNumber")
-				.description("Page number")
-				.type(GraphQLNonNull.nonNull(Scalars.GraphQLInt))
+			.addField(FieldDef.create("pageNumber")
+				.withType(NonNullDef.output(ScalarDef.INT))
+				.withDescription("Page number")
+				.withMetadata(GraphQLModel.FIELD_RESOLVER, env -> {
+					PageCursor pageCursor = env.getSource();
+					return pageCursor.getPageNumber();
+				})
+				.build()
 			)
-			.field(GraphQLFieldDefinition.newFieldDefinition()
-				.name("current")
-				.description("If this is the current page")
-				.type(GraphQLNonNull.nonNull(Scalars.GraphQLBoolean))
+			.addField(FieldDef.create("current")
+				.withType(NonNullDef.output(ScalarDef.BOOLEAN))
+				.withDescription("If this is the current page")
+				.withMetadata(GraphQLModel.FIELD_RESOLVER, env -> {
+					PageCursor pageCursor = env.getSource();
+					return pageCursor.isCurrent();
+				})
+				.build()
 			)
 			.build();
 
-		codeRegistry.dataFetcher(
-			FieldCoordinates.coordinates("PageCursor", "cursor"),
-			(DataFetchingEnvironment env) -> {
-				PageCursor pageCursor = env.getSource();
-				return CursorEncoding.encode(pageCursor.getCursor());
-			}
-		);
-
-		codeRegistry.dataFetcher(
-			FieldCoordinates.coordinates("PageCursor", "pageNumber"),
-			(DataFetchingEnvironment env) -> {
-				PageCursor pageCursor = env.getSource();
-				return pageCursor.getPageNumber();
-			}
-		);
-
-		codeRegistry.dataFetcher(
-			FieldCoordinates.coordinates("PageCursor", "current"),
-			(DataFetchingEnvironment env) -> {
-				PageCursor pageCursor = env.getSource();
-				return pageCursor.isCurrent();
-			}
-		);
-
-		var type = GraphQLObjectType.newObject()
-			.name("PageCursors")
-			.description("""
+		return ObjectDef.create("PageCursors")
+			.withDescription("""
 				Detailed information about page cursors, used to generate
 				pagination.
 
@@ -253,169 +191,99 @@ public class SearchQueryGenerator
 				Cursors in this object should be used given to search as the
 				`after` argument with the same `first` argument.
 			""")
-			.field(GraphQLFieldDefinition.newFieldDefinition()
-				.name("previous")
-				.description("Get the previous page if available")
-				.type(pageCursorType)
+			.addField(FieldDef.create("previous")
+				.withType(pageCursorType)
+				.withDescription("Get the previous page if available")
+				.withMetadata(GraphQLModel.FIELD_RESOLVER, env -> {
+					PageCursors pageCursors = env.getSource();
+					return pageCursors.getPrevious();
+				})
+				.build()
 			)
-			.field(GraphQLFieldDefinition.newFieldDefinition()
-				.name("start")
-				.description("Pages at the start of the pagination")
-				.type(GraphQLNonNull.nonNull(GraphQLList.list(
-					(GraphQLNonNull.nonNull(pageCursorType)
-				))))
+			.addField(FieldDef.create("start")
+				.withType(NonNullDef.output(ListDef.output(
+					NonNullDef.output(pageCursorType)
+				)))
+				.withDescription("Pages at the start of the pagination")
+				.withMetadata(GraphQLModel.FIELD_RESOLVER, env -> {
+					PageCursors pageCursors = env.getSource();
+					return pageCursors.getStart();
+				})
+				.build()
 			)
-			.field(GraphQLFieldDefinition.newFieldDefinition()
-				.name("middle")
-				.description("Pages at the middle of the pagination")
-				.type(GraphQLNonNull.nonNull(GraphQLList.list(
-					(GraphQLNonNull.nonNull(pageCursorType)
-				))))
+			.addField(FieldDef.create("middle")
+				.withType(NonNullDef.output(ListDef.output(
+					NonNullDef.output(pageCursorType)
+				)))
+				.withDescription("Pages at the middle of the pagination")
+				.withMetadata(GraphQLModel.FIELD_RESOLVER, env -> {
+					PageCursors pageCursors = env.getSource();
+					return pageCursors.getMiddle();
+				})
+				.build()
 			)
-			.field(GraphQLFieldDefinition.newFieldDefinition()
-				.name("end")
-				.description("Pages at the start of the pagination")
-				.type(GraphQLNonNull.nonNull(GraphQLList.list(
-					(GraphQLNonNull.nonNull(pageCursorType)
-				))))
+			.addField(FieldDef.create("end")
+				.withType(NonNullDef.output(ListDef.output(
+					NonNullDef.output(pageCursorType)
+				)))
+				.withDescription("Pages at the end of the pagination")
+				.withMetadata(GraphQLModel.FIELD_RESOLVER, env -> {
+					PageCursors pageCursors = env.getSource();
+					return pageCursors.getEnd();
+				})
+				.build()
 			)
-			.field(GraphQLFieldDefinition.newFieldDefinition()
-				.name("next")
-				.description("Get the next page if available")
-				.type(pageCursorType)
+			.addField(FieldDef.create("next")
+				.withType(pageCursorType)
+				.withDescription("Get the next page if available")
+				.withMetadata(GraphQLModel.FIELD_RESOLVER, env -> {
+					PageCursors pageCursors = env.getSource();
+					return pageCursors.getNext();
+				})
+				.build()
 			)
 			.build();
-
-		codeRegistry.dataFetcher(
-			FieldCoordinates.coordinates("PageCursors", "previous"),
-			(DataFetchingEnvironment env) -> {
-				PageCursors pageCursors = env.getSource();
-				return pageCursors.getPrevious();
-			}
-		);
-
-		codeRegistry.dataFetcher(
-			FieldCoordinates.coordinates("PageCursors", "start"),
-			(DataFetchingEnvironment env) -> {
-				PageCursors pageCursors = env.getSource();
-				return pageCursors.getStart();
-			}
-		);
-
-		codeRegistry.dataFetcher(
-			FieldCoordinates.coordinates("PageCursors", "middle"),
-			(DataFetchingEnvironment env) -> {
-				PageCursors pageCursors = env.getSource();
-				return pageCursors.getMiddle();
-			}
-		);
-
-		codeRegistry.dataFetcher(
-			FieldCoordinates.coordinates("PageCursors", "end"),
-			(DataFetchingEnvironment env) -> {
-				PageCursors pageCursors = env.getSource();
-				return pageCursors.getEnd();
-			}
-		);
-
-		codeRegistry.dataFetcher(
-			FieldCoordinates.coordinates("PageCursors", "next"),
-			(DataFetchingEnvironment env) -> {
-				PageCursors pageCursors = env.getSource();
-				return pageCursors.getNext();
-			}
-		);
-
-		return type;
 	}
 
-	public void generateSearchQuery(
-		Collection collection,
-		String queryName,
-		GraphQLObjectType.Builder builder
+	public FieldDef generateSearchQuery(
+		StructuredDef def,
+		String fieldName
 	)
 	{
-		var def = collection.getDefinition();
 		var resultType = generateResultType(def);
 		var criteria = generateCriteria(def);
 
-		var fieldBuilder = GraphQLFieldDefinition.newFieldDefinition()
-			.name("search")
-			.description("Search for " + def.getName())
-			.type(resultType)
-			.argument(GraphQLArgument.newArgument()
-				.name("first")
-				.description("Return the first N results from the start or from the cursor given by `after`")
-				.type(Scalars.GraphQLInt)
+		var fieldBuilder = FieldDef.create(fieldName)
+			.withType(resultType)
+			.withDescription("Search for " + def.getName())
+			.withMetadata(GraphQLModel.FIELD_RESOLVER_FACTORY, new CollectionSearchResolver(def, criteria))
+			.addArgument(ArgumentDef.create("first")
+				.withType(ScalarDef.INT)
+				.withDescription("Return the first N results from the start or from the cursor given by `after`")
+				.build()
 			)
-			.argument(GraphQLArgument.newArgument()
-				.name("after")
-				.description("Return results after the given cursor")
-				.type(Scalars.GraphQLString)
+			.addArgument(ArgumentDef.create("after")
+				.withType(ScalarDef.STRING)
+				.withDescription("Return results after the given cursor")
+				.build()
 			)
-			.argument(GraphQLArgument.newArgument()
-				.name("criteria")
-				.description("Criteria that should match, leave null or empty to match everything")
-				.type(GraphQLList.list(GraphQLNonNull.nonNull(criteria.getGraphQLType())))
+			.addArgument(ArgumentDef.create("criteria")
+				.withType(ListDef.input(NonNullDef.input(criteria.getGraphQLType())))
+				.withDescription("Criteria that should match, leave null or empty to match everything")
+				.build()
 			);
 
 		var sortInput = generateSortInput(def);
 		if(sortInput != null)
 		{
-			fieldBuilder.argument(GraphQLArgument.newArgument()
-				.name("sort")
-				.description("Sort the result of this search")
-				.type(GraphQLList.list(GraphQLNonNull.nonNull(generateSortInput(def))))
+			fieldBuilder = fieldBuilder.addArgument(ArgumentDef.create("sort")
+				.withType(ListDef.input(NonNullDef.input(sortInput)))
+				.withDescription("Sort the result of this search")
+				.build()
 			);
 		}
 
-		builder.field(fieldBuilder.build());
-
-		DataFetcher<CompletableFuture<SearchResult>> dataFetcher = (env) -> {
-			var query = Query.create();
-
-			if(env.containsArgument("criteria"))
-			{
-				List<Map<String, Object>> args = env.getArgument("criteria");
-				var path = QueryPath.root(def);
-				for(var e : args)
-				{
-					query = query.addClause(criteria.toClause(e, path));
-				}
-			}
-
-			if(env.containsArgument("sort"))
-			{
-				List<Map<String, Object>> sort = env.getArgument("sort");
-				if(! sort.isEmpty())
-				{
-					for(var s : sort)
-					{
-						query = query.addSort(FieldSort.create(
-							((QueryPath) s.get("field")).toIndexName(),
-							(Boolean) s.get("ascending")
-						));
-					}
-				}
-			}
-
-			query = query.withPage(Page.first(
-				env.getArgumentOrDefault("first", 10),
-				CursorEncoding.decode(env.getArgument("after"))
-			));
-
-			// Check if scores are being fetched
-			query = query.withScoresNeeded(
-				env.getSelectionSet().contains("edges/score")
-			);
-
-			StorageContext ctx = env.getContext();
-			return ctx.getTx()
-				.wrap(collection.search(query))
-				.toFuture();
-		};
-
-		codeRegistry.dataFetcher(FieldCoordinates.coordinates(queryName, "search"), dataFetcher);
+		return fieldBuilder.build();
 	}
 
 	private Criteria generateCriteria(OutputTypeDef output)
@@ -489,7 +357,7 @@ public class SearchQueryGenerator
 		return result.toImmutable();
 	}
 
-	private GraphQLInputObjectType generateSortInput(
+	private InputObjectDef generateSortInput(
 		StructuredDef def
 	)
 	{
@@ -497,10 +365,9 @@ public class SearchQueryGenerator
 
 		var values = def.getFields()
 			.select(f -> StorageModel.isSortable(f))
-			.collect(field -> GraphQLEnumValueDefinition.newEnumValueDefinition()
-				.name(SchemaNames.toSortEnumValue(field))
-				.description("Sort by the field " + field.getName())
-				.value(rootPath.field(field.getName()))
+			.collect(field -> EnumValueDef.create(SchemaNames.toSortEnumValue(field))
+				.withDescription("Sort by the field " + field.getName())
+				.withMetadata(GraphQLModel.ENUM_VALUE, rootPath.field(field.getName()))
 				.build()
 			)
 			.toList();
@@ -511,152 +378,103 @@ public class SearchQueryGenerator
 			return null;
 		}
 
-		var enumType = GraphQLEnumType.newEnum()
-			.name(SchemaNames.toSortEnumName(def))
-			.values(values)
+		var enumType = EnumDef.create(SchemaNames.toSortEnumName(def))
+			.addValues(values)
 			.build();
 
-		return GraphQLInputObjectType.newInputObject()
-			.name(SchemaNames.toSortInputName(def))
-			.description("Input used to define sorting when querying for " + def.getName())
-			.field(GraphQLInputObjectField.newInputObjectField()
-				.name("field")
-				.description("The field to sort on")
-				.type(GraphQLNonNull.nonNull(enumType))
+		return InputObjectDef.create(SchemaNames.toSortInputName(def))
+			.withDescription("Input used to define sorting when querying for " + def.getName())
+			.addField(InputFieldDef.create("field")
+				.withType(NonNullDef.input(enumType))
+				.withDescription("The field to sort on")
+				.build()
 			)
-			.field(GraphQLInputObjectField.newInputObjectField()
-				.name("ascending")
-				.description("If the sort should be ascending, `true` by default")
-				.type(Scalars.GraphQLBoolean)
-				.defaultValue(true)
+			.addField(InputFieldDef.create("ascending")
+				.withType(ScalarDef.BOOLEAN)
+				.withDescription("If the sort should be ascending, `true` by default")
+				.withDefaultValue(true)
+				.build()
 			)
 			.build();
 	}
 
-	private GraphQLObjectType generateResultType(
+	private ObjectDef generateResultType(
 		StructuredDef def
 	)
 	{
 		var name = SchemaNames.toSearchResultTypeName(def);
-
-		var type = GraphQLObjectType.newObject()
-			.name(name)
-			.description("Search result for " + def.getName() + ".")
-			.field(GraphQLFieldDefinition.newFieldDefinition()
-				.name("totalCount")
-				.description("Total items matching")
-				.type(GraphQLNonNull.nonNull(Scalars.GraphQLInt))
+		return ObjectDef.create(name)
+			.withDescription("Search result for " + def.getName() + ".")
+			.addField(FieldDef.create("totalCount")
+				.withType(NonNullDef.output(ScalarDef.INT))
+				.withDescription("Total items matching")
+				.withMetadata(GraphQLModel.FIELD_RESOLVER, TOTAL_COUNT_FETCHER)
+				.build()
 			)
-			.field(GraphQLFieldDefinition.newFieldDefinition()
-				.name("totalCountEstimated")
-				.description("If the total count was estimated")
-				.type(GraphQLNonNull.nonNull(Scalars.GraphQLBoolean))
+			.addField(FieldDef.create("totalCountEstimated")
+				.withType(NonNullDef.output(ScalarDef.BOOLEAN))
+				.withDescription("If the total count was estimated")
+				.withMetadata(GraphQLModel.FIELD_RESOLVER, TOTAL_COUNT_ESTIMATED_FETCHER)
+				.build()
 			)
-			.field(GraphQLFieldDefinition.newFieldDefinition()
-				.name("pageInfo")
-				.description("Information about the current page")
-				.type(GraphQLNonNull.nonNull(pageInfoType))
+			.addField(FieldDef.create("pageInfo")
+				.withType(NonNullDef.output(pageInfoType))
+				.withDescription("Information about the current page")
+				.withMetadata(GraphQLModel.FIELD_RESOLVER, PAGE_INFO_FETCHER)
+				.build()
 			)
-			.field(GraphQLFieldDefinition.newFieldDefinition()
-				.name("pageCursors")
-				.description("Generate pagination cursors")
-				.type(GraphQLNonNull.nonNull(pageCursorsType))
-				.argument(GraphQLArgument.newArgument()
-					.name("max")
-					.description("The maximum number of pages to display, includes separators")
-					.type(Scalars.GraphQLInt)
+			.addField(FieldDef.create("pageCursors")
+				.withType(NonNullDef.output(pageCursorsType))
+				.withDescription("Generate pagination cursors")
+				.withMetadata(GraphQLModel.FIELD_RESOLVER, PAGE_CURSORS_FETCHER)
+				.addArgument(ArgumentDef.create("max")
+					.withType(ScalarDef.INT)
+					.withDescription("The maximum number of pages to display, includes separators")
+					.build()
 				)
+				.build()
 			)
-			.field(GraphQLFieldDefinition.newFieldDefinition()
-				.name("nodes")
-				.description("Direct access to the matching items")
-				.type(GraphQLNonNull.nonNull(GraphQLList.list(
-					GraphQLNonNull.nonNull(GraphQLTypeReference.typeRef(def.getName()))
-				)))
+			.addField(FieldDef.create("nodes")
+				.withType(NonNullDef.output(ListDef.output(NonNullDef.output(def.getName()))))
+				.withDescription("Direct access to the matching items")
+				.withMetadata(GraphQLModel.FIELD_RESOLVER, NODES_FETCHER)
+				.build()
 			)
-			.field(GraphQLFieldDefinition.newFieldDefinition()
-				.name("edges")
-				.description("Matching items including scores and cursors")
-				.type(GraphQLNonNull.nonNull(GraphQLList.list(
-					GraphQLNonNull.nonNull(generateEdgeType(def))
-				)))
+			.addField(FieldDef.create("edges")
+				.withType(NonNullDef.output(ListDef.output(NonNullDef.output(generateEdgeType(def)))))
+				.withDescription("Matching items including scores and cursors")
+				.withMetadata(GraphQLModel.FIELD_RESOLVER, EDGES_FETCHER)
+				.build()
 			)
 			.build();
-
-		codeRegistry.dataFetcher(
-			FieldCoordinates.coordinates(name, "totalCount"),
-			TOTAL_COUNT_FETCHER
-		);
-
-		codeRegistry.dataFetcher(
-			FieldCoordinates.coordinates(name, "totalCountEstimated"),
-			TOTAL_COUNT_ESTIMATED_FETCHER
-		);
-
-		codeRegistry.dataFetcher(
-			FieldCoordinates.coordinates(name, "pageInfo"),
-			PAGE_INFO_FETCHER
-		);
-
-		codeRegistry.dataFetcher(
-			FieldCoordinates.coordinates(name, "pageCursors"),
-			PAGE_CURSORS_FETCHER
-		);
-
-		codeRegistry.dataFetcher(
-			FieldCoordinates.coordinates(name, "nodes"),
-			NODES_FETCHER
-		);
-
-		codeRegistry.dataFetcher(
-			FieldCoordinates.coordinates(name, "edges"),
-			EDGES_FETCHER
-		);
-
-		return type;
 	}
 
-	private GraphQLObjectType generateEdgeType(
+	private ObjectDef generateEdgeType(
 		StructuredDef def
 	)
 	{
 		var name = SchemaNames.toSearchEdgeTypeName(def);
 
-		var type = GraphQLObjectType.newObject()
-			.name(name)
-			.description("Edge for " + def.getName() + ".")
-			.field(GraphQLFieldDefinition.newFieldDefinition()
-				.name("score")
-				.description("Score of this result")
-				.type(GraphQLNonNull.nonNull(Scalars.GraphQLFloat))
+		return ObjectDef.create(name)
+			.withDescription("Edge for " + def.getName() + ".")
+			.addField(FieldDef.create("score")
+				.withType(NonNullDef.output(ScalarDef.FLOAT))
+				.withDescription("Score of this result")
+				.withMetadata(GraphQLModel.FIELD_RESOLVER, EDGE_SCORE_FETCHER)
+				.build()
 			)
-			.field(GraphQLFieldDefinition.newFieldDefinition()
-				.name("cursor")
-				.description("Cursor for this result, can be used to return results before or after this")
-				.type(GraphQLNonNull.nonNull(Scalars.GraphQLString))
+			.addField(FieldDef.create("cursor")
+				.withType(NonNullDef.output(ScalarDef.STRING))
+				.withDescription("Cursor for this result, can be used to return results before or after this")
+				.withMetadata(GraphQLModel.FIELD_RESOLVER, EDGE_CURSOR_FETCHER)
+				.build()
 			)
-			.field(GraphQLFieldDefinition.newFieldDefinition()
-				.name("node")
-				.description("The matching result")
-				.type(GraphQLNonNull.nonNull(GraphQLTypeReference.typeRef(def.getName())))
+			.addField(FieldDef.create("node")
+				.withType(NonNullDef.output(def.getName()))
+				.withDescription("The matching result")
+				.withMetadata(GraphQLModel.FIELD_RESOLVER, EDGE_NODE_FETCHER)
+				.build()
 			)
 			.build();
-
-		codeRegistry.dataFetcher(
-			FieldCoordinates.coordinates(name, "score"),
-			EDGE_SCORE_FETCHER
-		);
-
-		codeRegistry.dataFetcher(
-			FieldCoordinates.coordinates(name, "cursor"),
-			EDGE_CURSOR_FETCHER
-		);
-
-		codeRegistry.dataFetcher(
-			FieldCoordinates.coordinates(name, "node"),
-			EDGE_NODE_FETCHER
-		);
-
-		return type;
 	}
 }

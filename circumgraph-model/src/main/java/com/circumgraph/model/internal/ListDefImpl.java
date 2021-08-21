@@ -46,7 +46,7 @@ public abstract class ListDefImpl
 	{
 		this.defs = defs;
 
-		HasPreparation.maybePrepare(getItemType(), defs);
+		HasPreparation.prepareUnnamed(itemType, defs);
 	}
 
 	@Override

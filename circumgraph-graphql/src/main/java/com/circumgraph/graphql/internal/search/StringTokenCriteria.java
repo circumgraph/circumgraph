@@ -2,9 +2,10 @@ package com.circumgraph.graphql.internal.search;
 
 import java.util.Map;
 
-import graphql.Scalars;
-import graphql.schema.GraphQLInputObjectField;
-import graphql.schema.GraphQLInputObjectType;
+import com.circumgraph.model.InputFieldDef;
+import com.circumgraph.model.InputObjectDef;
+import com.circumgraph.model.ScalarDef;
+
 import se.l4.silo.index.EqualsMatcher;
 import se.l4.silo.index.Matcher;
 
@@ -22,28 +23,27 @@ public class StringTokenCriteria
 		will only match if no String is present.
 	""";
 
-	private final GraphQLInputObjectType graphQLType;
+	private final InputObjectDef graphQLType;
 
 	public StringTokenCriteria()
 	{
-		this.graphQLType = GraphQLInputObjectType.newInputObject()
-			.name("StringTokenCriteriaInput")
-			.description(DESCRIPTION)
-			.field(GraphQLInputObjectField.newInputObjectField()
-				.name("any")
-				.description("Match if any value is present")
-				.type(Scalars.GraphQLBoolean)
+		this.graphQLType = InputObjectDef.create("StringTokenCriteriaInput")
+			.withDescription(DESCRIPTION)
+			.addField(InputFieldDef.create("any")
+				.withType(ScalarDef.BOOLEAN)
+				.withDescription("Match if any value is present")
+				.build()
 			)
-			.field(GraphQLInputObjectField.newInputObjectField()
-				.name("equals")
-				.description("String should equal the given value")
-				.type(Scalars.GraphQLString)
+			.addField(InputFieldDef.create("equals")
+				.withType(ScalarDef.STRING)
+				.withDescription("String should equal the given value")
+				.build()
 			)
 			.build();
 	}
 
 	@Override
-	public GraphQLInputObjectType getGraphQLType()
+	public InputObjectDef getGraphQLType()
 	{
 		return graphQLType;
 	}

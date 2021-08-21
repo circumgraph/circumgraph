@@ -29,7 +29,7 @@ public class PolymorphicValueMapper
 		.withCode("storage:mutation:invalid-polymorphic-type")
 		.withArgument("expectedType")
 		.withArgument("givenType")
-		.withMessage("Expected sub-type of {{expectedType}} but got {{givenType}")
+		.withMessage("Expected sub-type of {{expectedType}} but got {{givenType}}")
 		.build();
 
 	private final OutputTypeDef type;

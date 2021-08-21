@@ -1,5 +1,8 @@
 package com.circumgraph.model;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsInAnyOrder;
+
 import com.circumgraph.model.internal.EnumDefImpl;
 
 import org.junit.jupiter.api.Test;
@@ -17,5 +20,36 @@ public class EnumDefTest
 				"sourceLocation"
 			)
 			.verify();
+	}
+
+	@Test
+	public void testMerge()
+	{
+		var schema = Schema.create()
+			.addType(EnumDef.create("Direction")
+				.addValue(EnumValueDef.create("NORTH")
+					.build())
+				.addValue(EnumValueDef.create("EAST")
+					.build())
+				.build()
+			)
+			.addType(EnumDef.create("Direction")
+				.addValue(EnumValueDef.create("SOUTH")
+					.build())
+				.addValue(EnumValueDef.create("WEST")
+					.build())
+				.build()
+			)
+			.build();
+
+		var model = Model.create()
+			.addSchema(schema)
+			.build();
+
+		var t = model.get("Direction", EnumDef.class).get();
+		assertThat(
+			t.getValues().collect(EnumValueDef::getName),
+			containsInAnyOrder("NORTH", "EAST", "SOUTH", "WEST")
+		);
 	}
 }

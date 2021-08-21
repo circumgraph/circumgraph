@@ -1,5 +1,7 @@
 package com.circumgraph.model.internal;
 
+import com.circumgraph.model.ListDef;
+import com.circumgraph.model.NonNullDef;
 import com.circumgraph.model.StructuredDef;
 
 /**
@@ -33,13 +35,24 @@ public interface HasPreparation
 	 */
 	static void maybePrepare(Object o, ModelDefs defs)
 	{
-		if(o instanceof HasPreparation)
+		if(o instanceof HasPreparation p)
 		{
-			var casted = (HasPreparation) o;
-			if(! casted.isReady())
-			{
-				casted.prepare(defs);
-			}
+			p.prepare(defs);
+		}
+	}
+
+	/**
+	 * Prepare the given object for use, but only if its an unnamed type
+	 * such as {@link NonNullDef} or {@link ListDef}.
+	 *
+	 * @param o
+	 * @param defs
+	 */
+	static void prepareUnnamed(Object o, ModelDefs defs)
+	{
+		if(o instanceof HasPreparation p && (o instanceof NonNullDef || o instanceof ListDef))
+		{
+			p.prepare(defs);
 		}
 	}
 }

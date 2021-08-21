@@ -1,4 +1,4 @@
-package com.circumgraph.storage.internal.model;
+package com.circumgraph.storage.internal.processors;
 
 import com.circumgraph.model.DirectiveUse;
 import com.circumgraph.model.FieldDef;

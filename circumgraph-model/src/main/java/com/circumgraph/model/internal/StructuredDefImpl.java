@@ -7,6 +7,7 @@ import java.util.function.Predicate;
 import com.circumgraph.model.DirectiveUse;
 import com.circumgraph.model.FieldDef;
 import com.circumgraph.model.InterfaceDef;
+import com.circumgraph.model.MetadataDef;
 import com.circumgraph.model.MetadataKey;
 import com.circumgraph.model.StructuredDef;
 import com.circumgraph.model.TypeDef;
@@ -39,7 +40,7 @@ public abstract class StructuredDefImpl
 	protected final ImmutableList<FieldDef> directFields;
 	protected ImmutableMap<String, FieldDef> fields;
 
-	private final MetadataHelper metadata;
+	protected final Metadata metadata;
 	protected ModelDefs defs;
 
 	public StructuredDefImpl(
@@ -48,7 +49,8 @@ public abstract class StructuredDefImpl
 		String description,
 		ImmutableList<TypeDef> implementsTypes,
 		ImmutableList<DirectiveUse> directives,
-		ImmutableList<FieldDef> fields
+		ImmutableList<FieldDef> fields,
+		Metadata metadata
 	)
 	{
 		this.sourceLocation = sourceLocation;
@@ -57,8 +59,7 @@ public abstract class StructuredDefImpl
 		this.directFields = fields;
 		this.implementsTypes = implementsTypes;
 		this.directives = directives;
-
-		this.metadata = new MetadataHelper();
+		this.metadata = metadata;
 	}
 
 	@Override
@@ -220,8 +221,6 @@ public abstract class StructuredDefImpl
 
 	private void collectFields(StructuredDef def, MutableMap<String, FieldDef> fields)
 	{
-		HasPreparation.maybePrepare(def, defs);
-
 		for(FieldDef field : def.getDirectFields())
 		{
 			if(fields.containsKey(field.getName()))
@@ -232,7 +231,8 @@ public abstract class StructuredDefImpl
 			fields.put(field.getName(), field);
 		}
 
-		def.getImplements().forEach(i -> {
+		def.getImplementsNames().forEach(name -> {
+			var i = defs.getType(name, InterfaceDef.class);
 			collectFields(i, fields);
 		});
 	}
@@ -244,16 +244,28 @@ public abstract class StructuredDefImpl
 	}
 
 	@Override
-	public <V> void setMetadata(MetadataKey<V> key, V value)
+	public RichIterable<MetadataDef> getDefinedMetadata()
 	{
-		metadata.setMetadata(key, value);
+		return metadata.getDefinedMetadata();
+	}
+
+	@Override
+	public <V> void setRuntimeMetadata(MetadataKey<V> key, V value)
+	{
+		metadata.setRuntimeMetadata(key, value);
 	}
 
 	@Override
 	public int hashCode()
 	{
-		return Objects
-			.hash(description, directFields, name, implementsTypes, directives);
+		return Objects.hash(
+			description,
+			directFields,
+			name,
+			implementsTypes,
+			directives,
+			metadata
+		);
 	}
 
 	@Override
@@ -267,7 +279,8 @@ public abstract class StructuredDefImpl
 			&& Objects.equals(directFields, other.directFields)
 			&& Objects.equals(name, other.name)
 			&& Objects.equals(implementsTypes, other.implementsTypes)
-			&& Objects.equals(directives, other.directives);
+			&& Objects.equals(directives, other.directives)
+			&& Objects.equals(metadata, other.metadata);
 	}
 
 	public abstract static class AbstractBuilder<B extends Builder<B>>
@@ -282,6 +295,7 @@ public abstract class StructuredDefImpl
 		protected final ImmutableList<TypeDef> implementsTypes;
 
 		protected final ImmutableList<DirectiveUse> directives;
+		protected final Metadata metadata;
 
 		public AbstractBuilder(
 			SourceLocation sourceLocation,
@@ -289,7 +303,8 @@ public abstract class StructuredDefImpl
 			String description,
 			ImmutableList<FieldDef> fields,
 			ImmutableList<TypeDef> implementsTypes,
-			ImmutableList<DirectiveUse> directives
+			ImmutableList<DirectiveUse> directives,
+			Metadata metadata
 		)
 		{
 			this.sourceLocation = sourceLocation;
@@ -298,6 +313,7 @@ public abstract class StructuredDefImpl
 			this.fields = fields;
 			this.implementsTypes = implementsTypes;
 			this.directives = directives;
+			this.metadata = metadata;
 		}
 
 		protected abstract B create(
@@ -306,7 +322,8 @@ public abstract class StructuredDefImpl
 			String description,
 			ImmutableList<FieldDef> fields,
 			ImmutableList<TypeDef> implementsTypes,
-			ImmutableList<DirectiveUse> directives
+			ImmutableList<DirectiveUse> directives,
+			Metadata metadata
 		);
 
 		@Override
@@ -318,7 +335,8 @@ public abstract class StructuredDefImpl
 				description,
 				fields,
 				implementsTypes,
-				directives
+				directives,
+				metadata
 			);
 		}
 
@@ -337,7 +355,8 @@ public abstract class StructuredDefImpl
 				description,
 				fields,
 				implementsTypes.newWith(type),
-				directives
+				directives,
+				metadata
 			);
 		}
 
@@ -352,7 +371,8 @@ public abstract class StructuredDefImpl
 				implementsTypes.newWithAll(
 					Lists.immutable.ofAll(types).collect(TypeRef::create)
 				),
-				directives
+				directives,
+				metadata
 			);
 		}
 
@@ -369,7 +389,8 @@ public abstract class StructuredDefImpl
 				description,
 				newFields,
 				implementsTypes,
-				directives
+				directives,
+				metadata
 			);
 		}
 
@@ -394,7 +415,8 @@ public abstract class StructuredDefImpl
 				description,
 				fields,
 				implementsTypes,
-				directives.newWith(directive)
+				directives.newWith(directive),
+				metadata
 			);
 		}
 
@@ -407,7 +429,8 @@ public abstract class StructuredDefImpl
 				description,
 				fields,
 				implementsTypes,
-				this.directives.newWithAll(directives)
+				this.directives.newWithAll(directives),
+				metadata
 			);
 		}
 
@@ -420,7 +443,36 @@ public abstract class StructuredDefImpl
 				description,
 				fields,
 				implementsTypes,
-				directives
+				directives,
+				metadata
+			);
+		}
+
+		@Override
+		public <V> B withMetadata(MetadataKey<V> key, V value)
+		{
+			return create(
+				sourceLocation,
+				id,
+				description,
+				fields,
+				implementsTypes,
+				directives,
+				metadata.withMetadata(key, value)
+			);
+		}
+
+		@Override
+		public B withAllMetadata(Iterable<MetadataDef> defs)
+		{
+			return create(
+				sourceLocation,
+				id,
+				description,
+				fields,
+				implementsTypes,
+				directives,
+				metadata.withAllMetadata(defs)
 			);
 		}
 	}

@@ -3,6 +3,9 @@ package com.circumgraph.model;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
+import java.util.Optional;
+
+import com.circumgraph.model.processing.DirectiveUseProcessor;
 import com.circumgraph.model.processing.ProcessingEncounter;
 import com.circumgraph.model.processing.TypeDefProcessor;
 
@@ -155,7 +158,7 @@ public class ProcessingTest
 	}
 
 	@Test
-	public void testChangeFieldOutputType()
+	public void testEditType()
 	{
 		var schema = Schema.create()
 			.addType(InterfaceDef.create("Test")
@@ -179,7 +182,46 @@ public class ProcessingTest
 					InterfaceDef type
 				)
 				{
-					encounter.changeOutput(type.getField("f1").get(), ScalarDef.INT);
+					encounter.edit(type, builder -> builder.withDescription("description"));
+				}
+			})
+			.build();
+
+		var model = Model.create()
+			.addSchema(schema)
+			.build();
+
+		var type = model.get("Test", InterfaceDef.class).get();
+		assertThat(type.getDescription(), is(Optional.of("description")));
+	}
+
+	@Test
+	public void testEditField()
+	{
+		var schema = Schema.create()
+			.addType(InterfaceDef.create("Test")
+				.addField(FieldDef.create("f1")
+					.withType(ScalarDef.STRING)
+					.build()
+				)
+				.build()
+			)
+			.addTypeDefProcessor(new TypeDefProcessor<InterfaceDef>()
+			{
+				@Override
+				public Class<InterfaceDef> getType()
+				{
+					return InterfaceDef.class;
+				}
+
+				@Override
+				public void process(
+					ProcessingEncounter encounter,
+					InterfaceDef type
+				)
+				{
+					var field = type.getField("f1").get();
+					encounter.edit(field, builder -> builder.withType(ScalarDef.INT));
 				}
 			})
 			.build();
@@ -194,34 +236,43 @@ public class ProcessingTest
 	}
 
 	@Test
-	public void testAddArgument()
+	public void testEditArgument()
 	{
 		var schema = Schema.create()
 			.addType(InterfaceDef.create("Test")
 				.addField(FieldDef.create("f1")
 					.withType(ScalarDef.STRING)
+					.addArgument(ArgumentDef.create("a1")
+						.withType(ScalarDef.INT)
+						.addDirective(DirectiveUse.create("stringActually").build())
+						.build()
+					)
 					.build()
 				)
 				.build()
 			)
-			.addTypeDefProcessor(new TypeDefProcessor<InterfaceDef>()
+			.addDirectiveUseProcessor(new DirectiveUseProcessor<ArgumentDef>()
 			{
 				@Override
-				public Class<InterfaceDef> getType()
+				public String getName()
 				{
-					return InterfaceDef.class;
+					return "stringActually";
+				}
+
+				@Override
+				public Class<ArgumentDef> getContextType()
+				{
+					return ArgumentDef.class;
 				}
 
 				@Override
 				public void process(
 					ProcessingEncounter encounter,
-					InterfaceDef type
+					ArgumentDef location,
+					DirectiveUse directive
 				)
 				{
-					encounter.addArgument(type.getField("f1").get(), ArgumentDef.create("a1")
-						.withType(ScalarDef.STRING)
-						.build()
-					);
+					encounter.edit(location, builder -> builder.withType(ScalarDef.STRING));
 				}
 			})
 			.build();
@@ -236,5 +287,45 @@ public class ProcessingTest
 
 		var arg = field.getArgument("a1").get();
 		assertThat(arg.getType(), is(ScalarDef.STRING));
+	}
+
+	@Test
+	public void testEditInputField()
+	{
+		var schema = Schema.create()
+			.addType(InputObjectDef.create("Test")
+				.addField(InputFieldDef.create("f1")
+					.withType(ScalarDef.STRING)
+					.build()
+				)
+				.build()
+			)
+			.addTypeDefProcessor(new TypeDefProcessor<InputObjectDef>()
+			{
+				@Override
+				public Class<InputObjectDef> getType()
+				{
+					return InputObjectDef.class;
+				}
+
+				@Override
+				public void process(
+					ProcessingEncounter encounter,
+					InputObjectDef type
+				)
+				{
+					var field = type.getField("f1").get();
+					encounter.edit(field, builder -> builder.withType(ScalarDef.INT));
+				}
+			})
+			.build();
+
+		var model = Model.create()
+			.addSchema(schema)
+			.build();
+
+		var type = model.get("Test", InputObjectDef.class).get();
+		var field = type.getField("f1").get();
+		assertThat(field.getType(), is(ScalarDef.INT));
 	}
 }
