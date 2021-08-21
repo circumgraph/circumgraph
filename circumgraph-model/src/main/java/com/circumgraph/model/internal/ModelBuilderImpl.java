@@ -923,7 +923,7 @@ public class ModelBuilderImpl
 	 * Validate a {@link InputFieldDef}.
 	 *
 	 * @param types
-	 * @param structured
+	 * @param inputObject
 	 * @param field
 	 * @param validationCollector
 	 */

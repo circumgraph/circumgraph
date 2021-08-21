@@ -51,7 +51,8 @@ public interface HasMetadata
 		/**
 		 * Set some metadata.
 		 *
-		 * @param argument
+		 * @param key
+		 * @param value
 		 * @return
 		 */
 		<V> B withMetadata(MetadataKey<V> key, V value);

@@ -122,10 +122,12 @@ public class GraphQLGenerator
 	}
 
 	/**
-	 * Generate a type for the given schema
-	 * @param schema
+	 * Generate and return {@link GraphQLType}.
+	 *
 	 * @param registry
+	 *   registry used to register {@link graphql.schema.DataFetcher}s
 	 * @param def
+	 *   definition to generate from
 	 */
 	private GraphQLType generateType(
 		GraphQLCodeRegistry.Builder registry,
