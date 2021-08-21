@@ -414,4 +414,44 @@ public class InterfaceDefTest
 		assertThat(t.getImplementors(), contains(i1));
 		assertThat(t.getAllImplementors(), containsInAnyOrder(i1, i2));
 	}
+
+	@Test
+	public void testMerge()
+	{
+		var schema = Schema.create()
+			.addType(InterfaceDef.create("Test")
+				.addField(FieldDef.create("f1")
+					.withType(ScalarDef.STRING)
+					.build()
+				)
+				.build()
+			)
+			.addType(InterfaceDef.create("Test")
+				.addField(FieldDef.create("f2")
+					.withType(ScalarDef.STRING)
+					.build()
+				)
+				.build()
+			)
+			.build();
+
+		var model = Model.create()
+			.addSchema(schema)
+			.build();
+
+		var t = model.get("Test").get();
+		assertThat(t, instanceOf(StructuredDef.class));
+		assertThat(t, instanceOf(InterfaceDef.class));
+		assertThat(t.getName(), is("Test"));
+
+		var def = StructuredDef.class.cast(t);
+		assertThat(def.getFields(), contains(
+			FieldDef.create("f1")
+				.withType(ScalarDef.STRING)
+				.build(),
+			FieldDef.create("f2")
+				.withType(ScalarDef.STRING)
+				.build()
+		));
+	}
 }
