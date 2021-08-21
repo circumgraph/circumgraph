@@ -69,7 +69,7 @@ public class FieldDefTest
 	}
 
 	@Test
-	public void testFieldInvalidType()
+	public void testFieldUnknownType()
 	{
 		var schema = Schema.create()
 			.addType(ObjectDef.create("Test")
@@ -96,7 +96,7 @@ public class FieldDefTest
 	}
 
 	@Test
-	public void testFieldInvalidTypeInNonNull()
+	public void testFieldUnknownTypeInNonNull()
 	{
 		var schema = Schema.create()
 			.addType(ObjectDef.create("Test")
@@ -123,7 +123,7 @@ public class FieldDefTest
 	}
 
 	@Test
-	public void testFieldInvalidTypeInList()
+	public void testFieldUnknownTypeInList()
 	{
 		var schema = Schema.create()
 			.addType(ObjectDef.create("Test")
@@ -150,7 +150,7 @@ public class FieldDefTest
 	}
 
 	@Test
-	public void testFieldInvalidTypeInListNonNull()
+	public void testFieldUnknownTypeInListNonNull()
 	{
 		var schema = Schema.create()
 			.addType(ObjectDef.create("Test")
@@ -177,7 +177,41 @@ public class FieldDefTest
 	}
 
 	@Test
-	public void testFieldArgumentInvalidType()
+	public void testFieldInvalidType()
+	{
+		var schema = Schema.create()
+			.addType(InputObjectDef.create("I")
+				.addField(InputFieldDef.create("if1")
+					.withType(ScalarDef.STRING)
+					.build()
+				)
+				.build()
+			)
+			.addType(ObjectDef.create("Test")
+				.addField(FieldDef.create("f1")
+					.withType("I")
+					.build()
+				)
+				.build()
+			)
+			.build();
+
+		var m = assertThrows(ModelValidationException.class, () -> {
+			Model.create()
+				.addSchema(schema)
+				.build();
+		});
+
+		var msg = m.getIssues().getFirst();
+		assertThat(msg.getLevel(), is(ValidationMessageLevel.ERROR));
+		assertThat(msg.getCode(), is("model:field:output-type-required"));
+		assertThat(msg.getArguments().get("type"), is("Test"));
+		assertThat(msg.getArguments().get("field"), is("f1"));
+		assertThat(msg.getArguments().get("fieldType"), is("I"));
+	}
+
+	@Test
+	public void testFieldArgumentUnknownType()
 	{
 		var schema = Schema.create()
 			.addType(ObjectDef.create("Test")
@@ -206,6 +240,141 @@ public class FieldDefTest
 		assertThat(msg.getArguments().get("field"), is("f1"));
 		assertThat(msg.getArguments().get("argument"), is("a1"));
 		assertThat(msg.getArguments().get("argumentType"), is("Unknown"));
+	}
+
+	@Test
+	public void testFieldArgumentUnknownTypeNonNull()
+	{
+		var schema = Schema.create()
+			.addType(ObjectDef.create("Test")
+				.addField(FieldDef.create("f1")
+					.withType(ScalarDef.STRING)
+					.addArgument(ArgumentDef.create("a1")
+						.withType(NonNullDef.input("Unknown"))
+						.build()
+					)
+					.build()
+				)
+				.build()
+			)
+			.build();
+
+		var m = assertThrows(ModelValidationException.class, () -> {
+			Model.create()
+				.addSchema(schema)
+				.build();
+		});
+
+		var msg = m.getIssues().getFirst();
+		assertThat(msg.getLevel(), is(ValidationMessageLevel.ERROR));
+		assertThat(msg.getCode(), is("model:argument:type-unknown"));
+		assertThat(msg.getArguments().get("type"), is("Test"));
+		assertThat(msg.getArguments().get("field"), is("f1"));
+		assertThat(msg.getArguments().get("argument"), is("a1"));
+		assertThat(msg.getArguments().get("argumentType"), is("Unknown"));
+	}
+
+	@Test
+	public void testFieldArgumentUnknownTypeInList()
+	{
+		var schema = Schema.create()
+			.addType(ObjectDef.create("Test")
+				.addField(FieldDef.create("f1")
+					.withType(ScalarDef.STRING)
+					.addArgument(ArgumentDef.create("a1")
+						.withType(ListDef.input("Unknown"))
+						.build()
+					)
+					.build()
+				)
+				.build()
+			)
+			.build();
+
+		var m = assertThrows(ModelValidationException.class, () -> {
+			Model.create()
+				.addSchema(schema)
+				.build();
+		});
+
+		var msg = m.getIssues().getFirst();
+		assertThat(msg.getLevel(), is(ValidationMessageLevel.ERROR));
+		assertThat(msg.getCode(), is("model:argument:type-unknown"));
+		assertThat(msg.getArguments().get("type"), is("Test"));
+		assertThat(msg.getArguments().get("field"), is("f1"));
+		assertThat(msg.getArguments().get("argument"), is("a1"));
+		assertThat(msg.getArguments().get("argumentType"), is("Unknown"));
+	}
+
+	@Test
+	public void testFieldArgumentUnknownTypeInListNonNull()
+	{
+		var schema = Schema.create()
+			.addType(ObjectDef.create("Test")
+				.addField(FieldDef.create("f1")
+					.withType(ScalarDef.STRING)
+					.addArgument(ArgumentDef.create("a1")
+						.withType(ListDef.input(NonNullDef.input("Unknown")))
+						.build()
+					)
+					.build()
+				)
+				.build()
+			)
+			.build();
+
+		var m = assertThrows(ModelValidationException.class, () -> {
+			Model.create()
+				.addSchema(schema)
+				.build();
+		});
+
+		var msg = m.getIssues().getFirst();
+		assertThat(msg.getLevel(), is(ValidationMessageLevel.ERROR));
+		assertThat(msg.getCode(), is("model:argument:type-unknown"));
+		assertThat(msg.getArguments().get("type"), is("Test"));
+		assertThat(msg.getArguments().get("field"), is("f1"));
+		assertThat(msg.getArguments().get("argument"), is("a1"));
+		assertThat(msg.getArguments().get("argumentType"), is("Unknown"));
+	}
+
+	@Test
+	public void testFieldArgumentInvalidType()
+	{
+		var schema = Schema.create()
+			.addType(ObjectDef.create("I")
+				.addField(FieldDef.create("f1")
+					.withType(ScalarDef.INT)
+					.build()
+				)
+				.build()
+			)
+			.addType(ObjectDef.create("Test")
+				.addField(FieldDef.create("f1")
+					.withType(ScalarDef.STRING)
+					.addArgument(ArgumentDef.create("a1")
+						.withType("I")
+						.build()
+					)
+					.build()
+				)
+				.build()
+			)
+			.build();
+
+		var m = assertThrows(ModelValidationException.class, () -> {
+			Model.create()
+				.addSchema(schema)
+				.build();
+		});
+
+		var msg = m.getIssues().getFirst();
+		assertThat(msg.getLevel(), is(ValidationMessageLevel.ERROR));
+		assertThat(msg.getCode(), is("model:argument:input-type-required"));
+		assertThat(msg.getArguments().get("type"), is("Test"));
+		assertThat(msg.getArguments().get("field"), is("f1"));
+		assertThat(msg.getArguments().get("argument"), is("a1"));
+		assertThat(msg.getArguments().get("argumentType"), is("I"));
 	}
 
 	@Test

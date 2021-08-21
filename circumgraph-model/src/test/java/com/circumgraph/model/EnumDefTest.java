@@ -52,4 +52,37 @@ public class EnumDefTest
 			containsInAnyOrder("NORTH", "EAST", "SOUTH", "WEST")
 		);
 	}
+
+	@Test
+	public void testMergeSameValue()
+	{
+		var schema = Schema.create()
+			.addType(EnumDef.create("Direction")
+				.addValue(EnumValueDef.create("NORTH")
+					.build())
+				.addValue(EnumValueDef.create("EAST")
+					.build())
+				.addValue(EnumValueDef.create("SOUTH")
+					.build())
+				.build()
+			)
+			.addType(EnumDef.create("Direction")
+				.addValue(EnumValueDef.create("SOUTH")
+					.build())
+				.addValue(EnumValueDef.create("WEST")
+					.build())
+				.build()
+			)
+			.build();
+
+		var model = Model.create()
+			.addSchema(schema)
+			.build();
+
+		var t = model.get("Direction", EnumDef.class).get();
+		assertThat(
+			t.getValues().collect(EnumValueDef::getName),
+			containsInAnyOrder("NORTH", "EAST", "SOUTH", "WEST")
+		);
+	}
 }

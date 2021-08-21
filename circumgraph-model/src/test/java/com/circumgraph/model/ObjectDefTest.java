@@ -10,6 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.util.Optional;
 
 import com.circumgraph.model.internal.ObjectDefImpl;
+import com.circumgraph.model.validation.SourceLocation;
 import com.circumgraph.model.validation.ValidationMessageLevel;
 
 import org.junit.jupiter.api.Test;
@@ -299,7 +300,7 @@ public class ObjectDefTest
 	}
 
 	@Test
-	public void testMergeSimple()
+	public void testMerge()
 	{
 		var schema = Schema.create()
 			.addType(ObjectDef.create("Test")
@@ -336,5 +337,41 @@ public class ObjectDefTest
 				.withType(ScalarDef.STRING)
 				.build()
 		));
+	}
+
+	@Test
+	public void testMergeInvalid()
+	{
+		var schema = Schema.create()
+			.addType(ObjectDef.create("Test")
+				.withSourceLocation(SourceLocation.create("LOC1"))
+				.addField(FieldDef.create("f1")
+					.withType(ScalarDef.STRING)
+					.build()
+				)
+				.build()
+			)
+			.addType(InterfaceDef.create("Test")
+				.withSourceLocation(SourceLocation.create("LOC2"))
+				.addField(FieldDef.create("f2")
+					.withType(ScalarDef.STRING)
+					.build()
+				)
+				.build()
+			)
+			.build();
+
+		var e = assertThrows(ModelValidationException.class, () -> {
+			Model.create()
+				.addSchema(schema)
+				.build();
+		});
+
+		var msg = e.getIssues().getFirst();
+		assertThat(msg.getLevel(), is(ValidationMessageLevel.ERROR));
+		assertThat(msg.getCode(), is("model:incompatible-type"));
+		assertThat(msg.getArguments().get("type"), is("Test"));
+		assertThat(msg.getArguments().get("originalLocation"), is("LOC1"));
+		assertThat(msg.getMessage(), is("Could not merge: `Test` has a different type than previously defined at LOC1"));
 	}
 }
