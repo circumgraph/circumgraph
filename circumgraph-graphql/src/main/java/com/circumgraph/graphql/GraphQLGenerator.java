@@ -215,13 +215,17 @@ public class GraphQLGenerator
 
 			for(var field : inputObjectDef.getFields())
 			{
-				builder.field(GraphQLInputObjectField.newInputObjectField()
+				var fieldBuilder = GraphQLInputObjectField.newInputObjectField()
 					.name(field.getName())
 					.description(field.getDescription().orElse(null))
-					.type(resolveInputType(field.getType()))
-					.defaultValue(field.getDefaultValue().orElse(null))
-					.build()
-				);
+					.type(resolveInputType(field.getType()));
+
+				if(field.getDefaultValue().isPresent())
+				{
+					fieldBuilder = fieldBuilder.defaultValueProgrammatic(field.getDefaultValue().get());
+				}
+
+				builder.field(fieldBuilder.build());
 			}
 
 			return builder.build();
@@ -286,7 +290,7 @@ public class GraphQLGenerator
 
 			if(argument.getDefaultValue().isPresent())
 			{
-				builder.defaultValue(argument.getDefaultValue().get());
+				builder = builder.defaultValueProgrammatic(argument.getDefaultValue().get());
 			}
 
 			result.add(builder.build());
