@@ -158,6 +158,42 @@ public class GraphQLTest
 			}
 		}
 
+		public void assertValidationError(String op, String path, String type)
+		{
+			for(var error : result.getErrors())
+			{
+				var extension = error.getExtensions();
+				if("VALIDATION_ERROR".equals(extension.get("code")) && type.equals(extension.get("type")))
+				{
+					return;
+				}
+			}
+
+			if(result.getErrors().isEmpty())
+			{
+				throw new AssertionError("Expected validation error of type " + type + ", but got no errors");
+			}
+
+			AssertionError error = new AssertionError("Expected validation errors of type " +  type + ", got: " + result.getErrors().stream()
+				.map(e -> e.getMessage())
+				.collect(Collectors.joining(", "))
+			);
+
+			for(GraphQLError e : result.getErrors())
+				{
+					if(e instanceof ExceptionWhileDataFetching)
+					{
+						error.addSuppressed(((ExceptionWhileDataFetching) e).getException());
+					}
+					else if(e instanceof Throwable)
+					{
+						error.addSuppressed((Throwable) e);
+					}
+				}
+
+				throw error;
+		}
+
 		public ListIterable<GraphQLError> errors()
 		{
 			return Lists.immutable.ofAll(result.getErrors());
