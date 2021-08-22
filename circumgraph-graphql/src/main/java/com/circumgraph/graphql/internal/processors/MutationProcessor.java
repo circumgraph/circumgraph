@@ -4,6 +4,7 @@ import com.circumgraph.graphql.GraphQLModel;
 import com.circumgraph.graphql.MutationInputMapper;
 import com.circumgraph.graphql.ScalarMapper;
 import com.circumgraph.graphql.internal.SchemaNames;
+import com.circumgraph.graphql.internal.mutation.EnumMutationMapper;
 import com.circumgraph.graphql.internal.mutation.ListMutationMapper;
 import com.circumgraph.graphql.internal.mutation.PolymorphicMutationMapper;
 import com.circumgraph.graphql.internal.mutation.ScalarMutationMapper;
@@ -17,6 +18,7 @@ import com.circumgraph.graphql.scalars.IDScalar;
 import com.circumgraph.graphql.scalars.IntScalar;
 import com.circumgraph.graphql.scalars.StringScalar;
 import com.circumgraph.model.ArgumentDef;
+import com.circumgraph.model.EnumDef;
 import com.circumgraph.model.FieldDef;
 import com.circumgraph.model.HasMetadata;
 import com.circumgraph.model.InterfaceDef;
@@ -157,6 +159,10 @@ public class MutationProcessor
 				unionDef,
 				unionDef.getTypes().collect(subDef -> generateMutationInput(subDef))
 			);
+		}
+		else if(def instanceof EnumDef enumDef)
+		{
+			return new EnumMutationMapper(enumDef);
 		}
 		else
 		{

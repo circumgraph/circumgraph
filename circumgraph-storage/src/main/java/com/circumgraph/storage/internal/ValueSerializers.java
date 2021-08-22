@@ -18,6 +18,7 @@ import com.circumgraph.storage.StorageModel;
 import com.circumgraph.storage.StorageSchema;
 import com.circumgraph.storage.StructuredValue;
 import com.circumgraph.storage.internal.serializers.BooleanValueSerializer;
+import com.circumgraph.storage.internal.serializers.EnumValueSerializer;
 import com.circumgraph.storage.internal.serializers.FloatValueSerializer;
 import com.circumgraph.storage.internal.serializers.IdValueSerializer;
 import com.circumgraph.storage.internal.serializers.IntValueSerializer;
@@ -88,9 +89,9 @@ public class ValueSerializers
 				true
 			);
 		}
-		else if(def instanceof EnumDef)
+		else if(def instanceof EnumDef enumDef)
 		{
-			return scalars.get(ScalarDef.STRING);
+			return new EnumValueSerializer(enumDef);
 		}
 		else if(def instanceof ScalarDef)
 		{

@@ -101,7 +101,7 @@ public class StructuredValueMapper
 							 * the definition is compatible.
 							 */
 							var previousFieldValue = previousFieldValues.get(key);
-							if(previousFieldValue.getDefinition() == mapper.getDef())
+							if(mapper.getDef().isAssignableFrom(previousFieldValue.getDefinition()))
 							{
 								// TODO: This should check if type are compatible - not equal, type widening and narrowing should be supportd
 								return Mono.just(Tuples.pair(key, previousFieldValue));
