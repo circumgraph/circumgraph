@@ -169,14 +169,16 @@ public class StructuredValueMapper
 	)
 	{
 		var values = value.getFields();
-		return Flux.fromIterable(this.fields.keyValuesView())
-			.flatMap(p -> {
-				var key = p.getOne();
-				var fieldValue = values.get(key);
-				var fieldMapper = (ValueMapper<Value, Mutation>) p.getTwo();
+		return Flux.concat(
+			Flux.fromIterable(this.fields.keyValuesView())
+				.flatMap(p -> {
+					var key = p.getOne();
+					var fieldValue = values.get(key);
+					var fieldMapper = (ValueMapper<Value, Mutation>) p.getTwo();
 
-				return fieldMapper.validate(location.forField(key), fieldValue);
-			})
-			.thenMany(validator.validate(location, value));
+					return fieldMapper.validate(location.forField(key), fieldValue);
+				}),
+			validator.validate(location, value)
+		);
 	}
 }
