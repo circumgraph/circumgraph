@@ -82,7 +82,18 @@ public class PolymorphicValueMapper
 				return Mono.empty();
 			}
 
-			return ((ValueMapper) mapper).applyMutation(encounter, location, previousValue, mutation);
+			return ((ValueMapper) mapper)
+				.applyMutation(encounter, location, previousValue, mutation)
+				.flatMap(newValue -> {
+					/*
+					* There may be some validation that applies to the
+					* entire structured value. So validate after mutation has
+					* been applied.
+					*/
+					return validator.validate(location, (Value) newValue)
+						.doOnNext(encounter::reportError)
+						.then(Mono.just(newValue));
+				});
 		});
 	}
 
@@ -95,8 +106,8 @@ public class PolymorphicValueMapper
 	{
 		if(value == null)
 		{
-			// Null values are not validated
-			return Flux.empty();
+			// Null values are only validated with direct validators
+			return validator.validate(location, value);
 		}
 
 		var mapper = subTypes.get(value.getDefinition().getName());
