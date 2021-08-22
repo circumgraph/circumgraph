@@ -109,8 +109,10 @@ public class PolymorphicValueMapper
 		}
 		else
 		{
-			return ((ValueMapper) mapper).validate(location, value)
-				.thenMany(validator.validate(location, value));
+			return Flux.concat(
+				((ValueMapper) mapper).validate(location, value),
+				validator.validate(location, value)
+			);
 		}
 	}
 

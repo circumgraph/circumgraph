@@ -114,8 +114,10 @@ public class ListValueMapper<V extends Value, M extends Mutation>
 			return validator.validate(location, value);
 		}
 
-		return Flux.fromIterable(value.items())
-			.flatMap(v -> itemMapper.validate(location, v))
-			.thenMany(validator.validate(location, value));
+		return Flux.concat(
+			Flux.fromIterable(value.items())
+				.flatMap(v -> itemMapper.validate(location, v)),
+			validator.validate(location, value)
+		);
 	}
 }
