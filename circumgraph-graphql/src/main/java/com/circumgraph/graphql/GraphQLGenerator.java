@@ -201,7 +201,7 @@ public class GraphQLGenerator
 				builder.value(GraphQLEnumValueDefinition.newEnumValueDefinition()
 					.name(value.getName())
 					.description(value.getDescription().orElse(null))
-					.value(value.getMetadata(GraphQLModel.ENUM_VALUE).orElse(null))
+					.value(value.getMetadata(GraphQLModel.ENUM_VALUE).orElse(value.getName()))
 					.build()
 				);
 			}

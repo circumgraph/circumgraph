@@ -114,6 +114,17 @@ public class EnumDefImpl
 	}
 
 	@Override
+	public String toString()
+	{
+		return "EnumDefImpl{"
+			+ "name=" + name
+			+ ", values=" + values
+			+ ", description=" + description
+			+ ", directives=" + directives
+			+ "}";
+	}
+
+	@Override
 	public int hashCode()
 	{
 		return Objects.hash(description, directives, name, values, metadata);

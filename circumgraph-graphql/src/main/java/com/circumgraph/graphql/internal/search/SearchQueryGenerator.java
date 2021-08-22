@@ -288,22 +288,25 @@ public class SearchQueryGenerator
 
 	private Criteria generateCriteria(OutputTypeDef output)
 	{
-		if(output instanceof NonNullDef.Output)
+		if(output instanceof NonNullDef.Output nonNullDef)
 		{
-			output = ((NonNullDef.Output) output).getType();
+			output = nonNullDef.getType();
 		}
 
 		// TODO: Caching
 		// TODO: Recursion
 
-		if(output instanceof StructuredDef)
+		if(output instanceof StructuredDef structuredDef)
 		{
-			var structuredDef = (StructuredDef) output;
 			return new StructuredDefCriteria(
 				structuredDef,
 				resolveFieldCriteria(structuredDef),
 				generateSubCriteria(structuredDef)
 			);
+		}
+		else if(output instanceof EnumDef enumDef)
+		{
+			return new EnumCriteria(enumDef);
 		}
 
 		// No querying available
@@ -318,7 +321,13 @@ public class SearchQueryGenerator
 				if(indexer.isPresent())
 				{
 					// Field has an indexer - use the Criteria associated with it
-					return indexerToCriteria.get(indexer.get().getName());
+					var criteria = indexerToCriteria.get(indexer.get().getName());
+					if(criteria != null)
+					{
+						return criteria;
+					}
+
+					return generateCriteria(f.getType());
 				}
 				else if(StorageModel.isIndexed(f))
 				{
