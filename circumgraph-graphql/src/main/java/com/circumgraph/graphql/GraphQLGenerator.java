@@ -2,6 +2,7 @@ package com.circumgraph.graphql;
 
 import java.util.List;
 
+import com.circumgraph.graphql.internal.DataFetcherExceptionHandlerImpl;
 import com.circumgraph.graphql.internal.FieldResolverAdapter;
 import com.circumgraph.graphql.internal.InterfaceResolver;
 import com.circumgraph.graphql.internal.TransactionInstrumentation;
@@ -85,8 +86,8 @@ public class GraphQLGenerator
 
 	public GraphQL.Builder generate(GraphQLSchema schema)
 	{
-		// TODO: Error mapping
 		return GraphQL.newGraphQL(schema)
+			.defaultDataFetcherExceptionHandler(new DataFetcherExceptionHandlerImpl())
 			.doNotAddDefaultInstrumentations()
 			.instrumentation(new TransactionInstrumentation(storage));
 	}
