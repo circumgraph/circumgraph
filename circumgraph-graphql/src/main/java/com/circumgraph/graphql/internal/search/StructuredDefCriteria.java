@@ -125,6 +125,12 @@ public class StructuredDefCriteria
 	}
 
 	@Override
+	public StructuredDef getModelDef()
+	{
+		return def;
+	}
+
+	@Override
 	public InputObjectDef getGraphQLType()
 	{
 		return graphQLType;

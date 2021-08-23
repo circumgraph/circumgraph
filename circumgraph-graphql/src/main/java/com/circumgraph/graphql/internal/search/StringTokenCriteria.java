@@ -4,6 +4,7 @@ import java.util.Map;
 
 import com.circumgraph.model.InputFieldDef;
 import com.circumgraph.model.InputObjectDef;
+import com.circumgraph.model.OutputTypeDef;
 import com.circumgraph.model.ScalarDef;
 
 import se.l4.silo.index.EqualsMatcher;
@@ -40,6 +41,12 @@ public class StringTokenCriteria
 				.build()
 			)
 			.build();
+	}
+
+	@Override
+	public OutputTypeDef getModelDef()
+	{
+		return ScalarDef.STRING;
 	}
 
 	@Override

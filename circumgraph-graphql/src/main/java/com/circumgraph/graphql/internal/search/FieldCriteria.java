@@ -5,6 +5,7 @@ import java.util.Map;
 import com.circumgraph.graphql.internal.InputUnions;
 import com.circumgraph.model.InputFieldDef;
 import com.circumgraph.model.InputObjectDef;
+import com.circumgraph.model.OutputTypeDef;
 import com.circumgraph.model.StructuredDef;
 import com.circumgraph.storage.search.QueryPath;
 
@@ -25,6 +26,7 @@ public class FieldCriteria
 		raise an error.
 	""".trim();
 
+	private final StructuredDef def;
 	private final InputObjectDef graphQLType;
 	private final MapIterable<String, Criteria> fields;
 
@@ -33,6 +35,7 @@ public class FieldCriteria
 		MapIterable<String, Criteria> fields
 	)
 	{
+		this.def = def;
 		this.fields = fields;
 		var name = def.getName() + "FieldCriteriaInput";
 
@@ -52,6 +55,12 @@ public class FieldCriteria
 		}
 
 		this.graphQLType = builder.build();
+	}
+
+	@Override
+	public OutputTypeDef getModelDef()
+	{
+		return def;
 	}
 
 	@Override

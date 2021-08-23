@@ -5,6 +5,7 @@ import java.util.Map;
 import com.circumgraph.graphql.internal.StorageIds;
 import com.circumgraph.model.InputFieldDef;
 import com.circumgraph.model.InputObjectDef;
+import com.circumgraph.model.OutputTypeDef;
 import com.circumgraph.model.ScalarDef;
 
 import se.l4.silo.index.EqualsMatcher;
@@ -44,6 +45,12 @@ public class IDCriteria
 				.build()
 			)
 			.build();
+	}
+
+	@Override
+	public OutputTypeDef getModelDef()
+	{
+		return ScalarDef.ID;
 	}
 
 	@Override

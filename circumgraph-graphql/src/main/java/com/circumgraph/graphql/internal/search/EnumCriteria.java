@@ -5,6 +5,7 @@ import java.util.Map;
 import com.circumgraph.model.EnumDef;
 import com.circumgraph.model.InputFieldDef;
 import com.circumgraph.model.InputObjectDef;
+import com.circumgraph.model.OutputTypeDef;
 import com.circumgraph.model.ScalarDef;
 
 import se.l4.silo.index.EqualsMatcher;
@@ -24,10 +25,13 @@ public class EnumCriteria
 		will only match if no value is present.
 	""";
 
+	private final EnumDef modelDef;
 	private final InputObjectDef graphQLType;
 
 	public EnumCriteria(EnumDef def)
 	{
+		this.modelDef = def;
+
 		this.graphQLType = InputObjectDef.create(def.getName() + "CriteriaInput")
 			.withDescription(DESCRIPTION)
 			.addField(InputFieldDef.create("any")
@@ -41,6 +45,12 @@ public class EnumCriteria
 				.build()
 			)
 			.build();
+	}
+
+	@Override
+	public OutputTypeDef getModelDef()
+	{
+		return modelDef;
 	}
 
 	@Override
