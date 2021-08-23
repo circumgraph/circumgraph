@@ -21,10 +21,6 @@
 
 * update dependency io.projectreactor:reactor-bom to v2020.0.10 ([ac46ce6](https://github.com/circumgraph/circumgraph/commit/ac46ce686e76b1a5d4ea90056ba04342e8eea790))
 
-# Changelog
-
-All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
-
 ## 0.1.0 (2021-08-16)
 
 
