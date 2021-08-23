@@ -14,6 +14,8 @@ import se.l4.silo.engine.index.search.types.SearchFieldType;
 public class IdValueIndexer
 	implements ValueIndexer
 {
+	public static final IdValueIndexer INSTANCE = new IdValueIndexer();
+
 	private static final SearchFieldType<Long> FIELD_TYPE = SearchFieldType.forBinary()
 		.map(IdValueIndexer::deserializeId, IdValueIndexer::serializeId)
 		.build();

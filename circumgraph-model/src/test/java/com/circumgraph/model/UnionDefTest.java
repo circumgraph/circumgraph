@@ -119,10 +119,10 @@ public class UnionDefTest
 
 		var msg = e.getIssues().getFirst();
 		assertThat(msg.getLevel(), is(ValidationMessageLevel.ERROR));
-		assertThat(msg.getCode(), is("model:union:structured-type-required"));
+		assertThat(msg.getCode(), is("model:union:object-type-required"));
 		assertThat(msg.getArguments().get("type"), is("U"));
 		assertThat(msg.getArguments().get("subType"), is("[A]"));
-		assertThat(msg.getMessage(), is("`[A]` is part of union `U`, but is not a structured type, must be interface or object"));
+		assertThat(msg.getMessage(), is("`[A]` is part of union `U`, but is not an object type"));
 	}
 
 	@Test

@@ -6,6 +6,7 @@ import java.util.Optional;
 import com.circumgraph.model.DirectiveUse;
 import com.circumgraph.model.MetadataDef;
 import com.circumgraph.model.MetadataKey;
+import com.circumgraph.model.ObjectDef;
 import com.circumgraph.model.OutputTypeDef;
 import com.circumgraph.model.TypeDef;
 import com.circumgraph.model.UnionDef;
@@ -67,9 +68,20 @@ public class UnionDefImpl
 	}
 
 	@Override
-	public ListIterable<OutputTypeDef> getTypes()
+	public ListIterable<ObjectDef> getTypes()
 	{
-		return types.collect(s -> defs == null ? s : defs.getType(s, OutputTypeDef.class));
+		if(defs == null)
+		{
+			return Lists.immutable.empty();
+		}
+
+		return types.collect(s -> defs.getType(s, ObjectDef.class));
+	}
+
+	@Override
+	public ListIterable<? extends OutputTypeDef> getRawTypes()
+	{
+		return types;
 	}
 
 	@Override

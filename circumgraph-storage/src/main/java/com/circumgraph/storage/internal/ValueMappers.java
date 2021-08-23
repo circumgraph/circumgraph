@@ -83,6 +83,7 @@ public class ValueMappers
 			def,
 			Lists.immutable.of(def),
 			(ValueValidator<Value>) EMPTY_VALIDATOR,
+			false,
 			false
 		);
 		return new RootObjectMapper((ValueMapper) polymorphic);
@@ -125,7 +126,8 @@ public class ValueMappers
 				def,
 				Lists.immutable.of(def),
 				resolveValidator(ctx, nonNull),
-				true
+				true,
+				false
 			);
 		}
 		else if(def instanceof UnionDef)
@@ -134,6 +136,7 @@ public class ValueMappers
 				def,
 				((UnionDef) def).getTypes(),
 				resolveValidator(ctx, nonNull),
+				true,
 				true
 			);
 		}
@@ -169,7 +172,8 @@ public class ValueMappers
 		OutputTypeDef def,
 		RichIterable<? extends OutputTypeDef> initialDefs,
 		ValueValidator<Value> validator,
-		boolean allowReferences
+		boolean allowReferences,
+		boolean diverging
 	)
 	{
 		MutableMap<String, ValueMapper<?, ?>> defs = Maps.mutable.empty();
@@ -220,7 +224,8 @@ public class ValueMappers
 		return new PolymorphicValueMapper(
 			def,
 			defs,
-			validator
+			validator,
+			diverging
 		);
 	}
 

@@ -4,6 +4,7 @@ import com.circumgraph.model.NonNullDef;
 import com.circumgraph.model.OutputTypeDef;
 import com.circumgraph.model.ScalarDef;
 import com.circumgraph.model.StructuredDef;
+import com.circumgraph.model.UnionDef;
 import com.circumgraph.storage.StorageSchema;
 import com.circumgraph.storage.search.QueryPath;
 
@@ -94,6 +95,18 @@ public class QueryPathImpl
 				);
 			}
 		}
+		else if(def instanceof UnionDef)
+		{
+			return new QueryPathImpl(
+				new QueryPathImpl(
+					this.polymorphic(field.get().getDeclaringType()),
+					def,
+					fieldName
+				),
+				def,
+				def.getName()
+			);
+		}
 		else
 		{
 			return new QueryPathImpl(
@@ -129,7 +142,8 @@ public class QueryPathImpl
 	@Override
 	public FieldQuery toQuery(Matcher<?> matcher)
 	{
-		if(def instanceof StructuredDef)
+		if(def instanceof UnionDef
+			|| (def instanceof StructuredDef structuredDef && ! structuredDef.hasImplements(StorageSchema.ENTITY_NAME)))
 		{
 			// Querying the object - delegate to the __typename
 			return FieldQuery.create(toIndexName() + ".__typename", matcher);
