@@ -4,6 +4,7 @@ import java.util.Map;
 
 import com.circumgraph.model.InputFieldDef;
 import com.circumgraph.model.InputObjectDef;
+import com.circumgraph.model.OutputTypeDef;
 import com.circumgraph.model.ScalarDef;
 
 import se.l4.silo.index.EqualsMatcher;
@@ -30,7 +31,7 @@ public class BooleanCriteria
 
 	public BooleanCriteria()
 	{
-		this.graphQLType = InputObjectDef.create("IDCriteriaInput")
+		this.graphQLType = InputObjectDef.create("BooleanCriteriaInput")
 			.withDescription(DESCRIPTION)
 			.addField(InputFieldDef.create("any")
 				.withType(ScalarDef.STRING)
@@ -43,6 +44,12 @@ public class BooleanCriteria
 				.build()
 			)
 			.build();
+	}
+
+	@Override
+	public OutputTypeDef getModelDef()
+	{
+		return ScalarDef.BOOLEAN;
 	}
 
 	@Override

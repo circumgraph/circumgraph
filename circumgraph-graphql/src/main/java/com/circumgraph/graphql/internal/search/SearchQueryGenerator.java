@@ -17,7 +17,9 @@ import com.circumgraph.model.ObjectDef;
 import com.circumgraph.model.OutputTypeDef;
 import com.circumgraph.model.ScalarDef;
 import com.circumgraph.model.StructuredDef;
+import com.circumgraph.model.UnionDef;
 import com.circumgraph.storage.StorageModel;
+import com.circumgraph.storage.StorageSchema;
 import com.circumgraph.storage.search.Edge;
 import com.circumgraph.storage.search.PageCursor;
 import com.circumgraph.storage.search.PageCursors;
@@ -251,7 +253,7 @@ public class SearchQueryGenerator
 	)
 	{
 		var resultType = generateResultType(def);
-		var criteria = generateCriteria(def);
+		var criteria = generateCriteria(def, false);
 
 		var fieldBuilder = FieldDef.create(fieldName)
 			.withType(resultType)
@@ -286,7 +288,7 @@ public class SearchQueryGenerator
 		return fieldBuilder.build();
 	}
 
-	private Criteria generateCriteria(OutputTypeDef output)
+	private Criteria generateCriteria(OutputTypeDef output, boolean allowReferences)
 	{
 		if(output instanceof NonNullDef.Output nonNullDef)
 		{
@@ -298,6 +300,14 @@ public class SearchQueryGenerator
 
 		if(output instanceof StructuredDef structuredDef)
 		{
+			if(allowReferences && structuredDef.findImplements(StorageSchema.ENTITY_NAME))
+			{
+				return new StoredObjectRefCriteria(
+					structuredDef,
+					(IDCriteria) indexerToCriteria.get("ID")
+				);
+			}
+
 			return new StructuredDefCriteria(
 				structuredDef,
 				resolveFieldCriteria(structuredDef),
@@ -307,6 +317,13 @@ public class SearchQueryGenerator
 		else if(output instanceof EnumDef enumDef)
 		{
 			return new EnumCriteria(enumDef);
+		}
+		else if(output instanceof UnionDef unionDef)
+		{
+			return new UnionCriteria(
+				unionDef,
+				generateSubCriteria(unionDef)
+			);
 		}
 
 		// No querying available
@@ -327,12 +344,12 @@ public class SearchQueryGenerator
 						return criteria;
 					}
 
-					return generateCriteria(f.getType());
+					return generateCriteria(f.getType(), true);
 				}
 				else if(StorageModel.isIndexed(f))
 				{
 					// For other fields we try to resolve a criteria
-					return generateCriteria(f.getType());
+					return generateCriteria(f.getType(), true);
 				}
 
 				return null;
@@ -359,7 +376,22 @@ public class SearchQueryGenerator
 		{
 			result.put(
 				SchemaNames.toQueryFieldName(subDef),
-				(StructuredDefCriteria) generateCriteria(subDef)
+				(StructuredDefCriteria) generateCriteria(subDef, false)
+			);
+		}
+
+		return result.toImmutable();
+	}
+
+	private ImmutableMap<String, Criteria> generateSubCriteria(UnionDef def)
+	{
+		var result = Maps.mutable.<String, Criteria>empty();
+
+		for(var subDef : def.getTypes())
+		{
+			result.put(
+				SchemaNames.toQueryFieldName(subDef),
+				generateCriteria(subDef, true)
 			);
 		}
 
