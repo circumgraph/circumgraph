@@ -6,7 +6,6 @@ import static org.hamcrest.Matchers.is;
 import java.util.Optional;
 
 import com.circumgraph.model.FieldDef;
-import com.circumgraph.model.NonNullDef;
 import com.circumgraph.model.ObjectDef;
 import com.circumgraph.model.ScalarDef;
 import com.circumgraph.model.Schema;
@@ -17,6 +16,7 @@ import com.circumgraph.storage.SimpleValue;
 import com.circumgraph.storage.SingleSchemaTest;
 import com.circumgraph.storage.StorageSchema;
 import com.circumgraph.storage.StructuredValue;
+import com.circumgraph.storage.mutation.NullMutation;
 import com.circumgraph.storage.mutation.ScalarValueMutation;
 import com.circumgraph.storage.mutation.StructuredMutation;
 
@@ -35,7 +35,7 @@ public class UnionTest
 			.addType(ObjectDef.create("Test")
 				.addImplements(StorageSchema.ENTITY_NAME)
 				.addField(FieldDef.create("value")
-					.withType(NonNullDef.output("U"))
+					.withType("U")
 					.build()
 				)
 				.build()
@@ -116,6 +116,75 @@ public class UnionTest
 		// Check the field value
 		var v1 = value.getField("v2", SimpleValue.class).get();
 		assertThat(v1.asString(), is("Hello World"));
+	}
+
+	@Test
+	public void testUpdateNone()
+	{
+		var collection = storage.get("Test");
+		var union = (StructuredDef) storage.getModel().get("U1").get();
+
+		var mutation = collection.newMutation()
+			.updateField("value", StructuredMutation.create(union)
+				.updateField("v1", ScalarValueMutation.createString("Hello World"))
+				.build())
+			.build();
+
+		var stored = collection.store(mutation).block();
+		var id = stored.getId();
+
+		var fetched = collection.get(id).block();
+		assertThat(fetched, is(stored));
+
+		// Perform the update
+		var updateMutation = collection.newMutation()
+			.build();
+
+		var updated = collection.store(id, updateMutation).block();
+		var fetchedUpdate = collection.get(id).block();
+
+		assertThat(fetchedUpdate, is(updated));
+
+		var value = fetchedUpdate.getField("value", StructuredValue.class).get();
+
+		// Check that the type is correct
+		assertThat(value.getDefinition(), is(union));
+
+		// Check the field value
+		var v1 = value.getField("v1", SimpleValue.class).get();
+		assertThat(v1.asString(), is("Hello World"));
+	}
+
+	@Test
+	public void testUpdateNull()
+	{
+		var collection = storage.get("Test");
+		var union = (StructuredDef) storage.getModel().get("U1").get();
+
+		var mutation = collection.newMutation()
+			.updateField("value", StructuredMutation.create(union)
+				.updateField("v1", ScalarValueMutation.createString("Hello World"))
+				.build())
+			.build();
+
+		var stored = collection.store(mutation).block();
+		var id = stored.getId();
+
+		var fetched = collection.get(id).block();
+		assertThat(fetched, is(stored));
+
+		// Perform the update
+		var updateMutation = collection.newMutation()
+			.updateField("value", NullMutation.create())
+			.build();
+
+		var updated = collection.store(id, updateMutation).block();
+		var fetchedUpdate = collection.get(id).block();
+
+		assertThat(fetchedUpdate, is(updated));
+
+		var value = fetchedUpdate.getField("value", StructuredValue.class);
+		assertThat(value, is(Optional.empty()));
 	}
 
 	@Test

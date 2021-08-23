@@ -35,16 +35,19 @@ public class PolymorphicValueMapper
 	private final OutputTypeDef type;
 	private final MapIterable<String, ValueMapper<?, ?>> subTypes;
 	private final ValueValidator<Value> validator;
+	private final boolean diverging;
 
 	public PolymorphicValueMapper(
 		OutputTypeDef type,
 		MapIterable<String, ValueMapper<?, ?>> subTypes,
-		ValueValidator<Value> validator
+		ValueValidator<Value> validator,
+		boolean diverging
 	)
 	{
 		this.type = type;
 		this.subTypes = subTypes;
 		this.validator = validator;
+		this.diverging = diverging;
 	}
 
 	@Override
@@ -82,8 +85,18 @@ public class PolymorphicValueMapper
 				return Mono.empty();
 			}
 
+			/*
+			 * If this mapper supports diverging types and the new polymorphic
+			 * type is not assignable from the previous type the previous value
+			 * is discarded.
+			 */
+			var actualPreviousValue = ! diverging
+				|| (previousValue != null && mapper.getDef().isAssignableFrom(previousValue.getDefinition()))
+				? previousValue
+				: null;
+
 			return ((ValueMapper) mapper)
-				.applyMutation(encounter, location, previousValue, mutation)
+				.applyMutation(encounter, location, actualPreviousValue, mutation)
 				.flatMap(newValue -> {
 					/*
 					* There may be some validation that applies to the

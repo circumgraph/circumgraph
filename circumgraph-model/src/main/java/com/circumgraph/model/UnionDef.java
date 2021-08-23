@@ -15,7 +15,14 @@ public interface UnionDef
 	 *
 	 * @return
 	 */
-	ListIterable<? extends OutputTypeDef> getTypes();
+	ListIterable<? extends ObjectDef> getTypes();
+
+	/**
+	 * Get the types that can be within the union.
+	 *
+	 * @return
+	 */
+	ListIterable<? extends OutputTypeDef> getRawTypes();
 
 	/**
 	 * Get the names of types this union can hold.

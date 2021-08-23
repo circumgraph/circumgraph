@@ -179,10 +179,10 @@ public class ModelBuilderImpl
 
 	private static final ValidationMessageType UNION_TYPE_STRUCTURED =
 		ValidationMessageType.error()
-			.withCode("model:union:structured-type-required")
+			.withCode("model:union:object-type-required")
 			.withArgument("type")
 			.withArgument("subType")
-			.withMessage("`{{subType}}` is part of union `{{type}}`, but is not a structured type, must be interface or object")
+			.withMessage("`{{subType}}` is part of union `{{type}}`, but is not an object type")
 			.build();
 
 	private final ImmutableSet<TypeDef> types;
@@ -984,7 +984,7 @@ public class ModelBuilderImpl
 		Consumer<ValidationMessage> validationCollector
 	)
 	{
-		for(var type : union.getTypes())
+		for(var type : union.getRawTypes())
 		{
 			// Validate the type
 			TypeDef foundType = type;
@@ -1003,7 +1003,7 @@ public class ModelBuilderImpl
 					.build()
 				);
 			}
-			else if(! (foundType instanceof StructuredDef))
+			else if(! (foundType instanceof ObjectDef))
 			{
 				validationCollector.accept(UNION_TYPE_STRUCTURED.toMessage()
 					.withLocation(union)
@@ -1431,7 +1431,7 @@ public class ModelBuilderImpl
 			}
 			else if(def instanceof UnionDef u)
 			{
-				for(var type : u.getTypes())
+				for(var type : u.getRawTypes())
 				{
 					unroll(type).ifPresent(this::addType);
 				}

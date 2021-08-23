@@ -8,10 +8,12 @@ import com.circumgraph.model.InterfaceDef;
 import com.circumgraph.model.ListDef;
 import com.circumgraph.model.Model;
 import com.circumgraph.model.NonNullDef;
+import com.circumgraph.model.OutputTypeDef;
 import com.circumgraph.model.ScalarDef;
 import com.circumgraph.model.SimpleValueDef;
 import com.circumgraph.model.StructuredDef;
 import com.circumgraph.model.TypeDef;
+import com.circumgraph.model.UnionDef;
 import com.circumgraph.storage.Collection;
 import com.circumgraph.storage.ListValue;
 import com.circumgraph.storage.SimpleValue;
@@ -22,7 +24,9 @@ import com.circumgraph.storage.StoredObjectRef;
 import com.circumgraph.storage.StoredObjectValue;
 import com.circumgraph.storage.StructuredValue;
 import com.circumgraph.storage.Value;
+import com.circumgraph.storage.internal.indexing.IdValueIndexer;
 import com.circumgraph.storage.search.QueryPath;
+import com.circumgraph.storage.types.ValueIndexer;
 
 import org.eclipse.collections.api.RichIterable;
 import org.eclipse.collections.api.factory.Lists;
@@ -262,36 +266,15 @@ public class StorageImpl
 			// Only handle this field if it is indexed
 			if(indexer.isEmpty()) return;
 
-			if(multiple)
-			{
-				var searchField = SearchFieldDef.create(StoredObjectValue.class, path.toIndexName())
-					.withType(indexer.get().getSearchFieldType())
-					.withHighlighting(highlightable)
-					.collection()
-					.withSupplier(value -> {
-						var list = Lists.mutable.empty();
-						generator.generate(value, v -> list.add(extractValue(v)));
-						return (Iterable) list;
-					})
-					.build();
-
-				fieldReceiver.accept(searchField);
-			}
-			else
-			{
-				var searchField = SearchFieldDef.create(StoredObjectValue.class, path.toIndexName())
-					.withType((SearchFieldType<Object>) indexer.get().getSearchFieldType())
-					.withHighlighting(highlightable)
-					.withSupplier(value -> {
-						var list = Lists.mutable.empty();
-						generator.generate(value, v -> list.add(extractValue(v)));
-						return (Object) list.getFirst();
-					})
-					.withSortable(sortable)
-					.build();
-
-				fieldReceiver.accept(searchField);
-			}
+			collectSimpleValueIndexer(
+				path,
+				multiple,
+				generator,
+				fieldReceiver,
+				indexer.get(),
+				sortable,
+				highlightable
+			);
 		}
 		else if(def instanceof StructuredDef)
 		{
@@ -399,12 +382,122 @@ public class StorageImpl
 				}
 			}
 		}
+		else if(def instanceof UnionDef unionDef)
+		{
+			// Index type of object - this is used for any/null queries
+			fieldReceiver.accept(createTypenameField(
+				generator,
+				path,
+				unionDef
+			));
+
+			/*
+			 * Go through all the specific types of this union and index all
+			 * the fields in them.
+			 */
+			MutableSet<String> fields = Sets.mutable.empty();
+			for(var subDef : unionDef.getTypes())
+			{
+				var specificPath = path.polymorphic(subDef);
+				if(subDef.findImplements(StorageSchema.ENTITY_NAME))
+				{
+					// Implements entity - index as an ID
+					collectSimpleValueIndexer(
+						specificPath,
+						multiple,
+						generator,
+						fieldReceiver,
+						IdValueIndexer.INSTANCE,
+						false,
+						false
+					);
+				}
+				else
+				{
+					// Index type of object - this is used for any/null queries
+					if(fields.add(specificPath.toIndexName()))
+					{
+						fieldReceiver.accept(createTypenameField(
+							generator,
+							specificPath,
+							subDef
+						));
+					}
+
+					for(var fieldDef : subDef.getFields())
+					{
+						var name = fieldDef.getName();
+						var fieldPath = path
+							.polymorphic(fieldDef.getDeclaringType())
+							.field(name);
+
+						if(! fields.add(fieldPath.toIndexName())) continue;
+
+						ValueGenerator fieldGenerator = createFieldGenerator(generator, name);
+
+						collectIndexedFields(
+							model,
+
+							fieldDef,
+							fieldDef.getType(),
+							fieldPath,
+							multiple,
+							fieldGenerator,
+
+							fieldReceiver
+						);
+					}
+				}
+			}
+		}
+	}
+
+	private static void collectSimpleValueIndexer(
+		QueryPath path,
+		boolean multiple,
+		ValueGenerator generator,
+		Consumer<SearchFieldDef<StoredObjectValue>> fieldReceiver,
+		ValueIndexer indexer,
+		boolean sortable,
+		boolean highlightable
+	)
+	{
+		if(multiple)
+		{
+			var searchField = SearchFieldDef.create(StoredObjectValue.class, path.toIndexName())
+				.withType(indexer.getSearchFieldType())
+				.withHighlighting(highlightable)
+				.collection()
+				.withSupplier(value -> {
+					var list = Lists.mutable.empty();
+					generator.generate(value, v -> list.add(extractValue(v)));
+					return (Iterable) list;
+				})
+				.build();
+
+			fieldReceiver.accept(searchField);
+		}
+		else
+		{
+			var searchField = SearchFieldDef.create(StoredObjectValue.class, path.toIndexName())
+				.withType((SearchFieldType<Object>) indexer.getSearchFieldType())
+				.withHighlighting(highlightable)
+				.withSupplier(value -> {
+					var list = Lists.mutable.empty();
+					generator.generate(value, v -> list.add(extractValue(v)));
+					return (Object) list.getFirst();
+				})
+				.withSortable(sortable)
+				.build();
+
+			fieldReceiver.accept(searchField);
+		}
 	}
 
 	private static SearchFieldDef<StoredObjectValue> createTypenameField(
 		ValueGenerator generator,
 		QueryPath path,
-		StructuredDef def
+		OutputTypeDef def
 	)
 	{
 		return SearchFieldDef.create(StoredObjectValue.class, path.typename().toIndexName())
@@ -450,7 +543,9 @@ public class StorageImpl
 		return (root, consumer) -> generator.generate(
 			root,
 			v -> {
-				var value = ((StructuredValue) v).getFields().get(name);
+				if(! (v instanceof StructuredValue sv)) return;
+
+				var value = sv.getFields().get(name);
 				if(value != null)
 				{
 					consumer.accept(value);
