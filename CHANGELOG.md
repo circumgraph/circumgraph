@@ -1,3 +1,19 @@
+# [0.2.0](https://github.com/circumgraph/circumgraph/compare/v0.1.1...v0.2.0) (2021-08-23)
+
+
+### Bug Fixes
+
+* **storage:** Fix some validation errors being supressed ([d87c190](https://github.com/circumgraph/circumgraph/commit/d87c19099466c4225b0f58c47ea2336300492ed6))
+* **storage:** Validate polymorphic values, such as interfaces and unions ([c431b00](https://github.com/circumgraph/circumgraph/commit/c431b00c8a3899999be59ea1a7218cb994d7eb39))
+
+
+### Features
+
+* **graphql:** Add support for searches on union values ([92fb955](https://github.com/circumgraph/circumgraph/commit/92fb955da8d91ec7679b279ac14933a8f01cdca0))
+* **graphql:** Friendlier error messages on validation issues ([67a25d8](https://github.com/circumgraph/circumgraph/commit/67a25d843ed291352c862bdd94639ab15e1ce1da))
+* **graphql:** Support storing and querying enums ([470667f](https://github.com/circumgraph/circumgraph/commit/470667f66eef238a93899a2f3e8451315e2d8e02))
+* **storage:** Support for indexing and querying of unions ([57f3180](https://github.com/circumgraph/circumgraph/commit/57f3180434675e70421d8d1273a7ba760c531e2a))
+
 ## [0.1.1](https://github.com/circumgraph/circumgraph/compare/v0.1.0...v0.1.1) (2021-08-17)
 
 
