@@ -96,8 +96,8 @@ public class GraphQLSchema
 	/**
 	 * Create a schema from the given string.
 	 *
-	 * @param schema
-	 *   schema SDL
+	 * @param source
+	 *   source to parse
 	 * @return
 	 *   parsed schema
 	 * @throws ModelValidationException
