@@ -1,5 +1,7 @@
 package com.circumgraph.model.validation;
 
+import com.circumgraph.model.Location;
+
 /**
  * Builder for validation messages.
  */
@@ -11,7 +13,7 @@ public interface ValidationBuilder
 	 * @param location
 	 * @return
 	 */
-	ValidationBuilder withLocation(SourceLocation location);
+	ValidationBuilder withLocation(Location location);
 
 	/**
 	 * Set a the human-readable message.

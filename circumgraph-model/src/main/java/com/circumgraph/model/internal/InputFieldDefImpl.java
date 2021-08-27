@@ -7,11 +7,11 @@ import com.circumgraph.model.DirectiveUse;
 import com.circumgraph.model.InputFieldDef;
 import com.circumgraph.model.InputObjectDef;
 import com.circumgraph.model.InputTypeDef;
+import com.circumgraph.model.Location;
 import com.circumgraph.model.MetadataDef;
 import com.circumgraph.model.MetadataKey;
 import com.circumgraph.model.TypeRef;
 import com.circumgraph.model.validation.ModelValidation;
-import com.circumgraph.model.validation.SourceLocation;
 
 import org.eclipse.collections.api.RichIterable;
 import org.eclipse.collections.api.factory.Lists;
@@ -24,7 +24,7 @@ import org.eclipse.collections.api.list.ListIterable;
 public class InputFieldDefImpl
 	implements InputFieldDef, HasPreparation
 {
-	private final SourceLocation sourceLocation;
+	private final Location sourceLocation;
 
 	private final String name;
 	private final String description;
@@ -39,7 +39,7 @@ public class InputFieldDefImpl
 	private ModelDefs defs;
 
 	public InputFieldDefImpl(
-		SourceLocation sourceLocation,
+		Location sourceLocation,
 		String name,
 		String description,
 		InputTypeDef type,
@@ -58,7 +58,7 @@ public class InputFieldDefImpl
 	}
 
 	@Override
-	public SourceLocation getSourceLocation()
+	public Location getDefinedAt()
 	{
 		return sourceLocation;
 	}
@@ -213,7 +213,7 @@ public class InputFieldDefImpl
 	public static class BuilderImpl
 		implements Builder
 	{
-		private final SourceLocation sourceLocation;
+		private final Location sourceLocation;
 		private final String name;
 		private final String description;
 		private final InputTypeDef type;
@@ -222,7 +222,7 @@ public class InputFieldDefImpl
 		private final Metadata metadata;
 
 		public BuilderImpl(
-			SourceLocation sourceLocation,
+			Location sourceLocation,
 			String name,
 			String description,
 			InputTypeDef type,
@@ -241,7 +241,7 @@ public class InputFieldDefImpl
 		}
 
 		@Override
-		public Builder withSourceLocation(SourceLocation sourceLocation)
+		public Builder withDefinedAt(Location sourceLocation)
 		{
 			return new BuilderImpl(
 				sourceLocation,
@@ -366,7 +366,7 @@ public class InputFieldDefImpl
 			Objects.requireNonNull(type, "type must be specified");
 
 			return new InputFieldDefImpl(
-				SourceLocation.automatic(sourceLocation),
+				Location.automatic(sourceLocation),
 				name,
 				description,
 				type,

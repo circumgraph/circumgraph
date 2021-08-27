@@ -6,10 +6,10 @@ import java.util.Optional;
 import com.circumgraph.model.DirectiveUse;
 import com.circumgraph.model.EnumDef;
 import com.circumgraph.model.EnumValueDef;
+import com.circumgraph.model.Location;
 import com.circumgraph.model.MetadataDef;
 import com.circumgraph.model.MetadataKey;
 import com.circumgraph.model.TypeDef;
-import com.circumgraph.model.validation.SourceLocation;
 
 import org.eclipse.collections.api.RichIterable;
 import org.eclipse.collections.api.factory.Lists;
@@ -22,7 +22,7 @@ import org.eclipse.collections.api.list.ListIterable;
 public class EnumDefImpl
 	implements EnumDef
 {
-	private final SourceLocation sourceLocation;
+	private final Location sourceLocation;
 	private final String name;
 	private final String description;
 	private final ImmutableList<EnumValueDef> values;
@@ -30,7 +30,7 @@ public class EnumDefImpl
 	private final Metadata metadata;
 
 	public EnumDefImpl(
-		SourceLocation sourceLocation,
+		Location sourceLocation,
 		String name,
 		String description,
 		ImmutableList<EnumValueDef> values,
@@ -47,7 +47,7 @@ public class EnumDefImpl
 	}
 
 	@Override
-	public SourceLocation getSourceLocation()
+	public Location getDefinedAt()
 	{
 		return sourceLocation;
 	}
@@ -159,7 +159,7 @@ public class EnumDefImpl
 	public static class BuilderImpl
 		implements Builder
 	{
-		private final SourceLocation sourceLocation;
+		private final Location sourceLocation;
 		private final String name;
 		private final String description;
 		private final ImmutableList<EnumValueDef> values;
@@ -167,7 +167,7 @@ public class EnumDefImpl
 		private final Metadata metadata;
 
 		public BuilderImpl(
-			SourceLocation sourceLocation,
+			Location sourceLocation,
 			String name,
 			String description,
 			ImmutableList<EnumValueDef> values,
@@ -184,7 +184,7 @@ public class EnumDefImpl
 		}
 
 		@Override
-		public Builder withSourceLocation(SourceLocation sourceLocation)
+		public Builder withDefinedAt(Location sourceLocation)
 		{
 			return new BuilderImpl(
 				sourceLocation,
@@ -293,7 +293,7 @@ public class EnumDefImpl
 		public EnumDef build()
 		{
 			return new EnumDefImpl(
-				SourceLocation.automatic(sourceLocation),
+				Location.automatic(sourceLocation),
 				name,
 				description,
 				values,

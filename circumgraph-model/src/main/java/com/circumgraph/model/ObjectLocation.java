@@ -1,10 +1,8 @@
-package com.circumgraph.storage.internal.mappers;
-
-import com.circumgraph.model.Location;
+package com.circumgraph.model;
 
 /**
  * Variant of {@link Location} to simplify creating locations that
- * describe a position in a mutation.
+ * describe a position in an object.
  */
 public interface ObjectLocation
 	extends Location

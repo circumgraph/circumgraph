@@ -6,13 +6,13 @@ import java.util.Optional;
 import com.circumgraph.model.ArgumentDef;
 import com.circumgraph.model.DirectiveUse;
 import com.circumgraph.model.FieldDef;
+import com.circumgraph.model.Location;
 import com.circumgraph.model.MetadataDef;
 import com.circumgraph.model.MetadataKey;
 import com.circumgraph.model.OutputTypeDef;
 import com.circumgraph.model.StructuredDef;
 import com.circumgraph.model.TypeRef;
 import com.circumgraph.model.validation.ModelValidation;
-import com.circumgraph.model.validation.SourceLocation;
 
 import org.eclipse.collections.api.RichIterable;
 import org.eclipse.collections.api.factory.Lists;
@@ -25,7 +25,7 @@ import org.eclipse.collections.api.list.ListIterable;
 public class FieldDefImpl
 	implements FieldDef, HasPreparation
 {
-	private final SourceLocation sourceLocation;
+	private final Location sourceLocation;
 
 	private final String name;
 	private final String description;
@@ -39,7 +39,7 @@ public class FieldDefImpl
 	private StructuredDef declaringType;
 
 	public FieldDefImpl(
-		SourceLocation sourceLocation,
+		Location sourceLocation,
 		String name,
 		String description,
 		OutputTypeDef type,
@@ -58,7 +58,7 @@ public class FieldDefImpl
 	}
 
 	@Override
-	public SourceLocation getSourceLocation()
+	public Location getDefinedAt()
 	{
 		return sourceLocation;
 	}
@@ -218,7 +218,7 @@ public class FieldDefImpl
 	public static class BuilderImpl
 		implements Builder
 	{
-		private final SourceLocation sourceLocation;
+		private final Location sourceLocation;
 		private final String name;
 		private final String description;
 		private final OutputTypeDef type;
@@ -227,7 +227,7 @@ public class FieldDefImpl
 		private final Metadata metadata;
 
 		public BuilderImpl(
-			SourceLocation sourceLocation,
+			Location sourceLocation,
 			String name,
 			String description,
 			OutputTypeDef type,
@@ -246,7 +246,7 @@ public class FieldDefImpl
 		}
 
 		@Override
-		public Builder withSourceLocation(SourceLocation sourceLocation)
+		public Builder withDefinedAt(Location sourceLocation)
 		{
 			return new BuilderImpl(
 				sourceLocation,
@@ -386,7 +386,7 @@ public class FieldDefImpl
 			Objects.requireNonNull(type, "type must be specified");
 
 			return new FieldDefImpl(
-				SourceLocation.automatic(sourceLocation),
+				Location.automatic(sourceLocation),
 				name,
 				description,
 				type,

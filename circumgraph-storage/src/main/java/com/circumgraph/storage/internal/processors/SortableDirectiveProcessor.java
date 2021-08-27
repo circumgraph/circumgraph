@@ -45,7 +45,7 @@ public class SortableDirectiveProcessor
 		else
 		{
 			encounter.report(INVALID_ARGUMENTS.toMessage()
-				.withLocation(directive.getSourceLocation())
+				.withLocation(directive.getDefinedAt())
 				.build()
 			);
 		}

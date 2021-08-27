@@ -8,7 +8,7 @@ import org.eclipse.collections.api.list.ListIterable;
  * Definition of a union of several types.
  */
 public interface UnionDef
-	extends OutputTypeDef, Derivable<UnionDef.Builder>, HasDirectives, HasSourceLocation, HasMetadata
+	extends OutputTypeDef, Derivable<UnionDef.Builder>, HasDirectives, HasLocation, HasMetadata
 {
 	/**
 	 * Get the types that can be within the union.
@@ -53,7 +53,7 @@ public interface UnionDef
 	interface Builder
 		extends Buildable<UnionDef>,
 			HasDirectives.Builder<Builder>,
-			HasSourceLocation.Builder<Builder>,
+			HasLocation.Builder<Builder>,
 			HasMetadata.Builder<Builder>
 	{
 		/**

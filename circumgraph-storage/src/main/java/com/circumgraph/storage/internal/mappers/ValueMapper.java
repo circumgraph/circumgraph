@@ -1,9 +1,9 @@
 package com.circumgraph.storage.internal.mappers;
 
 import com.circumgraph.model.ListDef;
+import com.circumgraph.model.Location;
 import com.circumgraph.model.OutputTypeDef;
 import com.circumgraph.model.StructuredDef;
-import com.circumgraph.model.validation.SourceLocation;
 import com.circumgraph.model.validation.ValidationMessage;
 import com.circumgraph.storage.Value;
 import com.circumgraph.storage.mutation.Mutation;
@@ -35,7 +35,7 @@ public interface ValueMapper<V extends Value, M extends Mutation>
 	 *   encounter used to report errors and perform special functions
 	 * @param location
 	 *   the location of the value being mapped, should be passed to
-	 *   {@link ValidationMessage.Builder#withLocation(SourceLocation)}
+	 *   {@link ValidationMessage.Builder#withLocation(Location)}
 	 *   if a validation error is encountered
 	 * @param previousValue
 	 *   the previous value, or {@code null}

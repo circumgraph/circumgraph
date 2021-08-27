@@ -20,5 +20,11 @@
 			<artifactId>eclipse-collections</artifactId>
 			<version>10.4.0</version>
 		</dependency>
+
+		<dependency>
+			<groupId>se.l4.ylem.io</groupId>
+			<artifactId>ylem-io</artifactId>
+			<version>1.0.0</version>
+		</dependency>
 	</dependencies>
 </project>

@@ -12,7 +12,6 @@ import java.util.Optional;
 import com.circumgraph.model.internal.FieldDefImpl;
 import com.circumgraph.model.processing.DirectiveUseProcessor;
 import com.circumgraph.model.processing.ProcessingEncounter;
-import com.circumgraph.model.validation.SourceLocation;
 import com.circumgraph.model.validation.ValidationMessageLevel;
 
 import org.junit.jupiter.api.Test;
@@ -425,7 +424,7 @@ public class FieldDefTest
 		var schema = Schema.create()
 			.addType(ObjectDef.create("Test")
 				.addField(FieldDef.create("f1")
-					.withSourceLocation(SourceLocation.create("LOC"))
+					.withDefinedAt(Location.create("LOC"))
 					.withType(ScalarDef.STRING)
 					.build()
 				)
@@ -433,7 +432,7 @@ public class FieldDefTest
 			)
 			.addType(ObjectDef.create("Test")
 				.addField(FieldDef.create("f1")
-					.withSourceLocation(SourceLocation.create("LOC2"))
+					.withDefinedAt(Location.create("LOC2"))
 					.withType(ScalarDef.INT)
 					.build()
 				)

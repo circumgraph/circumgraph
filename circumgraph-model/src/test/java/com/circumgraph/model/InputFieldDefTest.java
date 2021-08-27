@@ -7,7 +7,6 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.circumgraph.model.internal.InputFieldDefImpl;
-import com.circumgraph.model.validation.SourceLocation;
 import com.circumgraph.model.validation.ValidationMessageLevel;
 
 import org.junit.jupiter.api.Test;
@@ -208,7 +207,7 @@ public class InputFieldDefTest
 		var schema = Schema.create()
 			.addType(InputObjectDef.create("Test")
 				.addField(InputFieldDef.create("f1")
-					.withSourceLocation(SourceLocation.create("LOC1"))
+					.withDefinedAt(Location.create("LOC1"))
 					.withType(ScalarDef.STRING)
 					.build()
 				)
@@ -216,7 +215,7 @@ public class InputFieldDefTest
 			)
 			.addType(InputObjectDef.create("Test")
 				.addField(InputFieldDef.create("f1")
-					.withSourceLocation(SourceLocation.create("LOC2"))
+					.withDefinedAt(Location.create("LOC2"))
 					.withType(ScalarDef.INT)
 					.build()
 				)

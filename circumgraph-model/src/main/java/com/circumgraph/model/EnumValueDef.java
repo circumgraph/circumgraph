@@ -8,7 +8,7 @@ import com.circumgraph.model.internal.EnumValueDefImpl;
  * Value inside a {@link EnumDef}.
  */
 public interface EnumValueDef
-	extends Derivable<EnumValueDef.Builder>, HasDirectives, HasSourceLocation, HasMetadata
+	extends Derivable<EnumValueDef.Builder>, HasDirectives, HasLocation, HasMetadata
 {
 	/**
 	 * Get the name of the value.
@@ -40,7 +40,7 @@ public interface EnumValueDef
 	interface Builder
 		extends Buildable<EnumValueDef>,
 			HasDirectives.Builder<Builder>,
-			HasSourceLocation.Builder<Builder>,
+			HasLocation.Builder<Builder>,
 			HasMetadata.Builder<Builder>
 	{
 		/**

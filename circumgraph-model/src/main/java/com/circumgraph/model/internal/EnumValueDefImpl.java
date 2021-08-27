@@ -5,9 +5,9 @@ import java.util.Optional;
 
 import com.circumgraph.model.DirectiveUse;
 import com.circumgraph.model.EnumValueDef;
+import com.circumgraph.model.Location;
 import com.circumgraph.model.MetadataDef;
 import com.circumgraph.model.MetadataKey;
-import com.circumgraph.model.validation.SourceLocation;
 
 import org.eclipse.collections.api.RichIterable;
 import org.eclipse.collections.api.factory.Lists;
@@ -20,14 +20,14 @@ import org.eclipse.collections.api.list.ListIterable;
 public class EnumValueDefImpl
 	implements EnumValueDef
 {
-	private final SourceLocation sourceLocation;
+	private final Location sourceLocation;
 	private final String name;
 	private final String description;
 	private final ImmutableList<DirectiveUse> directives;
 	private final Metadata metadata;
 
 	public EnumValueDefImpl(
-		SourceLocation sourceLocation,
+		Location sourceLocation,
 		String name,
 		String description,
 		ImmutableList<DirectiveUse> directives,
@@ -42,7 +42,7 @@ public class EnumValueDefImpl
 	}
 
 	@Override
-	public SourceLocation getSourceLocation()
+	public Location getDefinedAt()
 	{
 		return sourceLocation;
 	}
@@ -138,14 +138,14 @@ public class EnumValueDefImpl
 	public static class BuilderImpl
 		implements Builder
 	{
-		private final SourceLocation sourceLocation;
+		private final Location sourceLocation;
 		private final String name;
 		private final String description;
 		private final ImmutableList<DirectiveUse> directives;
 		private final Metadata metadata;
 
 		public BuilderImpl(
-			SourceLocation sourceLocation,
+			Location sourceLocation,
 			String name,
 			String description,
 			ImmutableList<DirectiveUse> directives,
@@ -160,7 +160,7 @@ public class EnumValueDefImpl
 		}
 
 		@Override
-		public Builder withSourceLocation(SourceLocation sourceLocation)
+		public Builder withDefinedAt(Location sourceLocation)
 		{
 			return new BuilderImpl(
 				sourceLocation,
@@ -237,7 +237,7 @@ public class EnumValueDefImpl
 		public EnumValueDef build()
 		{
 			return new EnumValueDefImpl(
-				SourceLocation.automatic(sourceLocation),
+				Location.automatic(sourceLocation),
 				name,
 				description,
 				directives,
