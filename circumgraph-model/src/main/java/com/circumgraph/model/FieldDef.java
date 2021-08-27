@@ -10,7 +10,7 @@ import org.eclipse.collections.api.list.ListIterable;
  * Field within an entity.
  */
 public interface FieldDef
-	extends Derivable<FieldDef.Builder>, HasDirectives, HasSourceLocation, HasMetadata
+	extends Derivable<FieldDef.Builder>, HasDirectives, HasLocation, HasMetadata
 {
 	/**
 	 * Get the name of this field.
@@ -83,7 +83,7 @@ public interface FieldDef
 	interface Builder
 		extends Buildable<FieldDef>,
 			HasDirectives.Builder<Builder>,
-			HasSourceLocation.Builder<Builder>,
+			HasLocation.Builder<Builder>,
 			HasMetadata.Builder<Builder>
 	{
 		/**

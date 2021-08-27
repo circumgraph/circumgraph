@@ -1,6 +1,7 @@
 package com.circumgraph.model.validation;
 
-import com.circumgraph.model.HasSourceLocation;
+import com.circumgraph.model.HasLocation;
+import com.circumgraph.model.Location;
 import com.circumgraph.model.internal.validation.ValidationMessageImpl;
 
 import org.eclipse.collections.api.block.predicate.Predicate;
@@ -16,7 +17,7 @@ public interface ValidationMessage
 	 *
 	 * @return
 	 */
-	SourceLocation getLocation();
+	Location getLocation();
 
 	/**
 	 * Get the level of this message.
@@ -108,7 +109,7 @@ public interface ValidationMessage
 		 * @param location
 		 * @return
 		 */
-		Builder withLocation(SourceLocation location);
+		Builder withLocation(Location location);
 
 		/**
 		 * Set the location where this validation message is created.
@@ -116,7 +117,7 @@ public interface ValidationMessage
 		 * @param object
 		 * @return
 		 */
-		Builder withLocation(HasSourceLocation object);
+		Builder withLocation(HasLocation object);
 
 		/**
 		 * Add an argument to the message.

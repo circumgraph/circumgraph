@@ -1,6 +1,6 @@
 package com.circumgraph.storage.internal.validators;
 
-import com.circumgraph.model.validation.SourceLocation;
+import com.circumgraph.model.Location;
 import com.circumgraph.model.validation.ValidationMessage;
 import com.circumgraph.model.validation.ValidationMessageType;
 import com.circumgraph.storage.Value;
@@ -30,7 +30,7 @@ public class NonNullValueValidator
 
 	@Override
 	public Flux<ValidationMessage> validate(
-		SourceLocation location,
+		Location location,
 		Value value
 	)
 	{

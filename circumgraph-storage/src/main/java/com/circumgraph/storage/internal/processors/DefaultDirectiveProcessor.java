@@ -69,7 +69,7 @@ public class DefaultDirectiveProcessor
 		{
 			encounter.report(INVALID_ARGUMENTS
 				.toMessage()
-				.withLocation(directive.getSourceLocation())
+				.withLocation(directive.getDefinedAt())
 				.build()
 			);
 
@@ -89,7 +89,7 @@ public class DefaultDirectiveProcessor
 			if(! actualProvider.isPresent())
 			{
 				encounter.report(UNKNOWN_PROVIDER.toMessage()
-					.withLocation(directive.getSourceLocation())
+					.withLocation(directive.getDefinedAt())
 					.withArgument("provider", provider.get())
 					.build()
 				);
@@ -100,7 +100,7 @@ public class DefaultDirectiveProcessor
 				if(! location.getType().isAssignableFrom(instance.getType()))
 				{
 					encounter.report(INVALID_PROVIDER.toMessage()
-						.withLocation(directive.getSourceLocation())
+						.withLocation(directive.getDefinedAt())
 						.withArgument("provider", provider.get())
 						.withArgument("fieldType", location.getTypeName())
 						.build()
@@ -115,7 +115,7 @@ public class DefaultDirectiveProcessor
 		else
 		{
 			encounter.report(INVALID_ARGUMENTS.toMessage()
-				.withLocation(directive.getSourceLocation())
+				.withLocation(directive.getDefinedAt())
 				.build()
 			);
 		}

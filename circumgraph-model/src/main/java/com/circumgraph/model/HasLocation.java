@@ -1,11 +1,9 @@
 package com.circumgraph.model;
 
-import com.circumgraph.model.validation.SourceLocation;
-
 /**
- * Marker interface for types that support a {@link SourceLocation}.
+ * Marker interface for types that support a {@link Location}.
  */
-public interface HasSourceLocation
+public interface HasLocation
 {
 	/**
 	 * Get the source of this object. This is used to provide debug
@@ -14,7 +12,7 @@ public interface HasSourceLocation
 	 * @return
 	 *   source of the definition
 	 */
-	SourceLocation getSourceLocation();
+	Location getDefinedAt();
 
 	interface Builder<B extends Builder<B>>
 	{
@@ -22,11 +20,11 @@ public interface HasSourceLocation
 		 * Set a specific source location of the object. Used for example when
 		 * parsing external schemas.
 		 *
-		 * @param sourceLocation
+		 * @param location
 		 *   the location to use
 		 * @return
 		 *   new instance of build
 		 */
-		B withSourceLocation(SourceLocation sourceLocation);
+		B withDefinedAt(Location location);
 	}
 }

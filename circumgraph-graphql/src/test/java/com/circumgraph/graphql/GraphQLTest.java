@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 
 import com.circumgraph.model.Model;
 import com.circumgraph.schema.graphql.GraphQLSchema;
+import com.circumgraph.schema.graphql.TextSource;
 import com.circumgraph.storage.Storage;
 import com.circumgraph.storage.StorageSchema;
 
@@ -50,7 +51,7 @@ public class GraphQLTest
 		var model = Model.create()
 			.addSchema(StorageSchema.INSTANCE)
 			.addSchema(new GraphQLAPISchema())
-			.addSchema(GraphQLSchema.create(schema))
+			.addSchema(GraphQLSchema.create(TextSource.create("<test>", schema)))
 			.build();
 
 		storage = Storage.open(model, tmp)

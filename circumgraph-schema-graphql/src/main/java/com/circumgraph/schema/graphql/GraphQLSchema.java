@@ -1,7 +1,6 @@
 package com.circumgraph.schema.graphql;
 
-import java.io.Reader;
-import java.io.StringReader;
+import java.io.IOException;
 import java.util.List;
 
 import com.circumgraph.model.ArgumentDef;
@@ -12,6 +11,8 @@ import com.circumgraph.model.FieldDef;
 import com.circumgraph.model.InputTypeDef;
 import com.circumgraph.model.InterfaceDef;
 import com.circumgraph.model.ListDef;
+import com.circumgraph.model.Location;
+import com.circumgraph.model.ModelException;
 import com.circumgraph.model.ModelValidationException;
 import com.circumgraph.model.NonNullDef;
 import com.circumgraph.model.ObjectDef;
@@ -20,7 +21,6 @@ import com.circumgraph.model.Schema;
 import com.circumgraph.model.TypeDef;
 import com.circumgraph.model.TypeRef;
 import com.circumgraph.model.UnionDef;
-import com.circumgraph.model.validation.SourceLocation;
 import com.circumgraph.model.validation.ValidationMessage;
 import com.circumgraph.model.validation.ValidationMessageType;
 
@@ -103,76 +103,30 @@ public class GraphQLSchema
 	 * @throws ModelValidationException
 	 *   if schema is not valid
 	 */
-	public static GraphQLSchema create(String schema)
-	{
-		return create(new StringReader(schema));
-	}
-
-	/**
-	 * Create a schema from the given string.
-	 *
-	 * @param schema
-	 *   schema SDL
-	 * @param sourceName
-	 *   name of source, commonly a filename
-	 * @return
-	 *   parsed schema
-	 * @throws ModelValidationException
-	 *   if schema is not valid
-	 */
-	public static GraphQLSchema create(String schema, String sourceName)
-	{
-		return create(new StringReader(schema), sourceName);
-	}
-
-	/**
-	 * Create a schema from the given {@link Reader}.
-	 *
-	 * @param reader
-	 *   reader to parse from
-	 * @return
-	 *   parsed schema
-	 * @throws ModelValidationException
-	 *   if schema is not valid
-	 */
-	public static GraphQLSchema create(Reader reader)
-	{
-		return create(reader, null);
-	}
-
-	/**
-	 * Create a schema from the given {@link Reader}.
-	 *
-	 * @param reader
-	 *   reader to parse from
-	 * @param sourceName
-	 *   name of source, commonly a filename
-	 * @return
-	 *   parsed schema
-	 * @throws ModelValidationException
-	 *   if schema is not valid
-	 */
-	@SuppressWarnings("rawtypes")
-	public static GraphQLSchema create(Reader reader, String sourceName)
+	public static GraphQLSchema create(TextSource source)
 	{
 		MutableList<TypeDef> types = Lists.mutable.empty();
 
 		Document doc;
-		try
+		try(var reader = source.open())
 		{
 			Parser parser = new Parser();
 			doc = parser.parseDocument(
 				MultiSourceReader.newMultiSourceReader()
-                	.reader(reader, sourceName)
+                	.reader(reader, source.getName())
                 	.build()
 			);
+		}
+		catch(IOException e)
+		{
+			throw new ModelException("Unable to read schema; " + e.getMessage(), e);
 		}
 		catch(InvalidSyntaxException e)
 		{
 			throw new ModelValidationException(
 				"Unable to parse schema:",
 				Lists.immutable.of(SYNTAX_ERROR.toMessage()
-					.withLocation(toSourceLocation(e.getLocation()))
+					.withLocation(toSourceLocation(source, e.getLocation()))
 					.withArgument("message", e.getMessage())
 					.build()
 				)
@@ -185,19 +139,19 @@ public class GraphQLSchema
 		{
 			if(type instanceof ObjectTypeDefinition o)
 			{
-				types.add(defineObject(o));
+				types.add(defineObject(source, o));
 			}
 			else if(type instanceof InterfaceTypeDefinition i)
 			{
-				types.add(defineInterface(i));
+				types.add(defineInterface(source, i));
 			}
 			else if(type instanceof EnumTypeDefinition e)
 			{
-				types.add(defineEnum(e));
+				types.add(defineEnum(source, e));
 			}
 			else if(type instanceof UnionTypeDefinition u)
 			{
-				types.add(defineUnion(u));
+				types.add(defineUnion(source, u));
 			}
 			else if(type instanceof InputObjectTypeDefinition i)
 			{
@@ -206,7 +160,7 @@ public class GraphQLSchema
 			else if(type instanceof TypeDefinition<?> d)
 			{
 				messages.add(UNSUPPORTED_TYPE.toMessage()
-					.withLocation(toSourceLocation(type))
+					.withLocation(toSourceLocation(source, type))
 					.withArgument("type", d.getName())
 					.build()
 				);
@@ -214,7 +168,7 @@ public class GraphQLSchema
 			else
 			{
 				messages.add(SYNTAX_ERROR.toMessage()
-					.withLocation(toSourceLocation(type))
+					.withLocation(toSourceLocation(source, type))
 					.withArgument("message", "Non-SDL content in schema")
 					.build()
 				);
@@ -233,55 +187,70 @@ public class GraphQLSchema
 	/**
 	 * Create a {@link ObjectDef} from a {@link ObjectTypeDefinition}.
 	 *
+	 * @param source
+	 *   source of schema
 	 * @param def
 	 *   definition to convert
 	 * @return
 	 *   converted {@link ObjectDef}
 	 */
-	private static ObjectDef defineObject(ObjectTypeDefinition def)
+	private static ObjectDef defineObject(
+		TextSource source,
+		ObjectTypeDefinition def
+	)
 	{
 		return ObjectDef.create(def.getName())
-			.withSourceLocation(toSourceLocation(def))
+			.withDefinedAt(toSourceLocation(source, def))
 			.withDescription(toDescription(def))
-			.addDirectives(createDirectives(def))
+			.addDirectives(createDirectives(source, def))
 			.addImplementsAll(createImplements(def.getImplements()))
-			.addFields(createFields(def.getFieldDefinitions()))
+			.addFields(createFields(source, def.getFieldDefinitions()))
 			.build();
 	}
 
 	/**
 	 * Create a {@link InterfaceDef} from a {@link InterfaceTypeDefinition}.
 	 *
+	 * @param source
+	 *   source of schema
 	 * @param def
 	 *   definition to convert
 	 * @return
 	 *   convert {@link InterfaceDef}
 	 */
-	private static InterfaceDef defineInterface(InterfaceTypeDefinition def)
+	private static InterfaceDef defineInterface(
+		TextSource source,
+		InterfaceTypeDefinition def
+	)
 	{
 		return InterfaceDef.create(def.getName())
-			.withSourceLocation(toSourceLocation(def))
+			.withDefinedAt(toSourceLocation(source, def))
 			.withDescription(toDescription(def))
-			.addDirectives(createDirectives(def))
+			.addDirectives(createDirectives(source, def))
 			.addImplementsAll(createImplements(def.getImplements()))
-			.addFields(createFields(def.getFieldDefinitions()))
+			.addFields(createFields(source, def.getFieldDefinitions()))
 			.build();
 	}
 
 	/**
 	 * Create a {@link EnumDef} from a {@link EnumTypeDefinition}.
 	 *
+	 * @param source
+	 *   source of schema
 	 * @param def
 	 *   definition to convert
 	 * @return
 	 *   convert {@link EnumDef}
 	 */
-	private static EnumDef defineEnum(EnumTypeDefinition def)
+	private static EnumDef defineEnum(
+		TextSource source,
+		EnumTypeDefinition def
+	)
 	{
 		return EnumDef.create(def.getName())
-			.withSourceLocation(toSourceLocation(def))
+			.withDefinedAt(toSourceLocation(source, def))
 			.withDescription(toDescription(def))
-			.addDirectives(createDirectives(def))
+			.addDirectives(createDirectives(source, def))
 			.addValues(Lists.immutable.ofAll(def.getEnumValueDefinitions())
 				.collect(v -> EnumValueDef.create(v.getName())
 					.withDescription(toDescription(v))
@@ -294,17 +263,22 @@ public class GraphQLSchema
 	/**
 	 * Create a {@link UnionDef} from a {@link UnionTypeDefinition}.
 	 *
+	 * @param source
+	 *   source of schema
 	 * @param def
 	 *   definition to convert
 	 * @return
 	 *   convert {@link UnionDef}
 	 */
-	private static UnionDef defineUnion(UnionTypeDefinition def)
+	private static UnionDef defineUnion(
+		TextSource source,
+		UnionTypeDefinition def
+	)
 	{
 		return UnionDef.create(def.getName())
-			.withSourceLocation(toSourceLocation(def))
+			.withDefinedAt(toSourceLocation(source, def))
 			.withDescription(toDescription(def))
-			.addDirectives(createDirectives(def))
+			.addDirectives(createDirectives(source, def))
 			.addTypes(Lists.immutable.ofAll(def.getMemberTypes())
 				.collect(type -> toOutputType(type))
 			)
@@ -333,50 +307,63 @@ public class GraphQLSchema
 	 * Create an iterable of {@link FieldDef} from an iterable of
 	 * {@link FieldDefinition}.
 	 *
+	 * @param source
+	 *   source of schema
 	 * @param fields
 	 *   fields to convert
 	 * @return
 	 *   converted iterable
 	 */
 	private static Iterable<FieldDef> createFields(
+		TextSource source,
 		Iterable<FieldDefinition> fields
 	)
 	{
 		return Lists.immutable.ofAll(fields)
-			.collect(GraphQLSchema::defineField);
+			.collect(field -> defineField(source, field));
 	}
 
 	/**
 	 * Create a {@link FieldDef} from a {@link FieldDefinition}.
 	 *
+	 * @param source
+	 *   source of schema
 	 * @param def
 	 *   field to convert
 	 * @return
 	 *   converted {@link FieldDef}
 	 */
-	private static FieldDef defineField(FieldDefinition def)
+	private static FieldDef defineField(
+		TextSource source,
+		FieldDefinition def
+	)
 	{
 		graphql.language.Type<?> gqlType = def.getType();
 		OutputTypeDef dataType = toOutputType(gqlType);
 
 		return FieldDef.create(def.getName())
-			.withSourceLocation(toSourceLocation(def))
+			.withDefinedAt(toSourceLocation(source, def))
 			.withDescription(toDescription(def))
 			.withType(dataType)
-			.addArguments(createArguments(def))
-			.addDirectives(createDirectives(def))
+			.addArguments(createArguments(source, def))
+			.addDirectives(createDirectives(source, def))
 			.build();
 	}
 
 	/**
 	 * Create an iterable of {@link ArgumentDef} from a {@link FieldDefinition}.
 	 *
+	 * @param source
+	 *   source of schema
 	 * @param def
 	 *   field to get arguments for
 	 * @return
 	 *   iterable with {@link ArgumentDef}
 	 */
-	private static Iterable<ArgumentDef> createArguments(FieldDefinition def)
+	private static Iterable<ArgumentDef> createArguments(
+		TextSource source,
+		FieldDefinition def
+	)
 	{
 		return Lists.immutable.ofAll(def.getInputValueDefinitions())
 			.collect(arg -> {
@@ -384,10 +371,10 @@ public class GraphQLSchema
 				InputTypeDef dataType = toInputType(gqlType);
 
 				return ArgumentDef.create(arg.getName())
-					.withSourceLocation(toSourceLocation(def))
+					.withDefinedAt(toSourceLocation(source, def))
 					.withDescription(toDescription(def))
 					.withType(dataType)
-					.addDirectives(createDirectives(arg))
+					.addDirectives(createDirectives(source, arg))
 					.withDefaultValue(arg.getDefaultValue() == null
 						? null
 						: toJavaValue(arg.getDefaultValue())
@@ -400,19 +387,22 @@ public class GraphQLSchema
 	 * Create an iterable of {@link DirectiveUse} for directives placed on
 	 * a {@link DirectivesContainer}.
 	 *
+	 * @param source
+	 *   source of schema
 	 * @param def
 	 *   container to get directives
 	 * @return
 	 *   iterable of {@link DirectiveUse}
 	 */
 	private static Iterable<DirectiveUse> createDirectives(
+		TextSource source,
 		DirectivesContainer<?> def
 	)
 	{
 		return Lists.immutable.ofAll(def.getDirectives())
 			.collect(d -> {
 				var builder = DirectiveUse.create(d.getName())
-					.withSourceLocation(toSourceLocation(d));
+					.withDefinedAt(toSourceLocation(source, d));
 
 				for(var arg : d.getArguments())
 				{
@@ -495,48 +485,38 @@ public class GraphQLSchema
 	}
 
 	/**
-	 * Perform a conversion to {@link SourceLocation} for a list.
+	 * Perform a conversion to {@link Location} for a {@link Node}.
 	 *
-	 * @param locations
-	 *   locations to converter
-	 * @return
-	 *   source location
-	 */
-	private static SourceLocation toSourceLocation(
-		List<graphql.language.SourceLocation> locations
-	)
-	{
-		return locations.isEmpty()
-			? SourceLocation.unknown()
-			: toSourceLocation(locations.get(0));
-	}
-
-	/**
-	 * Perform a conversion to {@link SourceLocation} for a {@link Node}.
-	 *
+	 * @param source
+	 *   source of schema
 	 * @param def
 	 *   node to convert
 	 * @return
 	 *   source location
 	 */
-	private static SourceLocation toSourceLocation(Node<?> def)
+	private static Location toSourceLocation(TextSource source, Node<?> def)
 	{
-		return toSourceLocation(def.getSourceLocation());
+		return toSourceLocation(source, def.getSourceLocation());
 	}
 
 	/**
-	 * Perform a conversion to {@link SourceLocation}.
+	 * Perform a conversion to {@link Location}.
 	 *
+	 * @param source
+	 *   source of schema
 	 * @param loc
 	 *   location to convert
 	 * @return
 	 *   source location
 	 */
-	private static SourceLocation toSourceLocation(graphql.language.SourceLocation loc)
+	private static Location toSourceLocation(TextSource source, graphql.language.SourceLocation loc)
 	{
-		if(loc == null) return SourceLocation.unknown();
+		if(loc == null)
+		{
+			return source.toLocation(0, 0);
+		}
 
-		return SourceLocation.line(loc.getSourceName(), loc.getLine(), loc.getColumn());
+		return source.toLocation(loc.getLine(), loc.getColumn());
 	}
 
 	/**

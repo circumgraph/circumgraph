@@ -38,7 +38,7 @@ public class GraphQLSchemaTest
 				.addDirectiveUseProcessor(new TestDirectiveProcessor())
 				.build()
 			)
-			.addSchema(GraphQLSchema.create(in))
+			.addSchema(GraphQLSchema.create(TextSource.create("<test>", in)))
 			.build();
 	}
 

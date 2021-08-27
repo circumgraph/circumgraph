@@ -10,7 +10,7 @@ import org.eclipse.collections.api.RichIterable;
  * Definition of an input object.
  */
 public interface InputObjectDef
-	extends InputTypeDef, Derivable<InputObjectDef.Builder>, HasSourceLocation, HasDirectives, HasMetadata
+	extends InputTypeDef, Derivable<InputObjectDef.Builder>, HasLocation, HasDirectives, HasMetadata
 {
 	/**
 	 * Get the all the fields in this object.
@@ -53,7 +53,7 @@ public interface InputObjectDef
 	interface Builder
 		extends Buildable<InputObjectDef>,
 			HasDirectives.Builder<Builder>,
-			HasSourceLocation.Builder<Builder>,
+			HasLocation.Builder<Builder>,
 			HasMetadata.Builder<Builder>
 	{
 		/**

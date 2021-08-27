@@ -7,7 +7,7 @@ import com.circumgraph.model.internal.DirectiveUseImpl;
  * or {@link ArgumentDef argument}.
  */
 public interface DirectiveUse
-	extends HasSourceLocation, HasArgumentUse
+	extends HasLocation, HasArgumentUse
 {
 	/**
 	 * Get the name of the directive.
@@ -28,7 +28,7 @@ public interface DirectiveUse
 	}
 
 	interface Builder
-		extends HasSourceLocation.Builder<Builder>, HasArgumentUse.Builder<Builder>
+		extends HasLocation.Builder<Builder>, HasArgumentUse.Builder<Builder>
 	{
 		/**
 		 * Build the instance.

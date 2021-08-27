@@ -10,7 +10,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.util.Optional;
 
 import com.circumgraph.model.internal.ObjectDefImpl;
-import com.circumgraph.model.validation.SourceLocation;
 import com.circumgraph.model.validation.ValidationMessageLevel;
 
 import org.junit.jupiter.api.Test;
@@ -344,7 +343,7 @@ public class ObjectDefTest
 	{
 		var schema = Schema.create()
 			.addType(ObjectDef.create("Test")
-				.withSourceLocation(SourceLocation.create("LOC1"))
+				.withDefinedAt(Location.create("LOC1"))
 				.addField(FieldDef.create("f1")
 					.withType(ScalarDef.STRING)
 					.build()
@@ -352,7 +351,7 @@ public class ObjectDefTest
 				.build()
 			)
 			.addType(InterfaceDef.create("Test")
-				.withSourceLocation(SourceLocation.create("LOC2"))
+				.withDefinedAt(Location.create("LOC2"))
 				.addField(FieldDef.create("f2")
 					.withType(ScalarDef.STRING)
 					.build()

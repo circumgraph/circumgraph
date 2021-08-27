@@ -13,13 +13,14 @@ import com.circumgraph.model.EnumDef;
 import com.circumgraph.model.EnumValueDef;
 import com.circumgraph.model.FieldDef;
 import com.circumgraph.model.HasDirectives;
+import com.circumgraph.model.HasLocation;
 import com.circumgraph.model.HasMetadata;
-import com.circumgraph.model.HasSourceLocation;
 import com.circumgraph.model.InputFieldDef;
 import com.circumgraph.model.InputObjectDef;
 import com.circumgraph.model.InputTypeDef;
 import com.circumgraph.model.InterfaceDef;
 import com.circumgraph.model.ListDef;
+import com.circumgraph.model.Location;
 import com.circumgraph.model.MetadataDef;
 import com.circumgraph.model.Model;
 import com.circumgraph.model.Model.Builder;
@@ -37,7 +38,6 @@ import com.circumgraph.model.UnionDef;
 import com.circumgraph.model.processing.DirectiveUseProcessor;
 import com.circumgraph.model.processing.ProcessingEncounter;
 import com.circumgraph.model.processing.TypeDefProcessor;
-import com.circumgraph.model.validation.SourceLocation;
 import com.circumgraph.model.validation.ValidationMessage;
 import com.circumgraph.model.validation.ValidationMessageType;
 
@@ -343,13 +343,27 @@ public class ModelBuilderImpl
 			}
 		}
 
+		Location location;
+		if(current instanceof HasLocation l1 && extension instanceof HasLocation l2)
+		{
+			location = l1.getDefinedAt().mergeWith(l2.getDefinedAt());
+		}
+		else if(current instanceof HasLocation l1)
+		{
+			location = l1.getDefinedAt();
+		}
+		else if(extension instanceof HasLocation l2)
+		{
+			location = l2.getDefinedAt();
+		}
+		else
+		{
+			location = Location.unknown();
+		}
+
 		// Report not being able to merge
 		validationCollector.accept(INCOMPATIBLE_TYPES.toMessage()
-			.withLocation(
-				current instanceof HasSourceLocation
-					? ((HasSourceLocation) current).getSourceLocation()
-					: SourceLocation.unknown()
-			)
+			.withLocation(location)
 			.withArgument("type", current.getName())
 			.withArgument("originalLocation", toLocation(current))
 			.build()
@@ -372,7 +386,7 @@ public class ModelBuilderImpl
 	)
 	{
 		return ObjectDef.create(d1.getName())
-			.withSourceLocation(d1.getSourceLocation())
+			.withDefinedAt(d1.getDefinedAt().mergeWith(d2.getDefinedAt()))
 			.withDescription(pickFirstNonBlank(d1.getDescription(), d2.getDescription()))
 			.addImplementsAll(mergeImplements(validationCollector, d1, d2))
 			.addDirectives(mergeDirectives(validationCollector, d1, d2))
@@ -388,7 +402,7 @@ public class ModelBuilderImpl
 	)
 	{
 		return InterfaceDef.create(d1.getName())
-			.withSourceLocation(d1.getSourceLocation())
+			.withDefinedAt(d1.getDefinedAt().mergeWith(d2.getDefinedAt()))
 			.withDescription(pickFirstNonBlank(d1.getDescription(), d2.getDescription()))
 			.addImplementsAll(mergeImplements(validationCollector, d1, d2))
 			.addDirectives(mergeDirectives(validationCollector, d1, d2))
@@ -448,7 +462,7 @@ public class ModelBuilderImpl
 		if(! Objects.equals(f1.getTypeName(), f2.getTypeName()))
 		{
 			validationCollector.accept(INCOMPATIBLE_FIELD_TYPE.toMessage()
-				.withLocation(f2.getSourceLocation())
+				.withLocation(f2.getDefinedAt().mergeWith(f1.getDefinedAt()))
 				.withArgument("type", type.getName())
 				.withArgument("field", f2.getName())
 				.withArgument("originalLocation", toLocation(f1))
@@ -459,7 +473,7 @@ public class ModelBuilderImpl
 		}
 
 		return FieldDef.create(f1.getName())
-			.withSourceLocation(f1.getSourceLocation())
+			.withDefinedAt(f1.getDefinedAt().mergeWith(f2.getDefinedAt()))
 			.withDescription(pickFirstNonBlank(f1.getDescription(), f2.getDescription()))
 			.withType(f1.getType())
 			.addArguments(mergeArguments(validationCollector, type, f1, f1.getArguments(), f2.getArguments()))
@@ -511,7 +525,7 @@ public class ModelBuilderImpl
 		if(! Objects.equals(a1.getTypeName(), a2.getTypeName()))
 		{
 			validationCollector.accept(INCOMPATIBLE_ARGUMENT_TYPE.toMessage()
-				.withLocation(a2.getSourceLocation())
+				.withLocation(a2.getDefinedAt().mergeWith(a1.getDefinedAt()))
 				.withArgument("type", type.getName())
 				.withArgument("field", field.getName())
 				.withArgument("argument", a1.getName())
@@ -523,7 +537,7 @@ public class ModelBuilderImpl
 		}
 
 		return ArgumentDef.create(a1.getName())
-			.withSourceLocation(a1.getSourceLocation())
+			.withDefinedAt(a1.getDefinedAt().mergeWith(a2.getDefinedAt()))
 			.withType(a1.getType())
 			.withDescription(pickFirstNonBlank(a1.getDescription(), a2.getDescription()))
 			.addDirectives(mergeDirectives(validationCollector, a1, a2))
@@ -544,7 +558,7 @@ public class ModelBuilderImpl
 	)
 	{
 		return InputObjectDef.create(d1.getName())
-			.withSourceLocation(d1.getSourceLocation())
+			.withDefinedAt(d1.getDefinedAt().mergeWith(d2.getDefinedAt()))
 			.withDescription(pickFirstNonBlank(d1.getDescription(), d2.getDescription()))
 			.addDirectives(mergeDirectives(validationCollector, d1, d2))
 			.addFields(mergeInputFields(validationCollector, d1, d1.getFields(), d2.getFields()))
@@ -610,7 +624,7 @@ public class ModelBuilderImpl
 		if(! Objects.equals(f1.getTypeName(), f2.getTypeName()))
 		{
 			validationCollector.accept(INCOMPATIBLE_FIELD_TYPE.toMessage()
-				.withLocation(f2.getSourceLocation())
+				.withLocation(f2.getDefinedAt().mergeWith(f1.getDefinedAt()))
 				.withArgument("type", type.getName())
 				.withArgument("field", f2.getName())
 				.withArgument("originalLocation", toLocation(f1))
@@ -621,7 +635,7 @@ public class ModelBuilderImpl
 		}
 
 		return InputFieldDef.create(f1.getName())
-			.withSourceLocation(f1.getSourceLocation())
+			.withDefinedAt(f1.getDefinedAt().mergeWith(f2.getDefinedAt()))
 			.withDescription(pickFirstNonBlank(f1.getDescription(), f2.getDescription()))
 			.withType(f1.getType())
 			.addDirectives(mergeDirectives(validationCollector, f1, f2))
@@ -677,7 +691,7 @@ public class ModelBuilderImpl
 		result.addAllIterable(d2.getTypeNames());
 
 		return UnionDef.create(d1.getName())
-			.withSourceLocation(d1.getSourceLocation())
+			.withDefinedAt(d1.getDefinedAt().mergeWith(d2.getDefinedAt()))
 			.withDescription(pickFirstNonBlank(d1.getDescription(), d2.getDescription()))
 			.addTypes(result.collect(TypeRef::create))
 			.addDirectives(mergeDirectives(validationCollector, d1, d2))
@@ -697,7 +711,7 @@ public class ModelBuilderImpl
 				var v2 = arguments.get(v1.getName());
 
 				var mergedValue = EnumValueDef.create(v1.getName())
-					.withSourceLocation(v1.getSourceLocation())
+					.withDefinedAt(v1.getDefinedAt().mergeWith(v2.getDefinedAt()))
 					.addDirectives(mergeDirectives(validationCollector, v1, v2))
 					.build();
 
@@ -713,7 +727,7 @@ public class ModelBuilderImpl
 		d2.getValues().forEach(p);
 
 		return EnumDef.create(d1.getName())
-			.withSourceLocation(d1.getSourceLocation())
+			.withDefinedAt(d1.getDefinedAt().mergeWith(d2.getDefinedAt()))
 			.withDescription(pickFirstNonBlank(d1.getDescription(), d2.getDescription()))
 			.addValues(arguments)
 			.addDirectives(mergeDirectives(validationCollector, d1, d2))
@@ -740,9 +754,9 @@ public class ModelBuilderImpl
 	 */
 	private String toLocation(Object current)
 	{
-		if(current instanceof HasSourceLocation)
+		if(current instanceof HasLocation)
 		{
-			return ((HasSourceLocation) current).getSourceLocation().describe();
+			return ((HasLocation) current).getDefinedAt().describe();
 		}
 		else
 		{
@@ -1033,9 +1047,9 @@ public class ModelBuilderImpl
 			{
 				validationCollector.accept(INVALID_DIRECTIVE.toMessage()
 					.withLocation(
-						hasDirectives instanceof HasSourceLocation source
-							? source.getSourceLocation()
-							: SourceLocation.unknown()
+						hasDirectives instanceof HasLocation source
+							? source.getDefinedAt()
+							: Location.unknown()
 					)
 					.withArgument("directive", directive.getName())
 					.build()

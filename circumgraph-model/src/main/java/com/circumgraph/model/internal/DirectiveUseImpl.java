@@ -4,7 +4,7 @@ import java.util.Objects;
 
 import com.circumgraph.model.ArgumentUse;
 import com.circumgraph.model.DirectiveUse;
-import com.circumgraph.model.validation.SourceLocation;
+import com.circumgraph.model.Location;
 
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ImmutableList;
@@ -16,12 +16,12 @@ import org.eclipse.collections.api.list.ListIterable;
 public class DirectiveUseImpl
 	implements DirectiveUse
 {
-	private final SourceLocation sourceLocation;
+	private final Location sourceLocation;
 	private final String name;
 	private final ImmutableList<ArgumentUse> arguments;
 
 	public DirectiveUseImpl(
-		SourceLocation sourceLocation,
+		Location sourceLocation,
 		String name,
 		ImmutableList<ArgumentUse> arguments
 	)
@@ -32,7 +32,7 @@ public class DirectiveUseImpl
 	}
 
 	@Override
-	public SourceLocation getSourceLocation()
+	public Location getDefinedAt()
 	{
 		return sourceLocation;
 	}
@@ -80,12 +80,12 @@ public class DirectiveUseImpl
 	private static class BuilderImpl
 		implements Builder
 	{
-		private final SourceLocation sourceLocation;
+		private final Location sourceLocation;
 		private final String name;
 		private final ImmutableList<ArgumentUse> arguments;
 
 		public BuilderImpl(
-			SourceLocation sourceLocation,
+			Location sourceLocation,
 			String name,
 			ImmutableList<ArgumentUse> arguments
 		)
@@ -96,7 +96,7 @@ public class DirectiveUseImpl
 		}
 
 		@Override
-		public Builder withSourceLocation(SourceLocation sourceLocation)
+		public Builder withDefinedAt(Location sourceLocation)
 		{
 			return new BuilderImpl(
 				sourceLocation,
@@ -129,7 +129,7 @@ public class DirectiveUseImpl
 		public DirectiveUse build()
 		{
 			return new DirectiveUseImpl(
-				SourceLocation.automatic(sourceLocation),
+				Location.automatic(sourceLocation),
 				name,
 				arguments
 			);

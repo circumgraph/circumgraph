@@ -8,7 +8,7 @@ import com.circumgraph.model.internal.ArgumentDefImpl;
  * Argument of a {@link FieldDef}.
  */
 public interface ArgumentDef
-	extends Derivable<ArgumentDef.Builder>, HasDirectives, HasSourceLocation
+	extends Derivable<ArgumentDef.Builder>, HasDirectives, HasLocation
 {
 	/**
 	 * Get the name of this argument.
@@ -68,7 +68,7 @@ public interface ArgumentDef
 	interface Builder
 		extends Buildable<ArgumentDef>,
 			HasDirectives.Builder<Builder>,
-			HasSourceLocation.Builder<Builder>
+			HasLocation.Builder<Builder>
 	{
 		/**
 		 * Set the the description of the argument.

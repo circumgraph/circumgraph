@@ -1,6 +1,5 @@
 package com.circumgraph.app;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -12,10 +11,12 @@ import com.circumgraph.graphql.GraphQLAPISchema;
 import com.circumgraph.graphql.GraphQLGenerator;
 import com.circumgraph.model.InterfaceDef;
 import com.circumgraph.model.Model;
+import com.circumgraph.model.ModelException;
 import com.circumgraph.model.ModelValidationException;
 import com.circumgraph.model.validation.ValidationMessage;
 import com.circumgraph.model.validation.ValidationMessageType;
 import com.circumgraph.schema.graphql.GraphQLSchema;
+import com.circumgraph.schema.graphql.TextSource;
 import com.circumgraph.storage.Storage;
 import com.circumgraph.storage.StorageSchema;
 import com.github.benmanes.caffeine.cache.Cache;
@@ -139,23 +140,28 @@ public class Instance
 				var relativeFile = dir.relativize(file);
 				logger.info("Loading " + relativeFile);
 
-				try(var reader = Files.newBufferedReader(file))
+				var source = TextSource.create(
+					relativeFile.toString(),
+					() -> Files.newBufferedReader(file)
+				);
+
+				try
 				{
 					builder = builder.addSchema(
-						GraphQLSchema.create(reader, relativeFile.toString())
+						GraphQLSchema.create(source)
 					);
 				}
-				catch(IOException e)
+				catch(ModelValidationException e)
+				{
+					validationMessages.withAll(e.getIssues());
+				}
+				catch(ModelException e)
 				{
 					validationMessages.add(IO_ERROR.toMessage()
 						.withLocation(() -> relativeFile.toString())
 						.withArgument("message", e.getMessage())
 						.build()
 					);
-				}
-				catch(ModelValidationException e)
-				{
-					validationMessages.withAll(e.getIssues());
 				}
 			}
 
@@ -203,21 +209,10 @@ public class Instance
 
 	private static void logIssues(ListIterable<? extends ValidationMessage> m)
 	{
-		logger.error("Found issues with model");
-		m.forEach(msg -> {
-			switch(msg.getLevel())
-			{
-				case ERROR:
-					logger.error(" * " + msg.format());
-					break;
-				case WARNING:
-					logger.warn(" * " + msg.format());
-					break;
-				case INFO:
-					logger.info(" * " + msg.format());
-					break;
-			}
-		});
+		var formatter = new ErrorFormatter();
+		var messages = m.collect(formatter::format).makeString("\n\n");
+
+		logger.error("Found issues with model\n\n" + messages + "\n");
 	}
 
 	private static Storage openStorage(StorageConfig config, Model model)

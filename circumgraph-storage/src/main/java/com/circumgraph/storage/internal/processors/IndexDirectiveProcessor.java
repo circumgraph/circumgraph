@@ -117,7 +117,7 @@ public class IndexDirectiveProcessor
 				if(! directive.getArguments().isEmpty())
 				{
 					encounter.report(INVALID_ARGUMENTS_POLYMORPHIC.toMessage()
-						.withLocation(directive.getSourceLocation())
+						.withLocation(directive.getDefinedAt())
 						.build()
 					);
 				}
@@ -134,7 +134,7 @@ public class IndexDirectiveProcessor
 		if(! DirectiveUseProcessor.checkOnlyArguments(directive, "type"))
 		{
 			encounter.report(INVALID_ARGUMENTS.toMessage()
-				.withLocation(directive.getSourceLocation())
+				.withLocation(directive.getDefinedAt())
 				.build()
 			);
 			return;
@@ -155,7 +155,7 @@ public class IndexDirectiveProcessor
 			{
 				// Multiple indexers, report error and give the user the ones that can be used
 				encounter.report(MULTIPLE_INDEXERS.toMessage()
-					.withLocation(directive.getSourceLocation())
+					.withLocation(directive.getDefinedAt())
 					.withArgument("fieldType", def.getName())
 					.withArgument("supported", indexing.getSupportedIndexers(def))
 					.build()
@@ -174,7 +174,7 @@ public class IndexDirectiveProcessor
 			if(indexer.isEmpty())
 			{
 				encounter.report(INVALID_INDEXER.toMessage()
-					.withLocation(directive.getSourceLocation())
+					.withLocation(directive.getDefinedAt())
 					.withArgument("indexer", typeName)
 					.build()
 				);
@@ -182,7 +182,7 @@ public class IndexDirectiveProcessor
 			else if(indexer.get().getType() != def)
 			{
 				encounter.report(INDEXER_TYPE_UNSUPPORTED.toMessage()
-					.withLocation(directive.getSourceLocation())
+					.withLocation(directive.getDefinedAt())
 					.withArgument("indexer", typeName)
 					.withArgument("fieldType", location.getType().getName())
 					.build()
@@ -203,7 +203,7 @@ public class IndexDirectiveProcessor
 	)
 	{
 		encounter.report(TYPE_UNSUPPORTED.toMessage()
-			.withLocation(directive.getSourceLocation())
+			.withLocation(directive.getDefinedAt())
 			.withArgument("fieldType", location.getType().getName())
 			.build()
 		);

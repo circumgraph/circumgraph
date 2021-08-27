@@ -1,14 +1,15 @@
-package com.circumgraph.model.validation;
+package com.circumgraph.model;
 
-import com.circumgraph.model.internal.BasicSourceLocation;
+import com.circumgraph.model.internal.LocationImpl;
+import com.circumgraph.model.internal.MergedLocationImpl;
 
 import org.eclipse.collections.api.factory.Lists;
 
 /**
- * Representation of a source location.
+ * Representation of a location.
  */
 @FunctionalInterface
-public interface SourceLocation
+public interface Location
 {
 	/**
 	 * Turn this object into a developer-friendly message describing the
@@ -23,10 +24,9 @@ public interface SourceLocation
 	 * @param other
 	 * @return
 	 */
-	default MergedSourceLocation mergeWith(SourceLocation other)
+	default MergedLocation mergeWith(Location other)
 	{
-		var merged = Lists.immutable.of(this, other);
-		return () -> merged;
+		return new MergedLocationImpl(Lists.immutable.of(this, other));
 	}
 
 	/**
@@ -36,7 +36,7 @@ public interface SourceLocation
 	 * @return
 	 *   instance representing the best known location
 	 */
-	static SourceLocation code()
+	static Location code()
 	{
 		StackTraceElement[] trace = Thread.currentThread().getStackTrace();
 		for(int i=0; i<trace.length; i++)
@@ -45,11 +45,11 @@ public interface SourceLocation
 			String className = trace[i].getClassName();
 			if(! "java.base".equals(module) && ! className.contains("com.circumgraph.model"))
 			{
-				return new BasicSourceLocation(trace[i].toString());
+				return new LocationImpl(trace[i].toString());
 			}
 		}
 
-		return BasicSourceLocation.UNKNOWN;
+		return LocationImpl.UNKNOWN;
 	}
 
 	/**
@@ -60,7 +60,7 @@ public interface SourceLocation
 	 * @return
 	 *   instance representing the best known location, never {@code null}
 	 */
-	static SourceLocation automatic(SourceLocation picked)
+	static Location automatic(Location picked)
 	{
 		return picked == null ? code() : picked;
 	}
@@ -71,9 +71,9 @@ public interface SourceLocation
 	 * @param message
 	 * @return
 	 */
-	static SourceLocation create(String message)
+	static Location create(String message)
 	{
-		return new BasicSourceLocation(message);
+		return new LocationImpl(message);
 	}
 
 	/**
@@ -81,40 +81,8 @@ public interface SourceLocation
 	 *
 	 * @return
 	 */
-	static SourceLocation unknown()
+	static Location unknown()
 	{
-		return BasicSourceLocation.UNKNOWN;
-	}
-
-	/**
-	 * Get a location representing a line in a given source.
-	 *
-	 * @param sourceName
-	 * @param line
-	 * @return
-	 */
-	static SourceLocation line(String sourceName, int line)
-	{
-		return () -> (sourceName == null ? "<source>" : sourceName)
-			+ "@" + line;
-	}
-
-	/**
-	 * Get a location representing a line and column in a given source.
-	 *
-	 * @param sourceName
-	 * @param line
-	 * @param column
-	 * @return
-	 */
-	static SourceLocation line(String sourceName, int line, int column)
-	{
-		if(column < 0)
-		{
-			return line(sourceName, line);
-		}
-
-		return () -> (sourceName == null ? "<source>" : sourceName)
-			+ "@" + line + ":" + column;
+		return LocationImpl.UNKNOWN;
 	}
 }

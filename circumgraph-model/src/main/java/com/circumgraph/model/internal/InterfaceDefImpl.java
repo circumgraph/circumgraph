@@ -3,9 +3,9 @@ package com.circumgraph.model.internal;
 import com.circumgraph.model.DirectiveUse;
 import com.circumgraph.model.FieldDef;
 import com.circumgraph.model.InterfaceDef;
+import com.circumgraph.model.Location;
 import com.circumgraph.model.StructuredDef;
 import com.circumgraph.model.TypeDef;
-import com.circumgraph.model.validation.SourceLocation;
 
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.factory.Sets;
@@ -20,7 +20,7 @@ public class InterfaceDefImpl
 	implements InterfaceDef
 {
 	public InterfaceDefImpl(
-		SourceLocation sourceLocation,
+		Location sourceLocation,
 		String name,
 		String description,
 		ImmutableList<TypeDef> implementsTypes,
@@ -127,7 +127,7 @@ public class InterfaceDefImpl
 		implements InterfaceDef.Builder
 	{
 		public BuilderImpl(
-			SourceLocation sourceLocation,
+			Location sourceLocation,
 			String id,
 			String description,
 			ImmutableList<FieldDef> fields,
@@ -149,7 +149,7 @@ public class InterfaceDefImpl
 
 		@Override
 		protected InterfaceDef.Builder create(
-			SourceLocation sourceLocation,
+			Location sourceLocation,
 			String id,
 			String description,
 			ImmutableList<FieldDef> fields,
@@ -173,7 +173,7 @@ public class InterfaceDefImpl
 		public InterfaceDef build()
 		{
 			return new InterfaceDefImpl(
-				SourceLocation.automatic(sourceLocation),
+				Location.automatic(sourceLocation),
 				id,
 				description,
 				implementsTypes,

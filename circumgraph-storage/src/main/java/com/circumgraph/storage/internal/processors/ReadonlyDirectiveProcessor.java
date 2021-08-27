@@ -40,7 +40,7 @@ public class ReadonlyDirectiveProcessor
 		if(directive.getArguments().isEmpty()) return;
 
 		encounter.report(INVALID_ARGUMENTS.toMessage()
-			.withLocation(directive.getSourceLocation())
+			.withLocation(directive.getDefinedAt())
 			.build()
 		);
 	}

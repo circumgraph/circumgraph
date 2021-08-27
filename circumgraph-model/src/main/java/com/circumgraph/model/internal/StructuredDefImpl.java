@@ -7,12 +7,12 @@ import java.util.function.Predicate;
 import com.circumgraph.model.DirectiveUse;
 import com.circumgraph.model.FieldDef;
 import com.circumgraph.model.InterfaceDef;
+import com.circumgraph.model.Location;
 import com.circumgraph.model.MetadataDef;
 import com.circumgraph.model.MetadataKey;
 import com.circumgraph.model.StructuredDef;
 import com.circumgraph.model.TypeDef;
 import com.circumgraph.model.TypeRef;
-import com.circumgraph.model.validation.SourceLocation;
 
 import org.eclipse.collections.api.RichIterable;
 import org.eclipse.collections.api.factory.Lists;
@@ -30,7 +30,7 @@ import org.eclipse.collections.api.set.SetIterable;
 public abstract class StructuredDefImpl
 	implements StructuredDef, HasPreparation
 {
-	protected final SourceLocation sourceLocation;
+	protected final Location sourceLocation;
 
 	protected final String name;
 	protected final String description;
@@ -44,7 +44,7 @@ public abstract class StructuredDefImpl
 	protected ModelDefs defs;
 
 	public StructuredDefImpl(
-		SourceLocation sourceLocation,
+		Location sourceLocation,
 		String name,
 		String description,
 		ImmutableList<TypeDef> implementsTypes,
@@ -63,7 +63,7 @@ public abstract class StructuredDefImpl
 	}
 
 	@Override
-	public SourceLocation getSourceLocation()
+	public Location getDefinedAt()
 	{
 		return sourceLocation;
 	}
@@ -286,7 +286,7 @@ public abstract class StructuredDefImpl
 	public abstract static class AbstractBuilder<B extends Builder<B>>
 		implements Builder<B>
 	{
-		protected final SourceLocation sourceLocation;
+		protected final Location sourceLocation;
 
 		protected final String id;
 		protected final String description;
@@ -298,7 +298,7 @@ public abstract class StructuredDefImpl
 		protected final Metadata metadata;
 
 		public AbstractBuilder(
-			SourceLocation sourceLocation,
+			Location sourceLocation,
 			String id,
 			String description,
 			ImmutableList<FieldDef> fields,
@@ -317,7 +317,7 @@ public abstract class StructuredDefImpl
 		}
 
 		protected abstract B create(
-			SourceLocation sourceLocation,
+			Location sourceLocation,
 			String id,
 			String description,
 			ImmutableList<FieldDef> fields,
@@ -435,7 +435,7 @@ public abstract class StructuredDefImpl
 		}
 
 		@Override
-		public B withSourceLocation(SourceLocation sourceLocation)
+		public B withDefinedAt(Location sourceLocation)
 		{
 			return create(
 				sourceLocation,

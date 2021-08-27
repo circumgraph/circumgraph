@@ -2,8 +2,8 @@ package com.circumgraph.model.internal.validation;
 
 import java.util.Objects;
 
-import com.circumgraph.model.HasSourceLocation;
-import com.circumgraph.model.validation.SourceLocation;
+import com.circumgraph.model.HasLocation;
+import com.circumgraph.model.Location;
 import com.circumgraph.model.validation.ValidationMessage;
 import com.circumgraph.model.validation.ValidationMessageLevel;
 import com.circumgraph.model.validation.ValidationMessageType;
@@ -18,14 +18,14 @@ import org.eclipse.collections.api.map.MapIterable;
 public class ValidationMessageImpl
 	implements ValidationMessage
 {
-	private final SourceLocation location;
+	private final Location location;
 	private final ValidationMessageLevel level;
 	private final String code;
 	private final MapIterable<String, Object> arguments;
 	private final String message;
 
 	public ValidationMessageImpl(
-		SourceLocation sourceLocation,
+		Location sourceLocation,
 		ValidationMessageLevel level,
 		String code,
 		MapIterable<String, Object> arguments,
@@ -40,7 +40,7 @@ public class ValidationMessageImpl
 	}
 
 	@Override
-	public SourceLocation getLocation()
+	public Location getLocation()
 	{
 		return location;
 	}
@@ -128,12 +128,12 @@ public class ValidationMessageImpl
 		implements Builder
 	{
 		private final ValidationMessageType type;
-		private final SourceLocation location;
+		private final Location location;
 		private final ImmutableMap<String, Object> arguments;
 
 		public BuilderImpl(
 			ValidationMessageType type,
-			SourceLocation location,
+			Location location,
 			ImmutableMap<String, Object> arguments
 		)
 		{
@@ -143,7 +143,7 @@ public class ValidationMessageImpl
 		}
 
 		@Override
-		public Builder withLocation(SourceLocation sourceLocation)
+		public Builder withLocation(Location sourceLocation)
 		{
 			Objects.requireNonNull(sourceLocation);
 
@@ -155,9 +155,9 @@ public class ValidationMessageImpl
 		}
 
 		@Override
-		public Builder withLocation(HasSourceLocation object)
+		public Builder withLocation(HasLocation object)
 		{
-			return withLocation(object.getSourceLocation());
+			return withLocation(object.getDefinedAt());
 		}
 
 		@Override

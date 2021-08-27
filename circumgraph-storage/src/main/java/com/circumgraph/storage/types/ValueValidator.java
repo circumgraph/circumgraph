@@ -1,6 +1,6 @@
 package com.circumgraph.storage.types;
 
-import com.circumgraph.model.validation.SourceLocation;
+import com.circumgraph.model.Location;
 import com.circumgraph.model.validation.ValidationMessage;
 import com.circumgraph.storage.Value;
 
@@ -23,7 +23,7 @@ public interface ValueValidator<V extends Value>
 	 * @param location
 	 */
 	Flux<ValidationMessage> validate(
-		SourceLocation location,
+		Location location,
 		V value
 	);
 
