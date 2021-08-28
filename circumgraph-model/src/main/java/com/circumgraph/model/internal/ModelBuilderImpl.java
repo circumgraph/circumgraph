@@ -1053,11 +1053,7 @@ public class ModelBuilderImpl
 			if(processor == null || ! processor.getContextType().isAssignableFrom(hasDirectives.getClass()))
 			{
 				validationCollector.accept(INVALID_DIRECTIVE.toMessage()
-					.withLocation(
-						hasDirectives instanceof HasLocation source
-							? source.getDefinedAt()
-							: Location.unknown()
-					)
+					.withLocation(directive)
 					.withArgument("directive", directive.getName())
 					.build()
 				);
