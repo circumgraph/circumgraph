@@ -1,5 +1,7 @@
 package com.circumgraph.model;
 
+import java.util.Optional;
+
 import com.circumgraph.model.internal.EnumDefImpl;
 
 import org.eclipse.collections.api.list.ListIterable;
@@ -16,6 +18,14 @@ public interface EnumDef
 	 * @return
 	 */
 	ListIterable<EnumValueDef> getValues();
+
+	/**
+	 * Get a specific value from this enum if it exists.
+	 *
+	 * @param name
+	 * @return
+	 */
+	Optional<EnumValueDef> getValue(String name);
 
 	/**
 	 * Start building a new enum type based on this instance.
