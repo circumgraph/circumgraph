@@ -1,5 +1,7 @@
 package com.circumgraph.model.internal;
 
+import java.util.Objects;
+
 import com.circumgraph.model.Location;
 
 public class LocationImpl
@@ -24,5 +26,21 @@ public class LocationImpl
 	public String describe()
 	{
 		return message;
+	}
+
+	@Override
+	public int hashCode()
+	{
+		return Objects.hash(message);
+	}
+
+	@Override
+	public boolean equals(Object obj)
+	{
+		if(this == obj) return true;
+		if(obj == null) return false;
+		if(getClass() != obj.getClass()) return false;
+		LocationImpl other = (LocationImpl) obj;
+		return Objects.equals(message, other.message);
 	}
 }
