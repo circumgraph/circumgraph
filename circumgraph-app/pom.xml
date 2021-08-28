@@ -75,6 +75,9 @@
 							<includeOnlyProperty>^git.commit.id.describe$</includeOnlyProperty>
 							<includeOnlyProperty>^git.commit.id.describe-short$</includeOnlyProperty>
 					</includeOnlyProperties>
+					<gitDescribe>
+						<tags>true</tags>
+					</gitDescribe>
 				</configuration>
 			</plugin>
 		</plugins>
