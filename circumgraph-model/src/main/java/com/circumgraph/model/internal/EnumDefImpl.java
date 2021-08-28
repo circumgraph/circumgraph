@@ -71,6 +71,12 @@ public class EnumDefImpl
 	}
 
 	@Override
+	public Optional<EnumValueDef> getValue(String name)
+	{
+		return values.detectOptional(v -> v.getName().equals(name));
+	}
+
+	@Override
 	public ListIterable<DirectiveUse> getDirectives()
 	{
 		return directives;
