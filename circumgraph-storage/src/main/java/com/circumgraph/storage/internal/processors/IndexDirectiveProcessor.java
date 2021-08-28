@@ -42,20 +42,20 @@ public class IndexDirectiveProcessor
 		.withCode("storage:@index:multiple-indexers")
 		.withArgument("fieldType")
 		.withArgument("supported")
-		.withMessage("{{fieldType}} supports multiple indexers, specify type on @index to select one of {{supported}}")
+		.withMessage("`{{fieldType}}` supports multiple indexers, specify type on @index to select one of {{supported}}")
 		.build();
 
 	private static final ValidationMessageType INVALID_INDEXER = ValidationMessageType.error()
 		.withCode("storage:@index:invalid-indexer")
-		.withArgument("name")
-		.withMessage("The indexer {{indexer}} does not exist")
+		.withArgument("indexer")
+		.withMessage("The indexer `{{indexer}}` does not exist")
 		.build();
 
 	private static final ValidationMessageType INDEXER_TYPE_UNSUPPORTED = ValidationMessageType.error()
 		.withCode("storage:@index:indexer-unsupported-type")
-		.withArgument("name")
+		.withArgument("indexer")
 		.withArgument("fieldType")
-		.withMessage("The indexer {{indexer}} does not support {{fieldType}}")
+		.withMessage("The indexer `{{indexer}}` does not support `{{fieldType}}`")
 		.build();
 
 	private final ValueIndexers indexing;
