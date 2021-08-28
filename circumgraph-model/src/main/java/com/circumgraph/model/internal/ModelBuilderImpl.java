@@ -4,6 +4,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 
 import com.circumgraph.model.ArgumentDef;
 import com.circumgraph.model.Buildable;
@@ -60,6 +61,23 @@ import org.eclipse.collections.api.set.MutableSet;
 public class ModelBuilderImpl
 	implements Model.Builder
 {
+	private static final Pattern NAME_PATTERN = Pattern.compile("^[_a-zA-Z][_a-zA-Z0-9]*$");
+
+	private static final ValidationMessageType TYPE_NAME_INVALID =
+		ValidationMessageType.error()
+			.withCode("model:type:invalid-name")
+			.withArgument("type")
+			.withMessage("The name of type `{{type}}` is not valid, should match [a-zA-Z_][a-zA-Z0-9_]*")
+			.build();
+
+	private static final ValidationMessageType FIELD_NAME_INVALID =
+		ValidationMessageType.error()
+			.withCode("model:field:invalid-name")
+			.withArgument("type")
+			.withArgument("field")
+			.withMessage("The name of field `{{field}}` in `{{type}}` is not valid, should match [a-zA-Z_][a-zA-Z0-9_]*")
+			.build();
+
 	private static final ValidationMessageType FIELD_TYPE_UNKNOWN =
 		ValidationMessageType.error()
 			.withCode("model:field:type-unknown")
@@ -85,6 +103,15 @@ public class ModelBuilderImpl
 			.withArgument("field")
 			.withArgument("fieldType")
 			.withMessage("Field `{{field}}` in `{{type}}` is declared as `{{fieldType}}`, but type is not an input type")
+			.build();
+
+	private static final ValidationMessageType ARGUMENT_NAME_INVALID =
+		ValidationMessageType.error()
+			.withCode("model:argument:invalid-name")
+			.withArgument("type")
+			.withArgument("field")
+			.withArgument("argument")
+			.withMessage("The name of argument `{{argument}}` for field `{{field}}` in `{{type}}` is not valid, should match [a-zA-Z_][a-zA-Z0-9_]*")
 			.build();
 
 	private static final ValidationMessageType ARGUMENT_TYPE_UNKNOWN =
@@ -365,7 +392,7 @@ public class ModelBuilderImpl
 		validationCollector.accept(INCOMPATIBLE_TYPES.toMessage()
 			.withLocation(location)
 			.withArgument("type", current.getName())
-			.withArgument("originalLocation", toLocation(current))
+			.withArgument("originalLocation", toLocation(current).describe())
 			.build()
 		);
 
@@ -465,7 +492,7 @@ public class ModelBuilderImpl
 				.withLocation(f2.getDefinedAt().mergeWith(f1.getDefinedAt()))
 				.withArgument("type", type.getName())
 				.withArgument("field", f2.getName())
-				.withArgument("originalLocation", toLocation(f1))
+				.withArgument("originalLocation", toLocation(f1).describe())
 				.build()
 			);
 
@@ -529,7 +556,7 @@ public class ModelBuilderImpl
 				.withArgument("type", type.getName())
 				.withArgument("field", field.getName())
 				.withArgument("argument", a1.getName())
-				.withArgument("originalLocation", toLocation(a1))
+				.withArgument("originalLocation", toLocation(a1).describe())
 				.build()
 			);
 
@@ -627,7 +654,7 @@ public class ModelBuilderImpl
 				.withLocation(f2.getDefinedAt().mergeWith(f1.getDefinedAt()))
 				.withArgument("type", type.getName())
 				.withArgument("field", f2.getName())
-				.withArgument("originalLocation", toLocation(f1))
+				.withArgument("originalLocation", toLocation(f1).describe())
 				.build()
 			);
 
@@ -752,15 +779,15 @@ public class ModelBuilderImpl
 	 * @param current
 	 * @return
 	 */
-	private String toLocation(Object current)
+	private Location toLocation(Object current)
 	{
-		if(current instanceof HasLocation)
+		if(current instanceof HasLocation loc)
 		{
-			return ((HasLocation) current).getDefinedAt().describe();
+			return loc.getDefinedAt();
 		}
 		else
 		{
-			return "Unknown Location";
+			return Location.unknown();
 		}
 	}
 
@@ -776,6 +803,15 @@ public class ModelBuilderImpl
 	)
 	{
 		// TODO: Schema specific validation
+
+		if(isInvalidName(type.getName()))
+		{
+			validationCollector.accept(TYPE_NAME_INVALID.toMessage()
+				.withLocation(toLocation(type))
+				.withArgument("type", type.getName())
+				.build()
+			);
+		}
 
 		// Validate that the directives will be processed
 		if(type instanceof HasDirectives hasDirectives)
@@ -827,6 +863,16 @@ public class ModelBuilderImpl
 		Consumer<ValidationMessage> validationCollector
 	)
 	{
+		if(isInvalidName(field.getName()))
+		{
+			validationCollector.accept(FIELD_NAME_INVALID.toMessage()
+				.withLocation(toLocation(field))
+				.withArgument("type", structured.getName())
+				.withArgument("field", field.getName())
+				.build()
+			);
+		}
+
 		validateDirectives(field, validationCollector);
 
 		// Validate the type
@@ -894,6 +940,17 @@ public class ModelBuilderImpl
 		Consumer<ValidationMessage> validationCollector
 	)
 	{
+		if(isInvalidName(argument.getName()))
+		{
+			validationCollector.accept(ARGUMENT_NAME_INVALID.toMessage()
+				.withLocation(toLocation(field))
+				.withArgument("type", structured.getName())
+				.withArgument("field", field.getName())
+				.withArgument("argument", argument.getName())
+				.build()
+			);
+		}
+
 		validateDirectives(argument, validationCollector);
 
 		// Validate the type
@@ -955,6 +1012,16 @@ public class ModelBuilderImpl
 		Consumer<ValidationMessage> validationCollector
 	)
 	{
+		if(isInvalidName(field.getName()))
+		{
+			validationCollector.accept(FIELD_NAME_INVALID.toMessage()
+				.withLocation(toLocation(field))
+				.withArgument("type", inputObject.getName())
+				.withArgument("field", field.getName())
+				.build()
+			);
+		}
+
 		validateDirectives(field, validationCollector);
 
 		// Validate the type
@@ -1154,6 +1221,17 @@ public class ModelBuilderImpl
 				}
 			}
 		}
+	}
+
+	/**
+	 * Check if a name is invalid.
+	 *
+	 * @param name
+	 * @return
+	 */
+	private boolean isInvalidName(String name)
+	{
+		return name == null || ! NAME_PATTERN.matcher(name).matches();
 	}
 
 	/**

@@ -4,6 +4,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.startsWith;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -44,6 +45,60 @@ public class FieldDefTest
 			.build();
 
 		assertThat(field.getMetadata(KEY), is(Optional.of("value1")));
+	}
+
+	@Test
+	public void testInvalidNameNull()
+	{
+		var schema = Schema.create()
+			.addType(ObjectDef.create("Test")
+				.addField(FieldDef.create(null)
+					.withType(ScalarDef.STRING)
+					.build()
+				)
+				.build()
+			)
+			.build();
+
+		var e = assertThrows(ModelValidationException.class, () -> {
+			Model.create()
+				.addSchema(schema)
+				.build();
+		});
+
+		var msg = e.getIssues().getFirst();
+		assertThat(msg.getLevel(), is(ValidationMessageLevel.ERROR));
+		assertThat(msg.getCode(), is("model:field:invalid-name"));
+		assertThat(msg.getArguments().get("type"), is("Test"));
+		assertThat(msg.getArguments().get("field"), nullValue());
+		assertThat(msg.getMessage(), is("The name of field `null` in `Test` is not valid, should match [a-zA-Z_][a-zA-Z0-9_]*"));
+	}
+
+	@Test
+	public void testInvalidNameLeadingDigit()
+	{
+		var schema = Schema.create()
+			.addType(ObjectDef.create("Test")
+				.addField(FieldDef.create("1abc")
+					.withType(ScalarDef.STRING)
+					.build()
+				)
+				.build()
+			)
+			.build();
+
+		var e = assertThrows(ModelValidationException.class, () -> {
+			Model.create()
+				.addSchema(schema)
+				.build();
+		});
+
+		var msg = e.getIssues().getFirst();
+		assertThat(msg.getLevel(), is(ValidationMessageLevel.ERROR));
+		assertThat(msg.getCode(), is("model:field:invalid-name"));
+		assertThat(msg.getArguments().get("type"), is("Test"));
+		assertThat(msg.getArguments().get("field"), is("1abc"));
+		assertThat(msg.getMessage(), is("The name of field `1abc` in `Test` is not valid, should match [a-zA-Z_][a-zA-Z0-9_]*"));
 	}
 
 	@Test
