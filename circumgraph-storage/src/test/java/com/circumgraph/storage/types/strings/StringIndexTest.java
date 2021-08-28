@@ -2,45 +2,89 @@ package com.circumgraph.storage.types.strings;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.circumgraph.model.DirectiveUse;
 import com.circumgraph.model.FieldDef;
-import com.circumgraph.model.NonNullDef;
+import com.circumgraph.model.Location;
+import com.circumgraph.model.ModelValidationException;
 import com.circumgraph.model.ObjectDef;
 import com.circumgraph.model.ScalarDef;
 import com.circumgraph.model.Schema;
-import com.circumgraph.storage.SimpleValue;
-import com.circumgraph.storage.SingleSchemaTest;
-import com.circumgraph.storage.StorageSchema;
-import com.circumgraph.storage.mutation.ScalarValueMutation;
-import com.circumgraph.storage.search.Query;
-import com.circumgraph.storage.search.QueryPath;
+import com.circumgraph.model.validation.ValidationMessageLevel;
+import com.circumgraph.storage.StorageTest;
 
 import org.junit.jupiter.api.Test;
 
-import se.l4.silo.index.EqualsMatcher;
-
+/**
+ * Test that simply tests that indexers can be created for {@code String}
+ * types.
+ */
 public class StringIndexTest
-	extends SingleSchemaTest
+	extends StorageTest
 {
-	@Override
-	protected Schema createSchema()
+	@Test
+	public void testDefault()
 	{
-		return Schema.create()
-			.addType(ObjectDef.create("Book")
-				.addImplements(StorageSchema.ENTITY_NAME)
-				.addField(FieldDef.create("title")
-					.withType(NonNullDef.output(ScalarDef.STRING))
+		open(Schema.create()
+			.addType(ObjectDef.create("Test")
+				.addField(FieldDef.create("field")
+					.withType(ScalarDef.STRING)
 					.addDirective(DirectiveUse.create("index")
-						.addArgument("type", "FULL_TEXT")
-						.build()
-					)
-					.addDirective(DirectiveUse.create("sortable")
 						.build()
 					)
 					.build()
 				)
-				.addField(FieldDef.create("isbn")
+				.build()
+			)
+			.build()
+		);
+	}
+
+	@Test
+	public void testFullText()
+	{
+		open(Schema.create()
+			.addType(ObjectDef.create("Test")
+				.addField(FieldDef.create("field")
+					.withType(ScalarDef.STRING)
+					.addDirective(DirectiveUse.create("index")
+						.addArgument("type", "FULL_TEXT")
+						.build()
+					)
+					.build()
+				)
+				.build()
+			)
+			.build()
+		);
+	}
+
+	@Test
+	public void tesTypeAhead()
+	{
+		open(Schema.create()
+			.addType(ObjectDef.create("Test")
+				.addField(FieldDef.create("field")
+					.withType(ScalarDef.STRING)
+					.addDirective(DirectiveUse.create("index")
+						.addArgument("type", "TYPE_AHEAD")
+						.build()
+					)
+					.build()
+				)
+				.build()
+			)
+			.build()
+		);
+	}
+
+	@Test
+	public void testToken()
+	{
+		open(Schema.create()
+			.addType(ObjectDef.create("Test")
+				.addField(FieldDef.create("field")
 					.withType(ScalarDef.STRING)
 					.addDirective(DirectiveUse.create("index")
 						.addArgument("type", "TOKEN")
@@ -50,106 +94,62 @@ public class StringIndexTest
 				)
 				.build()
 			)
-			.build();
+			.build()
+		);
 	}
 
 	@Test
-	public void testStore()
+	public void testUnknown()
 	{
-		var collection = storage.get("Book");
+		var e = assertThrows(ModelValidationException.class, () -> open(Schema.create()
+			.addType(ObjectDef.create("Test")
+				.addField(FieldDef.create("field")
+					.withType(ScalarDef.STRING)
+					.addDirective(DirectiveUse.create("index")
+						.withDefinedAt(Location.create("LOC1"))
+						.addArgument("type", "THIS_DOES_NOT_EXIST")
+						.build()
+					)
+					.build()
+				)
+				.build()
+			)
+			.build()
+		));
 
-		var mutation = collection.newMutation()
-			.updateField("title", ScalarValueMutation.createString("A Short History of Nearly Everything"))
-			.updateField("isbn", ScalarValueMutation.createString("076790818X"))
-			.build();
-
-		var stored = collection.store(mutation).block();
-
-		var idValue = (SimpleValue) stored.getFields().get("id");
-		long id = (long) idValue.get();
-
-		var fetched = collection.get(id).block();
-		assertThat(fetched, is(stored));
-
-		var titleValue = (SimpleValue) fetched.getFields().get("title");
-		assertThat(titleValue.get(), is("A Short History of Nearly Everything"));
+		var msg = e.getIssues().getFirst();
+		assertThat(msg.getLevel(), is(ValidationMessageLevel.ERROR));
+		assertThat(msg.getLocation(), is(Location.create("LOC1")));
+		assertThat(msg.getCode(), is("storage:@index:invalid-indexer"));
+		assertThat(msg.getArguments().get("indexer"), is("THIS_DOES_NOT_EXIST"));
+		assertThat(msg.getMessage(), is("The indexer `THIS_DOES_NOT_EXIST` does not exist"));
 	}
 
 	@Test
-	public void testQueryNoClauses()
+	public void testUnsupportedType()
 	{
-		var collection = storage.get("Book");
+		var e = assertThrows(ModelValidationException.class, () -> open(Schema.create()
+			.addType(ObjectDef.create("Test")
+				.addField(FieldDef.create("field")
+					.withType(ScalarDef.STRING)
+					.addDirective(DirectiveUse.create("index")
+						.withDefinedAt(Location.create("LOC1"))
+						.addArgument("type", "INT")
+						.build()
+					)
+					.build()
+				)
+				.build()
+			)
+			.build()
+		));
 
-		var mutation = collection.newMutation()
-			.updateField("title", ScalarValueMutation.createString("A Short History of Nearly Everything"))
-			.updateField("isbn", ScalarValueMutation.createString("076790818X"))
-			.build();
-
-		collection.store(mutation).block();
-
-		var results = collection.search(Query.create()).block();
-		assertThat(results.getTotalCount(), is(1));
-	}
-
-	@Test
-	public void testQueryNoMatches()
-	{
-		var collection = storage.get("Book");
-
-		var mutation = collection.newMutation()
-			.updateField("title", ScalarValueMutation.createString("A Short History of Nearly Everything"))
-			.updateField("isbn", ScalarValueMutation.createString("076790818X"))
-			.build();
-
-		collection.store(mutation).block();
-
-		var root = QueryPath.root(collection.getDefinition());
-		var results = collection.search(
-			Query.create()
-				.addClause(root.field("isbn").toQuery(EqualsMatcher.create("a")))
-		).block();
-
-		assertThat(results.getTotalCount(), is(0));
-	}
-
-	@Test
-	public void testQueryToken()
-	{
-		var collection = storage.get("Book");
-
-		var mutation = collection.newMutation()
-			.updateField("title", ScalarValueMutation.createString("A Short History of Nearly Everything"))
-			.updateField("isbn", ScalarValueMutation.createString("076790818X"))
-			.build();
-
-		collection.store(mutation).block();
-
-		var root = QueryPath.root(collection.getDefinition());
-		var results = collection.search(
-			Query.create()
-				.addClause(root.field("isbn").toQuery(EqualsMatcher.create("076790818X")))
-		).block();
-
-		assertThat(results.getTotalCount(), is(1));
-	}
-
-	@Test
-	public void testQueryNull()
-	{
-		var collection = storage.get("Book");
-
-		var mutation = collection.newMutation()
-			.updateField("title", ScalarValueMutation.createString("A Short History of Nearly Everything"))
-			.build();
-
-		collection.store(mutation).block();
-
-		var root = QueryPath.root(collection.getDefinition());
-		var results = collection.search(
-			Query.create()
-				.addClause(root.field("isbn").toQuery(EqualsMatcher.create(null)))
-		).block();
-
-		assertThat(results.getTotalCount(), is(1));
+		var msg = e.getIssues().getFirst();
+		assertThat(msg.getLevel(), is(ValidationMessageLevel.ERROR));
+		assertThat(msg.getLocation(), is(Location.create("LOC1")));
+		assertThat(msg.getCode(), is("storage:@index:indexer-unsupported-type"));
+		assertThat(msg.getArguments().get("indexer"), is("INT"));
+		assertThat(msg.getArguments().get("fieldType"), is("String"));
+		assertThat(msg.getMessage(), is("The indexer `INT` does not support `String`"));
 	}
 }
