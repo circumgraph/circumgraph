@@ -803,6 +803,13 @@ public class ModelBuilderImpl
 		{
 			validateUnion(types, u, validationCollector);
 		}
+		else if(type instanceof EnumDef e)
+		{
+			for(var value : e.getValues())
+			{
+				validateDirectives(value, validationCollector);
+			}
+		}
 	}
 
 	/**
