@@ -94,14 +94,22 @@ public class NonNullDefTest
 	public void testModelResolvesTypes()
 	{
 		var schema = Schema.create()
-			.addType(NonNullDef.output("String"))
+			.addType(ObjectDef.create("Test")
+				.addField(FieldDef.create("f1")
+					.withType(NonNullDef.output("String"))
+					.build()
+				)
+				.build()
+			)
 			.build();
 
 		var model = Model.create()
 			.addSchema(schema)
 			.build();
 
-		var t = model.get("String!", NonNullDef.class).get();
-		assertThat(t.getType(), is(ScalarDef.STRING));
+		var type = model.get("Test", StructuredDef.class).get();
+		var field = type.getField("f1").get();
+		var fieldType = (NonNullDef) field.getType();
+		assertThat(fieldType.getType(), is(ScalarDef.STRING));
 	}
 }
