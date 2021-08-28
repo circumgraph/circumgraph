@@ -29,7 +29,7 @@ public class InputFieldDefTest
 	}
 
 	@Test
-	public void testInputFieldInvalidType()
+	public void testInputFieldUnknownType()
 	{
 		var schema = Schema.create()
 			.addType(InputObjectDef.create("Test")
@@ -56,7 +56,7 @@ public class InputFieldDefTest
 	}
 
 	@Test
-	public void testInputFieldInvalidTypeInNonNull()
+	public void testInputFieldUnknownTypeInNonNull()
 	{
 		var schema = Schema.create()
 			.addType(InputObjectDef.create("Test")
@@ -83,7 +83,7 @@ public class InputFieldDefTest
 	}
 
 	@Test
-	public void testInputFieldInvalidTypeInList()
+	public void testInputFieldUnknownTypeInList()
 	{
 		var schema = Schema.create()
 			.addType(InputObjectDef.create("Test")
@@ -110,7 +110,7 @@ public class InputFieldDefTest
 	}
 
 	@Test
-	public void testInputFieldInvalidTypeInListNonNull()
+	public void testInputFieldUnknownTypeInListNonNull()
 	{
 		var schema = Schema.create()
 			.addType(InputObjectDef.create("Test")
@@ -134,6 +134,40 @@ public class InputFieldDefTest
 		assertThat(msg.getArguments().get("type"), is("Test"));
 		assertThat(msg.getArguments().get("field"), is("f1"));
 		assertThat(msg.getArguments().get("fieldType"), is("Unknown"));
+	}
+
+	@Test
+	public void testInputFieldInvalidType()
+	{
+		var schema = Schema.create()
+			.addType(InputObjectDef.create("Test")
+				.addField(InputFieldDef.create("f1")
+					.withType("I")
+					.build()
+				)
+				.build()
+			)
+			.addType(ObjectDef.create("I")
+				.addField(FieldDef.create("f1")
+					.withType(ScalarDef.INT)
+					.build()
+				)
+				.build()
+			)
+			.build();
+
+		var m = assertThrows(ModelValidationException.class, () -> {
+			Model.create()
+				.addSchema(schema)
+				.build();
+		});
+
+		var msg = m.getIssues().getFirst();
+		assertThat(msg.getLevel(), is(ValidationMessageLevel.ERROR));
+		assertThat(msg.getCode(), is("model:field:input-type-required"));
+		assertThat(msg.getArguments().get("type"), is("Test"));
+		assertThat(msg.getArguments().get("field"), is("f1"));
+		assertThat(msg.getArguments().get("fieldType"), is("I"));
 	}
 
 	@Test
