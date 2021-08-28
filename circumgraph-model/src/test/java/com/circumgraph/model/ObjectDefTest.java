@@ -5,6 +5,7 @@ import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.Optional;
@@ -50,6 +51,58 @@ public class ObjectDefTest
 		assertThat(t, instanceOf(StructuredDef.class));
 		assertThat(t, instanceOf(ObjectDef.class));
 		assertThat(t.getName(), is("Test"));
+	}
+
+	@Test
+	public void testInvalidNameNull()
+	{
+		var schema = Schema.create()
+			.addType(ObjectDef.create(null)
+				.addField(FieldDef.create("test")
+					.withType(ScalarDef.STRING)
+					.build()
+				)
+				.build()
+			)
+			.build();
+
+		var e = assertThrows(ModelValidationException.class, () -> {
+			Model.create()
+				.addSchema(schema)
+				.build();
+		});
+
+		var msg = e.getIssues().getFirst();
+		assertThat(msg.getLevel(), is(ValidationMessageLevel.ERROR));
+		assertThat(msg.getCode(), is("model:type:invalid-name"));
+		assertThat(msg.getArguments().get("type"), nullValue());
+		assertThat(msg.getMessage(), is("The name of type `null` is not valid, should match [a-zA-Z_][a-zA-Z0-9_]*"));
+	}
+
+	@Test
+	public void testInvalidNameLeadingDigit()
+	{
+		var schema = Schema.create()
+			.addType(ObjectDef.create("1abc")
+				.addField(FieldDef.create("test")
+					.withType(ScalarDef.STRING)
+					.build()
+				)
+				.build()
+			)
+			.build();
+
+		var e = assertThrows(ModelValidationException.class, () -> {
+			Model.create()
+				.addSchema(schema)
+				.build();
+		});
+
+		var msg = e.getIssues().getFirst();
+		assertThat(msg.getLevel(), is(ValidationMessageLevel.ERROR));
+		assertThat(msg.getCode(), is("model:type:invalid-name"));
+		assertThat(msg.getArguments().get("type"), is("1abc"));
+		assertThat(msg.getMessage(), is("The name of type `1abc` is not valid, should match [a-zA-Z_][a-zA-Z0-9_]*"));
 	}
 
 	@Test

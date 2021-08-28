@@ -11,7 +11,6 @@ import com.circumgraph.model.Location;
 import com.circumgraph.model.MetadataDef;
 import com.circumgraph.model.MetadataKey;
 import com.circumgraph.model.TypeRef;
-import com.circumgraph.model.validation.ModelValidation;
 
 import org.eclipse.collections.api.RichIterable;
 import org.eclipse.collections.api.factory.Lists;
@@ -197,8 +196,6 @@ public class InputFieldDefImpl
 
 	public static Builder create(String name)
 	{
-		ModelValidation.requireValidFieldName(name);
-
 		return new BuilderImpl(
 			null,
 			name,
