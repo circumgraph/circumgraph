@@ -46,8 +46,6 @@ public interface Location
 	 * {@link #scope(Location) scoped location} and fallback on {@link #code()}
 	 * if no active location.
 	 *
-	 * @param picked
-	 *   location to maybe use, may be {@code null}
 	 * @return
 	 *   instance representing the best known location, never {@code null}
 	 */
