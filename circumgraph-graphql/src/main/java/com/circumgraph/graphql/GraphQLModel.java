@@ -4,6 +4,7 @@ import java.util.Optional;
 
 import com.circumgraph.model.EnumValueDef;
 import com.circumgraph.model.FieldDef;
+import com.circumgraph.model.Location;
 import com.circumgraph.model.MetadataKey;
 import com.circumgraph.storage.StorageModel;
 
@@ -14,13 +15,18 @@ import com.circumgraph.storage.StorageModel;
 public class GraphQLModel
 {
 	/**
+	 * Location used by the enhancements added by the GraphQL model.
+	 */
+	public static final Location LOCATION = Location.create("GraphQL API");
+
+	/**
 	 * Key for setting a {@link FieldResolver} on a built {@link FieldDef}.
 	 *
 	 * If used manually instead of via {@link #setFieldResolver(FieldDef, FieldResolver)}
 	 * it may be required to set {@link StorageModel#FIELD_TYPE} to
 	 * {@link StorageModel.FieldType#DYNAMIC}.
 	 */
-	public static MetadataKey<FieldResolver> FIELD_RESOLVER =
+	public static final MetadataKey<FieldResolver> FIELD_RESOLVER =
 		MetadataKey.create("graphql:field-resolver", FieldResolver.class);
 
 	/**
@@ -30,14 +36,14 @@ public class GraphQLModel
 	 * it may be required to set {@link StorageModel#FIELD_TYPE} to
 	 * {@link StorageModel.FieldType#DYNAMIC}.
 	 */
-	public static MetadataKey<FieldResolverFactory> FIELD_RESOLVER_FACTORY =
+	public static final MetadataKey<FieldResolverFactory> FIELD_RESOLVER_FACTORY =
 		MetadataKey.create("graphql:field-resolver-factory", FieldResolverFactory.class);
 
 	/**
 	 * Key for setting a custom Java-object to use as the value for an
 	 * {@link EnumValueDef}.
 	 */
-	public static MetadataKey<Object> ENUM_VALUE =
+	public static final MetadataKey<Object> ENUM_VALUE =
 		MetadataKey.create("graphql:enum-value", Object.class);
 
 	/**

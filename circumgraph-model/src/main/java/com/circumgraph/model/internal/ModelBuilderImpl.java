@@ -22,6 +22,7 @@ import com.circumgraph.model.InputTypeDef;
 import com.circumgraph.model.InterfaceDef;
 import com.circumgraph.model.ListDef;
 import com.circumgraph.model.Location;
+import com.circumgraph.model.MergedLocation;
 import com.circumgraph.model.MetadataDef;
 import com.circumgraph.model.Model;
 import com.circumgraph.model.Model.Builder;
@@ -1354,7 +1355,10 @@ public class ModelBuilderImpl
 			{
 				if(processor.getType().isAssignableFrom(type.getClass()))
 				{
-					((TypeDefProcessor) processor).process(encounter, type);
+					try(var handle = Location.scope(processor.getLocation()))
+					{
+						((TypeDefProcessor) processor).process(encounter, type);
+					}
 				}
 			}
 
@@ -1384,7 +1388,10 @@ public class ModelBuilderImpl
 			return;
 		}
 
-		((DirectiveUseProcessor) processor).process(encounter, hasDirectives, directive.get());
+		try(var handle = Location.scope(processor.getLocation()))
+		{
+			((DirectiveUseProcessor) processor).process(encounter, hasDirectives, directive.get());
+		}
 	}
 
 	/**
@@ -1561,12 +1568,19 @@ public class ModelBuilderImpl
 		}
 
 		@Override
+		@SuppressWarnings({ "unchecked", "rawtypes" })
 		public <B extends Buildable<?>, D extends Derivable<B>> void edit(
 			D instance,
 			Function<B, B> editor
 		)
 		{
 			B builder = instance.derive();
+			if(builder instanceof HasLocation.Builder locationBuilder
+				&& instance instanceof HasLocation hasLocation)
+			{
+				builder = (B) locationBuilder.withDefinedAt(mergeLocation(hasLocation.getDefinedAt()));
+			}
+
 			D edited = (D) editor.apply(builder).build();
 
 			if(edited instanceof TypeDef def)
@@ -1580,6 +1594,7 @@ public class ModelBuilderImpl
 				);
 
 				replaceType(parent.derive()
+					.withDefinedAt(mergeLocation(parent.getDefinedAt()))
 					.addField(def)
 					.build()
 				);
@@ -1595,6 +1610,7 @@ public class ModelBuilderImpl
 				);
 
 				replaceType(parent.derive()
+					.withDefinedAt(mergeLocation(parent.getDefinedAt()))
 					.addField(def)
 					.build()
 				);
@@ -1603,6 +1619,20 @@ public class ModelBuilderImpl
 			{
 				throw new ModelException("Unknown type of object, can not edit: " + instance);
 			}
+		}
+
+		private Location mergeLocation(Location current)
+		{
+			var automatic = Location.automatic();
+			if(current instanceof MergedLocation mergedLocation)
+			{
+				if(mergedLocation.list().contains(automatic))
+				{
+					return current;
+				}
+			}
+
+			return current.mergeWith(automatic);
 		}
 	}
 }

@@ -14,6 +14,7 @@ import com.circumgraph.model.FieldDef;
 import com.circumgraph.model.HasDirectives;
 import com.circumgraph.model.InterfaceDef;
 import com.circumgraph.model.ListDef;
+import com.circumgraph.model.Location;
 import com.circumgraph.model.Model;
 import com.circumgraph.model.ModelException;
 import com.circumgraph.model.NonNullDef;
@@ -422,6 +423,12 @@ public class GraphQLSchemaTest
 		public String getName()
 		{
 			return "test";
+		}
+
+		@Override
+		public Location getLocation()
+		{
+			return Location.create("test");
 		}
 
 		@Override

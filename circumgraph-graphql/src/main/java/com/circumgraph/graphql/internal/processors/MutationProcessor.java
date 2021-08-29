@@ -23,6 +23,7 @@ import com.circumgraph.model.FieldDef;
 import com.circumgraph.model.HasMetadata;
 import com.circumgraph.model.InterfaceDef;
 import com.circumgraph.model.ListDef;
+import com.circumgraph.model.Location;
 import com.circumgraph.model.MetadataKey;
 import com.circumgraph.model.ModelException;
 import com.circumgraph.model.NonNullDef;
@@ -68,6 +69,12 @@ public class MutationProcessor
 			.newWithKeyValue(ScalarDef.ID, new IDScalar())
 			.newWithKeyValue(ScalarDef.INT, new IntScalar())
 			.newWithKeyValue(ScalarDef.STRING, new StringScalar());
+	}
+
+	@Override
+	public Location getLocation()
+	{
+		return GraphQLModel.LOCATION;
 	}
 
 	@Override

@@ -2,12 +2,14 @@ package com.circumgraph.storage.internal.processors;
 
 import com.circumgraph.model.InterfaceDef;
 import com.circumgraph.model.ListDef;
+import com.circumgraph.model.Location;
 import com.circumgraph.model.MetadataKey;
 import com.circumgraph.model.NonNullDef;
 import com.circumgraph.model.StructuredDef;
 import com.circumgraph.model.processing.ProcessingEncounter;
 import com.circumgraph.model.processing.TypeDefProcessor;
 import com.circumgraph.model.validation.ValidationMessageType;
+import com.circumgraph.storage.StorageModel;
 import com.circumgraph.storage.StorageSchema;
 
 /**
@@ -24,6 +26,12 @@ public class InterfaceImplementationProcessor
 		.withArgument("type")
 		.withMessage("{{type}} requires an implementation")
 		.build();
+
+	@Override
+	public Location getLocation()
+	{
+		return StorageModel.LOCATION;
+	}
 
 	@Override
 	public Class<StructuredDef> getType()

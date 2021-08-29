@@ -13,6 +13,7 @@ import org.eclipse.collections.api.factory.Sets;
  * for the location as needed.
  */
 public interface DirectiveUseProcessor<T extends HasDirectives>
+	extends Processor
 {
 	/**
 	 * Get the name of the directive this validates.

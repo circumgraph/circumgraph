@@ -8,6 +8,7 @@ import com.circumgraph.graphql.internal.resolvers.RootQueryResolverFactory;
 import com.circumgraph.graphql.internal.search.SearchQueryGenerator;
 import com.circumgraph.model.ArgumentDef;
 import com.circumgraph.model.FieldDef;
+import com.circumgraph.model.Location;
 import com.circumgraph.model.NonNullDef;
 import com.circumgraph.model.ObjectDef;
 import com.circumgraph.model.ScalarDef;
@@ -35,6 +36,12 @@ public class QueryProcessor
 	public QueryProcessor(SearchQueryGenerator generator)
 	{
 		this.generator = generator;
+	}
+
+	@Override
+	public Location getLocation()
+	{
+		return GraphQLModel.LOCATION;
 	}
 
 	@Override

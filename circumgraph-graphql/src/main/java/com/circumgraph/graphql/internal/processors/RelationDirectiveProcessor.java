@@ -9,6 +9,7 @@ import com.circumgraph.model.ArgumentUse;
 import com.circumgraph.model.DirectiveUse;
 import com.circumgraph.model.FieldDef;
 import com.circumgraph.model.ListDef;
+import com.circumgraph.model.Location;
 import com.circumgraph.model.NonNullDef;
 import com.circumgraph.model.ScalarDef;
 import com.circumgraph.model.StructuredDef;
@@ -115,6 +116,12 @@ public class RelationDirectiveProcessor
 	public String getName()
 	{
 		return "relation";
+	}
+
+	@Override
+	public Location getLocation()
+	{
+		return GraphQLModel.LOCATION;
 	}
 
 	@Override

@@ -34,6 +34,12 @@ public class DirectiveUseTest
 		return new DirectiveUseProcessor()
 		{
 			@Override
+			public Location getLocation()
+			{
+				return Location.create("@" + name);
+			}
+
+			@Override
 			public String getName()
 			{
 				return name;

@@ -2,6 +2,7 @@ package com.circumgraph.storage.internal.processors;
 
 import com.circumgraph.model.DirectiveUse;
 import com.circumgraph.model.FieldDef;
+import com.circumgraph.model.Location;
 import com.circumgraph.model.processing.DirectiveUseProcessor;
 import com.circumgraph.model.processing.ProcessingEncounter;
 import com.circumgraph.model.validation.ValidationMessageType;
@@ -27,6 +28,12 @@ public class SortableDirectiveProcessor
 	public String getName()
 	{
 		return "sortable";
+	}
+
+	@Override
+	public Location getLocation()
+	{
+		return StorageModel.LOCATION;
 	}
 
 	@Override

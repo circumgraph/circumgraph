@@ -2,9 +2,11 @@ package com.circumgraph.storage.internal.processors;
 
 import com.circumgraph.model.DirectiveUse;
 import com.circumgraph.model.FieldDef;
+import com.circumgraph.model.Location;
 import com.circumgraph.model.processing.DirectiveUseProcessor;
 import com.circumgraph.model.processing.ProcessingEncounter;
 import com.circumgraph.model.validation.ValidationMessageType;
+import com.circumgraph.storage.StorageModel;
 
 /**
  * Validator for the {@code readonly} directive which disables mutations for
@@ -22,6 +24,12 @@ public class ReadonlyDirectiveProcessor
 	public String getName()
 	{
 		return "readonly";
+	}
+
+	@Override
+	public Location getLocation()
+	{
+		return StorageModel.LOCATION;
 	}
 
 	@Override
