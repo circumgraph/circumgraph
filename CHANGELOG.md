@@ -1,3 +1,10 @@
+# [0.3.0](https://github.com/circumgraph/circumgraph/compare/v0.2.0...v0.3.0) (2021-08-29)
+
+
+### Features
+
+* Improve error reporting with source code snippets and better formatting ([9bfacea](https://github.com/circumgraph/circumgraph/commit/9bfaceaba7d65eaf24cbb4f9e16d1480b644543b))
+
 # [0.2.0](https://github.com/circumgraph/circumgraph/compare/v0.1.1...v0.2.0) (2021-08-23)
 
 
