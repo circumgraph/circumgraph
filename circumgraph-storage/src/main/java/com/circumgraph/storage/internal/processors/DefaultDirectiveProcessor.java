@@ -27,13 +27,13 @@ public class DefaultDirectiveProcessor
 
 	private static final ValidationMessageType UNKNOWN_PROVIDER = ValidationMessageType.error()
 		.withCode("storage:@default:unknown-provider")
-		.withMessage("The default provider {{provider}} is not available")
+		.withMessage("The default-value provider `{{provider}}` is not available")
 		.withArgument("provider")
 		.build();
 
 	private static final ValidationMessageType INVALID_PROVIDER = ValidationMessageType.error()
 		.withCode("storage:@default:invalid-provider")
-		.withMessage("Default provider {{provider}} does not support the type {{fieldType}}")
+		.withMessage("Default-value provider `{{provider}}` does not support the type `{{fieldType}}`")
 		.withArgument("provider")
 		.withArgument("fieldType")
 		.build();
