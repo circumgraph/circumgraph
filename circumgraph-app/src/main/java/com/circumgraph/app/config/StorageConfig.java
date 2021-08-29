@@ -20,4 +20,9 @@ public class StorageConfig
 	{
 		return dir;
 	}
+
+	public void setDir(Path dir)
+	{
+		this.dir = dir;
+	}
 }

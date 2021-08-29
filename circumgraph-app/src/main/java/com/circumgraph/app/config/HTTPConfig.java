@@ -20,4 +20,9 @@ public class HTTPConfig
 	{
 		return server;
 	}
+
+	public void setServer(HTTPServerConfig server)
+	{
+		this.server = server;
+	}
 }

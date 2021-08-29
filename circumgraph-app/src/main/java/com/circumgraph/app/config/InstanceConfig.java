@@ -13,7 +13,7 @@ import se.l4.exobytes.Expose;
 public class InstanceConfig
 {
 	@Expose
-	private String env;
+	private String env = "production";
 
 	@Expose
 	@NonNull @Valid
@@ -37,13 +37,28 @@ public class InstanceConfig
 		return config;
 	}
 
+	public void setConfig(ConfigConfig config)
+	{
+		this.config = config;
+	}
+
 	public StorageConfig getStorage()
 	{
 		return storage;
 	}
 
+	public void setStorage(StorageConfig storage)
+	{
+		this.storage = storage;
+	}
+
 	public HTTPConfig getHttp()
 	{
 		return http;
+	}
+
+	public void setHttp(HTTPConfig http)
+	{
+		this.http = http;
 	}
 }
