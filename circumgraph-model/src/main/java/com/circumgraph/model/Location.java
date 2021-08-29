@@ -38,22 +38,28 @@ public interface Location
 	 */
 	static Location code()
 	{
-		StackTraceElement[] trace = Thread.currentThread().getStackTrace();
-		for(int i=0; i<trace.length; i++)
-		{
-			String module = trace[i].getModuleName();
-			String className = trace[i].getClassName();
-			if(! "java.base".equals(module) && ! className.contains("com.circumgraph.model"))
-			{
-				return new LocationImpl(trace[i].toString());
-			}
-		}
-
-		return LocationImpl.UNKNOWN;
+		return LocationImpl.code();
 	}
 
 	/**
-	 * Use the given source location is non-null or generate one via code.
+	 * Get the best location available. Will use the
+	 * {@link #scope(Location) scoped location} and fallback on {@link #code()}
+	 * if no active location.
+	 *
+	 * @param picked
+	 *   location to maybe use, may be {@code null}
+	 * @return
+	 *   instance representing the best known location, never {@code null}
+	 */
+	static Location automatic()
+	{
+		return Location.automatic(null);
+	}
+
+	/**
+	 * Get the best location available. Will use the picked location first,
+	 * falling back to the {@link #scope(Location) scoped location} and
+	 * {@link #code()} if no active location.
 	 *
 	 * @param picked
 	 *   location to maybe use, may be {@code null}
@@ -62,7 +68,7 @@ public interface Location
 	 */
 	static Location automatic(Location picked)
 	{
-		return picked == null ? code() : picked;
+		return LocationImpl.automatic(picked);
 	}
 
 	/**
@@ -84,5 +90,35 @@ public interface Location
 	static Location unknown()
 	{
 		return LocationImpl.UNKNOWN;
+	}
+
+	/**
+	 * Scope operations on the current thread to the given location. Should be
+	 * used with a try-with-resources statement.
+	 *
+	 * <pre>
+	 * try(var handle = Location.scope(currentLocation)) {
+	 *    ...
+	 * }
+	 * </pre>
+	 *
+	 * @param location
+	 * @return
+	 */
+	static Handle scope(Location location)
+	{
+		return LocationImpl.scope(location);
+	}
+
+	/**
+	 * Handle returned by {@link Location#scope(Location)}. Used to remove
+	 * the scope when done.
+	 */
+	@FunctionalInterface
+	interface Handle
+		extends AutoCloseable
+	{
+		@Override
+		void close();
 	}
 }
