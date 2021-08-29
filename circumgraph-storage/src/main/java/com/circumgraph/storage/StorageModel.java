@@ -3,6 +3,7 @@ package com.circumgraph.storage;
 import java.util.Optional;
 
 import com.circumgraph.model.FieldDef;
+import com.circumgraph.model.Location;
 import com.circumgraph.model.MetadataKey;
 import com.circumgraph.model.Model;
 import com.circumgraph.model.StructuredDef;
@@ -29,15 +30,20 @@ public class StorageModel
 	}
 
 	/**
+	 * Location used by the enhancements added by the Storage model.
+	 */
+	public static final Location LOCATION = Location.create("Storage");
+
+	/**
 	 * Key for the type a {@link FieldDef} is. Set this to override a field
 	 * being stored.
 	 */
-	public static MetadataKey<FieldType> FIELD_TYPE = MetadataKey.create("storage:field-type", FieldType.class);
+	public static final MetadataKey<FieldType> FIELD_TYPE = MetadataKey.create("storage:field-type", FieldType.class);
 
-	private static MetadataKey<ValueIndexer> FIELD_INDEXER = MetadataKey.create("storage:field-indexer", ValueIndexer.class);
-	private static MetadataKey<Boolean> FIELD_INDEXED = MetadataKey.create("storage:field-indexed", Boolean.class);
-	private static MetadataKey<Boolean> FIELD_SORTABLE = MetadataKey.create("storage:field-sortable", Boolean.class);
-	private static MetadataKey<Boolean> FIELD_HIGHLIGHTABLE = MetadataKey.create("storage:field-highlightable", Boolean.class);
+	private static final MetadataKey<ValueIndexer> FIELD_INDEXER = MetadataKey.create("storage:field-indexer", ValueIndexer.class);
+	private static final MetadataKey<Boolean> FIELD_INDEXED = MetadataKey.create("storage:field-indexed", Boolean.class);
+	private static final MetadataKey<Boolean> FIELD_SORTABLE = MetadataKey.create("storage:field-sortable", Boolean.class);
+	private static final MetadataKey<Boolean> FIELD_HIGHLIGHTABLE = MetadataKey.create("storage:field-highlightable", Boolean.class);
 
 	private StorageModel()
 	{

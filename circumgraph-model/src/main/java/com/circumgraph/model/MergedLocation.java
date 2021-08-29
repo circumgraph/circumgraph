@@ -1,5 +1,7 @@
 package com.circumgraph.model;
 
+import com.circumgraph.model.internal.MergedLocationImpl;
+
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ListIterable;
 
@@ -38,5 +40,16 @@ public interface MergedLocation
 		return location instanceof MergedLocation m
 			? m.list()
 			: Lists.immutable.of(location);
+	}
+
+	/**
+	 * Get a merged version of all the given locations.
+	 *
+	 * @param locations
+	 * @return
+	 */
+	static MergedLocation of(Location... locations)
+	{
+		return new MergedLocationImpl(Lists.immutable.of(locations));
 	}
 }

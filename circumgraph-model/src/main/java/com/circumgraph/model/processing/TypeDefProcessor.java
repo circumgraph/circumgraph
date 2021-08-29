@@ -6,6 +6,7 @@ import com.circumgraph.model.TypeDef;
  * Processor for instances of {@link TypeDef}.
  */
 public interface TypeDefProcessor<T>
+	extends Processor
 {
 	/**
 	 * Get the type this can process.

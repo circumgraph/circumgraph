@@ -704,6 +704,12 @@ public class FieldDefTest
 		implements DirectiveUseProcessor<FieldDef>
 	{
 		@Override
+		public Location getLocation()
+		{
+			return Location.create("@test");
+		}
+
+		@Override
 		public String getName()
 		{
 			return "test";

@@ -3,6 +3,7 @@ package com.circumgraph.graphql.internal.processors;
 import com.circumgraph.graphql.FieldResolver;
 import com.circumgraph.graphql.GraphQLModel;
 import com.circumgraph.graphql.internal.resolvers.StaticValueFieldResolver;
+import com.circumgraph.model.Location;
 import com.circumgraph.model.StructuredDef;
 import com.circumgraph.model.processing.ProcessingEncounter;
 import com.circumgraph.model.processing.TypeDefProcessor;
@@ -22,6 +23,12 @@ public class OutputProcessor
 		.withArgument("type")
 		.withMessage("The field `{{field}}` in `{{type}}` has arguments but no resolver has been set")
 		.build();
+
+	@Override
+	public Location getLocation()
+	{
+		return GraphQLModel.LOCATION;
+	}
 
 	@Override
 	public Class<StructuredDef> getType()

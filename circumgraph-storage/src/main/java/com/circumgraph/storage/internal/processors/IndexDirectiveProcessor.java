@@ -3,6 +3,7 @@ package com.circumgraph.storage.internal.processors;
 import com.circumgraph.model.DirectiveUse;
 import com.circumgraph.model.FieldDef;
 import com.circumgraph.model.ListDef;
+import com.circumgraph.model.Location;
 import com.circumgraph.model.NonNullDef;
 import com.circumgraph.model.OutputTypeDef;
 import com.circumgraph.model.ScalarDef;
@@ -71,6 +72,12 @@ public class IndexDirectiveProcessor
 	public String getName()
 	{
 		return "index";
+	}
+
+	@Override
+	public Location getLocation()
+	{
+		return StorageModel.LOCATION;
 	}
 
 	@Override
