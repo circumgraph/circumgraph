@@ -21,4 +21,9 @@ public class ConfigConfig
 	{
 		return dir;
 	}
+
+	public void setDir(Path dir)
+	{
+		this.dir = dir;
+	}
 }
