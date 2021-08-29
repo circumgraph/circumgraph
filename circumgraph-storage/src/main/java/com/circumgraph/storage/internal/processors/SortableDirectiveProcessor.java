@@ -18,6 +18,11 @@ public class SortableDirectiveProcessor
 		.withMessage("@sortable does not support arguments")
 		.build();
 
+	private static final ValidationMessageType NO_INDEXER = ValidationMessageType.error()
+		.withCode("storage:@sortable:not-indexed")
+		.withMessage("@sortable is only supported for fields that also use @index")
+		.build();
+
 	@Override
 	public String getName()
 	{
@@ -39,8 +44,18 @@ public class SortableDirectiveProcessor
 	{
 		if(directive.getArguments().isEmpty())
 		{
-			// Mark the field as sortable
-			StorageModel.setSortable(location, true);
+			if(StorageModel.getIndexer(location).isEmpty())
+			{
+				encounter.report(NO_INDEXER.toMessage()
+					.withLocation(directive)
+					.build()
+				);
+			}
+			else
+			{
+				// Mark the field as sortable
+				StorageModel.setSortable(location, true);
+			}
 		}
 		else
 		{
