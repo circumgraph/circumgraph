@@ -3,6 +3,7 @@ package com.circumgraph.storage.internal.mappers;
 import com.circumgraph.model.validation.ValidationMessage;
 import com.circumgraph.storage.Value;
 import com.circumgraph.storage.mutation.Mutation;
+import com.circumgraph.storage.types.ValueMapper;
 
 /**
  * Encounter used when applying {@link Mutation}s in a {@link ValueMapper}.

@@ -4,6 +4,7 @@ import com.circumgraph.graphql.GraphQLModel;
 import com.circumgraph.graphql.MutationInputMapper;
 import com.circumgraph.graphql.ScalarMapper;
 import com.circumgraph.graphql.internal.SchemaNames;
+import com.circumgraph.graphql.internal.mutation.DeferredMutationMapper;
 import com.circumgraph.graphql.internal.mutation.EnumMutationMapper;
 import com.circumgraph.graphql.internal.mutation.ListMutationMapper;
 import com.circumgraph.graphql.internal.mutation.PolymorphicMutationMapper;
@@ -46,7 +47,7 @@ public class MutationProcessor
 	implements TypeDefProcessor<StructuredDef>
 {
 	@SuppressWarnings("rawtypes")
-	private static final MetadataKey<MutationInputMapper> MAPPER =
+	public static final MetadataKey<MutationInputMapper> MAPPER =
 		MetadataKey.create("graphql:mutation-mapper", MutationInputMapper.class);
 
 	private final ImmutableMap<ScalarDef, ScalarMapper<?>> scalars;
@@ -191,6 +192,15 @@ public class MutationProcessor
 		if(allowReferences && def.findImplements(StorageSchema.ENTITY_NAME))
 		{
 			return generateReferenceInput(def);
+		}
+
+		if(allowReferences)
+		{
+			/*
+			 * If references are allowed this is generating a non-entity,
+			 * register a deferred mapper to be used in case of recursion.
+			 */
+			def.setRuntimeMetadata(MAPPER, new DeferredMutationMapper<>(def));
 		}
 
 		if(def instanceof InterfaceDef i)

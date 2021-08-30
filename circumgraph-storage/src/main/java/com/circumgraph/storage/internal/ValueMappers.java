@@ -5,23 +5,23 @@ import java.util.LinkedList;
 import com.circumgraph.model.ArgumentUse;
 import com.circumgraph.model.EnumDef;
 import com.circumgraph.model.FieldDef;
-import com.circumgraph.model.HasDirectives;
+import com.circumgraph.model.HasMetadata;
 import com.circumgraph.model.InterfaceDef;
 import com.circumgraph.model.ListDef;
+import com.circumgraph.model.MetadataKey;
 import com.circumgraph.model.Model;
 import com.circumgraph.model.NonNullDef;
 import com.circumgraph.model.ObjectDef;
 import com.circumgraph.model.OutputTypeDef;
 import com.circumgraph.model.ScalarDef;
-import com.circumgraph.model.SimpleValueDef;
 import com.circumgraph.model.StructuredDef;
 import com.circumgraph.model.UnionDef;
 import com.circumgraph.storage.Storage;
 import com.circumgraph.storage.StorageModel;
 import com.circumgraph.storage.StorageSchema;
 import com.circumgraph.storage.StoredObjectValue;
-import com.circumgraph.storage.StructuredValue;
 import com.circumgraph.storage.Value;
+import com.circumgraph.storage.internal.mappers.DeferredValueMapper;
 import com.circumgraph.storage.internal.mappers.EnumValueMapper;
 import com.circumgraph.storage.internal.mappers.ListValueMapper;
 import com.circumgraph.storage.internal.mappers.PolymorphicValueMapper;
@@ -30,9 +30,11 @@ import com.circumgraph.storage.internal.mappers.RootObjectMapper;
 import com.circumgraph.storage.internal.mappers.ScalarValueMapper;
 import com.circumgraph.storage.internal.mappers.StoredObjectRefMapper;
 import com.circumgraph.storage.internal.mappers.StructuredValueMapper;
-import com.circumgraph.storage.internal.mappers.ValueMapper;
+import com.circumgraph.storage.internal.providers.EmptyValueProvider;
 import com.circumgraph.storage.internal.validators.NonNullValueValidator;
+import com.circumgraph.storage.mutation.Mutation;
 import com.circumgraph.storage.mutation.StructuredMutation;
+import com.circumgraph.storage.types.ValueMapper;
 import com.circumgraph.storage.types.ValueProvider;
 import com.circumgraph.storage.types.ValueValidator;
 
@@ -50,7 +52,8 @@ import se.l4.silo.StorageException;
  */
 public class ValueMappers
 {
-	private static final ValueValidator<?> EMPTY_VALIDATOR = (loc, v) -> Flux.empty();
+	@SuppressWarnings("rawtypes")
+	public static final MetadataKey<ValueMapper> MAPPER = MetadataKey.create("storage:mapper", ValueMapper.class);
 
 	private final Model model;
 	private final Storage storage;
@@ -82,82 +85,101 @@ public class ValueMappers
 		var polymorphic = createPolymorphic(
 			def,
 			Lists.immutable.of(def),
-			(ValueValidator<Value>) EMPTY_VALIDATOR,
 			false,
 			false
 		);
 		return new RootObjectMapper((ValueMapper) polymorphic);
 	}
 
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	private ValueMapper<?, ?> create(OutputTypeDef def, HasDirectives ctx)
+	private ValueMutationHandler<?, ?> createHandler(FieldDef field)
 	{
-		var mapper = create0(def, ctx);
-		if(ctx != null && ctx.getDirective("readonly").isPresent())
+		var mapper = resolveMapper(field.getType());
+
+		if(field.getDirective("readonly").isPresent())
 		{
-			return new ReadOnlyMapper(mapper);
+			mapper = new ReadOnlyMapper(mapper);
 		}
 
-		return mapper;
+		return new ValueMutationHandlerImpl(
+			mapper,
+			resolveProvider(field),
+			resolveValidator(field)
+		);
 	}
 
-	private ValueMapper<?, ?> create0(OutputTypeDef def, HasDirectives ctx)
+	private ValueMutationHandler<?, ?> createItemHandler(OutputTypeDef type)
 	{
-		boolean nonNull = false;
-		if(def instanceof NonNullDef.Output)
+		var mapper = resolveMapper(type);
+
+		return new ValueMutationHandlerImpl(
+			mapper,
+			new EmptyValueProvider(type),
+			type instanceof NonNullDef ? NonNullValueValidator.instance() : ValueValidator.empty()
+		);
+	}
+
+	private ValueMapper<?, ?> resolveMapper(OutputTypeDef def)
+	{
+		if(def instanceof HasMetadata md)
 		{
-			// Resolve NonNullDef - non-null is applied as validation
-			nonNull = true;
-			def = ((NonNullDef.Output) def).getType();
+			var current = md.getMetadata(MAPPER);
+			if(current.isPresent())
+			{
+				return current.get();
+			}
+
+			md.setRuntimeMetadata(MAPPER, new DeferredValueMapper(md));
 		}
 
-		if(def instanceof ListDef.Output)
+		ValueMapper mapper;
+		if(def instanceof NonNullDef.Output nonNullDef)
 		{
-			var listDef = (ListDef.Output) def;
-			return new ListValueMapper<>(
+			mapper = resolveMapper(nonNullDef.getType());
+		}
+		else if(def instanceof ListDef.Output listDef)
+		{
+			mapper = new ListValueMapper<>(
 				listDef,
-				resolveValidator(ctx, nonNull),
-				create(listDef.getItemType(), null)
+				createItemHandler(listDef.getItemType())
 			);
 		}
 		else if(def instanceof StructuredDef)
 		{
-			return createPolymorphic(
+			mapper = createPolymorphic(
 				def,
 				Lists.immutable.of(def),
-				resolveValidator(ctx, nonNull),
 				true,
 				false
 			);
 		}
-		else if(def instanceof UnionDef)
+		else if(def instanceof UnionDef unionDef)
 		{
-			return createPolymorphic(
+			mapper = createPolymorphic(
 				def,
-				((UnionDef) def).getTypes(),
-				resolveValidator(ctx, nonNull),
+				unionDef.getTypes(),
 				true,
 				true
 			);
 		}
-		else if(def instanceof EnumDef)
+		else if(def instanceof EnumDef enumDef)
 		{
-			return new EnumValueMapper(
-				(EnumDef) def,
-				resolveProvider((EnumDef) def, ctx),
-				resolveValidator(ctx, nonNull)
-			);
+			mapper = new EnumValueMapper(enumDef);
 		}
-		else if(def instanceof ScalarDef)
+		else if(def instanceof ScalarDef scalarDef)
 		{
-			return new ScalarValueMapper(
-				(ScalarDef) def,
-				resolveProvider((ScalarDef) def, ctx),
-				resolveValidator(ctx, nonNull)
-			);
+			mapper = new ScalarValueMapper(scalarDef);
+		}
+		else
+		{
+			throw new StorageException("Unable to create a mapper for " + def);
 		}
 
-		throw new StorageException("Unable to create a mapper for " + def);
+		if(def instanceof HasMetadata md)
+		{
+			md.setRuntimeMetadata(MAPPER, mapper);
+		}
+
+		return mapper;
 	}
 
 	/**
@@ -171,7 +193,6 @@ public class ValueMappers
 	private PolymorphicValueMapper createPolymorphic(
 		OutputTypeDef def,
 		RichIterable<? extends OutputTypeDef> initialDefs,
-		ValueValidator<Value> validator,
 		boolean allowReferences,
 		boolean diverging
 	)
@@ -224,7 +245,6 @@ public class ValueMappers
 		return new PolymorphicValueMapper(
 			def,
 			defs,
-			validator,
 			diverging
 		);
 	}
@@ -235,26 +255,24 @@ public class ValueMappers
 			def,
 			def.getFields()
 				.select(f -> StorageModel.getFieldType(f) == StorageModel.FieldType.STORED)
-				.toMap(FieldDef::getName, f -> create(f.getType(), f)),
-			(ValueValidator<StructuredValue>) EMPTY_VALIDATOR
+				.toMap(FieldDef::getName, this::createHandler)
 		);
 	}
 
 	@SuppressWarnings("unchecked")
 	private <V extends Value> ValueValidator<V> resolveValidator(
-		HasDirectives ctx,
-		boolean nonNull
+		FieldDef def
 	)
 	{
 		MutableList<ValueValidator<V>> result = Lists.mutable.empty();
-		if(nonNull)
+		if(def.getType() instanceof NonNullDef)
 		{
 			result.add(NonNullValueValidator.instance());
 		}
 
 		if(result.isEmpty())
 		{
-			return (ValueValidator<V>) EMPTY_VALIDATOR;
+			return ValueValidator.empty();
 		}
 		else if(result.size() == 1)
 		{
@@ -269,14 +287,12 @@ public class ValueMappers
 
 	@SuppressWarnings("unchecked")
 	private <V extends Value> ValueProvider<V> resolveProvider(
-		SimpleValueDef def,
-		HasDirectives ctx
+		FieldDef field
 	)
 	{
-		if(ctx == null) return null;
-
-		var defaultDirective = ctx.getDirective("default");
-		if(defaultDirective.isEmpty()) return null;
+		// TODO: This should be set via StorageModel instead
+		var defaultDirective = field.getDirective("default");
+		if(defaultDirective.isEmpty()) return new EmptyValueProvider<>(field.getType());
 
 		var directive = defaultDirective.get();
 
@@ -289,6 +305,51 @@ public class ValueMappers
 			return (ValueProvider<V>) providers.get(providerArg.get()).get();
 		}
 
-		return null;
+		return new EmptyValueProvider<>(field.getType());
+	}
+
+	private static class ValueMutationHandlerImpl<V extends Value, M extends Mutation>
+		implements ValueMutationHandler<V, M>
+	{
+		private final OutputTypeDef def;
+		private final ValueProvider<V> defaultProvider;
+		private final ValueMapper<V, M> mapper;
+		private final ValueValidator<V> validator;
+
+		public ValueMutationHandlerImpl(
+			ValueMapper<V, M> mapper,
+			ValueProvider<V> defaultProvider,
+			ValueValidator<V> validator
+		)
+		{
+			this.def = mapper.getDef();
+			this.mapper = mapper;
+			this.defaultProvider = defaultProvider;
+			this.validator = validator;
+		}
+
+		@Override
+		public OutputTypeDef getDef()
+		{
+			return def;
+		}
+
+		@Override
+		public ValueProvider<V> getDefault()
+		{
+			return defaultProvider;
+		}
+
+		@Override
+		public ValueMapper<V, M> getMapper()
+		{
+			return mapper;
+		}
+
+		@Override
+		public ValueValidator<V> getValidator()
+		{
+			return validator;
+		}
 	}
 }

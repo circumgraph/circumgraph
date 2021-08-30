@@ -17,7 +17,7 @@ public class NonNullValueValidator
 {
 	private static NonNullValueValidator INSTANCE = new NonNullValueValidator();
 
-	private static ValidationMessageType ERROR = ValidationMessageType.error()
+	public static ValidationMessageType ERROR = ValidationMessageType.error()
 		.withCode("storage:validation:null")
 		.withMessage("Value can not be null")
 		.build();

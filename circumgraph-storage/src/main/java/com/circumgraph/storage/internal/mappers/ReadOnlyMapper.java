@@ -1,12 +1,12 @@
 package com.circumgraph.storage.internal.mappers;
 
+import com.circumgraph.model.ObjectLocation;
 import com.circumgraph.model.OutputTypeDef;
-import com.circumgraph.model.validation.ValidationMessage;
 import com.circumgraph.model.validation.ValidationMessageType;
 import com.circumgraph.storage.Value;
 import com.circumgraph.storage.mutation.Mutation;
+import com.circumgraph.storage.types.ValueMapper;
 
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
@@ -35,12 +35,6 @@ public class ReadOnlyMapper<V extends Value, M extends Mutation>
 	}
 
 	@Override
-	public Mono<V> getInitialValue()
-	{
-		return mapper.getInitialValue();
-	}
-
-	@Override
 	public Mono<V> applyMutation(
 		MappingEncounter encounter,
 		ObjectLocation location,
@@ -64,8 +58,8 @@ public class ReadOnlyMapper<V extends Value, M extends Mutation>
 	}
 
 	@Override
-	public Flux<ValidationMessage> validate(ObjectLocation location, V value)
+	public String toString()
 	{
-		return mapper.validate(location, value);
+		return "ReadOnlyMapper{mapper=" + mapper + "}";
 	}
 }

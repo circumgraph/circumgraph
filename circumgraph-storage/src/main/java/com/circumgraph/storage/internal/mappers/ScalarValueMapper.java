@@ -1,14 +1,12 @@
 package com.circumgraph.storage.internal.mappers;
 
+import com.circumgraph.model.ObjectLocation;
 import com.circumgraph.model.OutputTypeDef;
 import com.circumgraph.model.ScalarDef;
-import com.circumgraph.model.validation.ValidationMessage;
 import com.circumgraph.storage.SimpleValue;
 import com.circumgraph.storage.mutation.ScalarValueMutation;
-import com.circumgraph.storage.types.ValueProvider;
-import com.circumgraph.storage.types.ValueValidator;
+import com.circumgraph.storage.types.ValueMapper;
 
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
@@ -18,32 +16,18 @@ public class ScalarValueMapper
 	implements ValueMapper<SimpleValue, ScalarValueMutation<?>>
 {
 	private final ScalarDef typeDef;
-	private final ValueProvider<SimpleValue> defaultValue;
-	private final ValueValidator<SimpleValue> validator;
 
 	public ScalarValueMapper(
-		ScalarDef typeDef,
-		ValueProvider<SimpleValue> defaultValue,
-		ValueValidator<SimpleValue> validator
+		ScalarDef typeDef
 	)
 	{
 		this.typeDef = typeDef;
-		this.defaultValue = defaultValue;
-		this.validator = validator;
 	}
 
 	@Override
 	public OutputTypeDef getDef()
 	{
 		return typeDef;
-	}
-
-	@Override
-	public Mono<SimpleValue> getInitialValue()
-	{
-		return defaultValue == null
-			? Mono.empty()
-			: defaultValue.create();
 	}
 
 	@Override
@@ -54,21 +38,12 @@ public class ScalarValueMapper
 		ScalarValueMutation<?> mutation
 	)
 	{
-		return Mono.defer(() -> {
-			var value = SimpleValue.create(typeDef, mutation.getValue());
-
-			return validate(location, value)
-				.doOnNext(encounter::reportError)
-				.then(Mono.just(value));
-		});
+		return Mono.just(SimpleValue.create(typeDef, mutation.getValue()));
 	}
 
 	@Override
-	public Flux<ValidationMessage> validate(
-		ObjectLocation location,
-		SimpleValue value
-	)
+	public String toString()
 	{
-		return validator.validate(location, value);
+		return "ScalarValueMapper{typeDef=" + typeDef + "}";
 	}
 }

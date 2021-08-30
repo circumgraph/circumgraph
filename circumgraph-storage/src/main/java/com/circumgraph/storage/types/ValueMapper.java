@@ -1,4 +1,4 @@
-package com.circumgraph.storage.internal.mappers;
+package com.circumgraph.storage.types;
 
 import com.circumgraph.model.ListDef;
 import com.circumgraph.model.Location;
@@ -6,9 +6,9 @@ import com.circumgraph.model.OutputTypeDef;
 import com.circumgraph.model.StructuredDef;
 import com.circumgraph.model.validation.ValidationMessage;
 import com.circumgraph.storage.Value;
+import com.circumgraph.storage.internal.mappers.MappingEncounter;
 import com.circumgraph.storage.mutation.Mutation;
 
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
@@ -22,11 +22,6 @@ public interface ValueMapper<V extends Value, M extends Mutation>
 	 * @return
 	 */
 	OutputTypeDef getDef();
-
-	/**
-	 * Get the initial value.
-	 */
-	Mono<V> getInitialValue();
 
 	/**
 	 * Apply the given mutation to a previous value.
@@ -46,23 +41,8 @@ public interface ValueMapper<V extends Value, M extends Mutation>
 	 */
 	Mono<V> applyMutation(
 		MappingEncounter encounter,
-		ObjectLocation location,
+		com.circumgraph.model.ObjectLocation location,
 		V previousValue,
 		M mutation
-	);
-
-	/**
-	 * Validate a value. Called directly for cases where no mapping is done.
-	 *
-	 * @param location
-	 *   the location of the value being mapped
-	 * @param value
-	 *   the value, or {@code null}
-	 * @return
-	 *   flux of validation messages
-	 */
-	Flux<ValidationMessage> validate(
-		ObjectLocation location,
-		V value
 	);
 }
