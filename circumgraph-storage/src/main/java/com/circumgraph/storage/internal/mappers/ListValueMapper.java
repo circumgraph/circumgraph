@@ -1,15 +1,16 @@
 package com.circumgraph.storage.internal.mappers;
 
 import com.circumgraph.model.ListDef;
+import com.circumgraph.model.ObjectLocation;
 import com.circumgraph.model.OutputTypeDef;
-import com.circumgraph.model.validation.ValidationMessage;
 import com.circumgraph.storage.ListValue;
 import com.circumgraph.storage.Value;
+import com.circumgraph.storage.internal.ValueMutationHandler;
 import com.circumgraph.storage.mutation.ListMutation;
 import com.circumgraph.storage.mutation.ListSetMutation;
 import com.circumgraph.storage.mutation.Mutation;
 import com.circumgraph.storage.mutation.NullMutation;
-import com.circumgraph.storage.types.ValueValidator;
+import com.circumgraph.storage.types.ValueMapper;
 
 import org.eclipse.collections.impl.collector.Collectors2;
 
@@ -22,18 +23,14 @@ public class ListValueMapper<V extends Value, M extends Mutation>
 	private static final Object NULL = new Object();
 
 	private final ListDef.Output typeDef;
-
-	private final ValueValidator<ListValue<V>> validator;
-	private final ValueMapper<V, M> itemMapper;
+	private final ValueMutationHandler<V, M> itemMapper;
 
 	public ListValueMapper(
 		ListDef.Output typeDef,
-		ValueValidator<ListValue<V>> validator,
-		ValueMapper<V, M> itemMapper
+		ValueMutationHandler<V, M> itemMapper
 	)
 	{
 		this.typeDef = typeDef;
-		this.validator = validator;
 		this.itemMapper = itemMapper;
 	}
 
@@ -41,12 +38,6 @@ public class ListValueMapper<V extends Value, M extends Mutation>
 	public OutputTypeDef getDef()
 	{
 		return typeDef;
-	}
-
-	@Override
-	public Mono<ListValue<V>> getInitialValue()
-	{
-		return Mono.empty();
 	}
 
 	@Override
@@ -74,12 +65,12 @@ public class ListValueMapper<V extends Value, M extends Mutation>
 							* NullMutation should set the value to null - validate
 							* that is possible before attempting to do so.
 							*/
-							return itemMapper.validate(location, null)
+							return itemMapper.getValidator().validate(location, null)
 								.doOnNext(encounter::reportError)
 								.then(Mono.just(NULL));
 						}
 
-						return itemMapper.applyMutation(
+						return itemMapper.getMapper().applyMutation(
 							encounter,
 							location,
 							null,
@@ -87,37 +78,14 @@ public class ListValueMapper<V extends Value, M extends Mutation>
 						);
 					})
 					.collect(Collectors2.toImmutableList())
-					.flatMap(values -> {
-						var value = ListValue.create(
+					.map(values -> ListValue.create(
 							typeDef,
 							values.collect(v -> v == NULL ? null : (V) v)
-						);
-
-						return validator.validate(location, value)
-							.doOnNext(encounter::reportError)
-							.then(Mono.just(value));
-					});
+						)
+					);
 			}
 
 			return Mono.just(previousValue);
 		});
-	}
-
-	@Override
-	public Flux<ValidationMessage> validate(
-		ObjectLocation location,
-		ListValue<V> value
-	)
-	{
-		if(value == null)
-		{
-			return validator.validate(location, value);
-		}
-
-		return Flux.concat(
-			Flux.fromIterable(value.items())
-				.flatMap(v -> itemMapper.validate(location, v)),
-			validator.validate(location, value)
-		);
 	}
 }

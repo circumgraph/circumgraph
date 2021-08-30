@@ -1,5 +1,6 @@
 package com.circumgraph.storage.internal;
 
+import com.circumgraph.model.ObjectLocation;
 import com.circumgraph.model.StructuredDef;
 import com.circumgraph.model.validation.ValidationMessage;
 import com.circumgraph.model.validation.ValidationMessageLevel;
@@ -10,14 +11,13 @@ import com.circumgraph.storage.StorageValidationException;
 import com.circumgraph.storage.StoredObjectValue;
 import com.circumgraph.storage.Value;
 import com.circumgraph.storage.internal.mappers.MappingEncounter;
-import com.circumgraph.storage.internal.mappers.ObjectLocation;
-import com.circumgraph.storage.internal.mappers.ValueMapper;
 import com.circumgraph.storage.internal.search.QueryImpl;
 import com.circumgraph.storage.internal.search.SearchResultImpl;
 import com.circumgraph.storage.mutation.StructuredMutation;
 import com.circumgraph.storage.mutation.StructuredMutation.Builder;
 import com.circumgraph.storage.search.Query;
 import com.circumgraph.storage.search.SearchResult;
+import com.circumgraph.storage.types.ValueMapper;
 
 import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.MutableList;

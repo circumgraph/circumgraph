@@ -11,10 +11,13 @@ import com.circumgraph.model.NonNullDef;
 import com.circumgraph.model.ObjectDef;
 import com.circumgraph.model.ScalarDef;
 import com.circumgraph.model.Schema;
+import com.circumgraph.model.validation.ValidationMessageLevel;
 import com.circumgraph.storage.SimpleValue;
 import com.circumgraph.storage.SingleSchemaTest;
 import com.circumgraph.storage.StorageException;
 import com.circumgraph.storage.StorageSchema;
+import com.circumgraph.storage.StorageValidationException;
+import com.circumgraph.storage.mutation.NullMutation;
 import com.circumgraph.storage.mutation.ScalarValueMutation;
 
 import org.junit.jupiter.api.Test;
@@ -101,5 +104,24 @@ public class NonNullTest
 		assertThrows(StorageException.class, () -> {
 			collection.store(mutation).block();
 		});
+	}
+
+	@Test
+	public void testSaveNull()
+	{
+		var collection = storage.get("Test");
+
+		var mutation = collection.newMutation()
+			.updateField("nonNull", NullMutation.create())
+			.build();
+
+		var e = assertThrows(StorageValidationException.class, () -> {
+			collection.store(mutation).block();
+		});
+
+		var msg = e.getIssues().getFirst();
+		assertThat(msg.getLevel(), is(ValidationMessageLevel.ERROR));
+		assertThat(msg.getCode(), is("storage:validation:null"));
+		assertThat(msg.getLocation().describe(), is("nonNull"));
 	}
 }

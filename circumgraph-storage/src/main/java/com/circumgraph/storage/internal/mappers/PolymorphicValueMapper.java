@@ -1,5 +1,6 @@
 package com.circumgraph.storage.internal.mappers;
 
+import com.circumgraph.model.ObjectLocation;
 import com.circumgraph.model.OutputTypeDef;
 import com.circumgraph.model.TypeDef;
 import com.circumgraph.model.validation.ValidationMessage;
@@ -10,11 +11,10 @@ import com.circumgraph.storage.Value;
 import com.circumgraph.storage.mutation.StoredObjectRefMutation;
 import com.circumgraph.storage.mutation.StructuredMutation;
 import com.circumgraph.storage.mutation.TypedMutation;
-import com.circumgraph.storage.types.ValueValidator;
+import com.circumgraph.storage.types.ValueMapper;
 
 import org.eclipse.collections.api.map.MapIterable;
 
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
@@ -34,19 +34,16 @@ public class PolymorphicValueMapper
 
 	private final OutputTypeDef type;
 	private final MapIterable<String, ValueMapper<?, ?>> subTypes;
-	private final ValueValidator<Value> validator;
 	private final boolean diverging;
 
 	public PolymorphicValueMapper(
 		OutputTypeDef type,
 		MapIterable<String, ValueMapper<?, ?>> subTypes,
-		ValueValidator<Value> validator,
 		boolean diverging
 	)
 	{
 		this.type = type;
 		this.subTypes = subTypes;
-		this.validator = validator;
 		this.diverging = diverging;
 	}
 
@@ -54,13 +51,6 @@ public class PolymorphicValueMapper
 	public OutputTypeDef getDef()
 	{
 		return type;
-	}
-
-	@Override
-	public Mono<Value> getInitialValue()
-	{
-		// TODO: Initial value should be supported by polymorphic types
-		return Mono.empty();
 	}
 
 	@Override
@@ -96,48 +86,8 @@ public class PolymorphicValueMapper
 				: null;
 
 			return ((ValueMapper) mapper)
-				.applyMutation(encounter, location, actualPreviousValue, mutation)
-				.flatMap(newValue -> {
-					/*
-					* There may be some validation that applies to the
-					* entire structured value. So validate after mutation has
-					* been applied.
-					*/
-					return validator.validate(location, (Value) newValue)
-						.doOnNext(encounter::reportError)
-						.then(Mono.just(newValue));
-				});
+				.applyMutation(encounter, location, actualPreviousValue, mutation);
 		});
-	}
-
-	@Override
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	public Flux<ValidationMessage> validate(
-		ObjectLocation location,
-		Value value
-	)
-	{
-		if(value == null)
-		{
-			// Null values are only validated with direct validators
-			return validator.validate(location, value);
-		}
-
-		var mapper = subTypes.get(value.getDefinition().getName());
-		if(mapper == null)
-		{
-			/*
-			 * Type is invalid, report single error.
-			 */
-			return Flux.just(createInvalidSubTypeError(location, value.getDefinition()));
-		}
-		else
-		{
-			return Flux.concat(
-				((ValueMapper) mapper).validate(location, value),
-				validator.validate(location, value)
-			);
-		}
 	}
 
 	private ValidationMessage createInvalidSubTypeError(

@@ -2,16 +2,16 @@ package com.circumgraph.storage.internal.mappers;
 
 import java.util.function.Supplier;
 
+import com.circumgraph.model.ObjectLocation;
 import com.circumgraph.model.OutputTypeDef;
 import com.circumgraph.model.StructuredDef;
-import com.circumgraph.model.validation.ValidationMessage;
 import com.circumgraph.model.validation.ValidationMessageType;
 import com.circumgraph.storage.Collection;
 import com.circumgraph.storage.StoredObjectRef;
 import com.circumgraph.storage.internal.StoredObjectRefImpl;
 import com.circumgraph.storage.mutation.StoredObjectRefMutation;
+import com.circumgraph.storage.types.ValueMapper;
 
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
@@ -50,12 +50,6 @@ public class StoredObjectRefMapper
 	}
 
 	@Override
-	public Mono<StoredObjectRef> getInitialValue()
-	{
-		return Mono.empty();
-	}
-
-	@Override
 	public Mono<StoredObjectRef> applyMutation(
 		MappingEncounter encounter,
 		ObjectLocation location,
@@ -66,34 +60,21 @@ public class StoredObjectRefMapper
 		return Mono.defer(() -> {
 			var value = new StoredObjectRefImpl(def, mutation.getId());
 
-			return validate(location, value)
-				.doOnNext(encounter::reportError)
-				.then(Mono.just(value));
-		});
-	}
+			return collection.get()
+				.contains(value.getId())
+				.flatMap(b -> {
+					if(! b)
+					{
+						encounter.reportError(INVALID_REFERENCE.toMessage()
+							.withLocation(location)
+							.withArgument("type", def.getName())
+							.withArgument("id", value.getId())
+							.build()
+						);
+					}
 
-	@Override
-	public Flux<ValidationMessage> validate(
-		ObjectLocation location,
-		StoredObjectRef value
-	)
-	{
-		return collection.get()
-			.contains(value.getId())
-			.flatMapMany(b -> {
-				if(b)
-				{
-					return Flux.empty();
-				}
-				else
-				{
-					return Flux.just(INVALID_REFERENCE.toMessage()
-						.withLocation(location)
-						.withArgument("type", def.getName())
-						.withArgument("id", value.getId())
-						.build()
-					);
-				}
-			});
+					return Mono.just(value);
+				});
+		});
 	}
 }

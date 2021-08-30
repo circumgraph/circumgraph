@@ -4,8 +4,10 @@ import java.util.LinkedList;
 
 import com.circumgraph.model.EnumDef;
 import com.circumgraph.model.FieldDef;
+import com.circumgraph.model.HasMetadata;
 import com.circumgraph.model.InterfaceDef;
 import com.circumgraph.model.ListDef;
+import com.circumgraph.model.MetadataKey;
 import com.circumgraph.model.Model;
 import com.circumgraph.model.NonNullDef;
 import com.circumgraph.model.ObjectDef;
@@ -18,6 +20,7 @@ import com.circumgraph.storage.StorageModel;
 import com.circumgraph.storage.StorageSchema;
 import com.circumgraph.storage.StructuredValue;
 import com.circumgraph.storage.internal.serializers.BooleanValueSerializer;
+import com.circumgraph.storage.internal.serializers.DeferredValueSerializer;
 import com.circumgraph.storage.internal.serializers.EnumValueSerializer;
 import com.circumgraph.storage.internal.serializers.FloatValueSerializer;
 import com.circumgraph.storage.internal.serializers.IdValueSerializer;
@@ -42,6 +45,9 @@ import se.l4.silo.StorageException;
  */
 public class ValueSerializers
 {
+	@SuppressWarnings("rawtypes")
+	public static final MetadataKey<ValueSerializer> SERIALIZER = MetadataKey.create("storage:serializer", ValueSerializer.class);
+
 	private final Model model;
 	private final MapIterable<ScalarDef, ValueSerializer<SimpleValue>> scalars;
 
@@ -61,48 +67,64 @@ public class ValueSerializers
 
 	private ValueSerializer<?> resolve(OutputTypeDef def)
 	{
-		if(def instanceof NonNullDef.Output)
+		if(def instanceof HasMetadata md)
 		{
-			return resolve(((NonNullDef.Output) def).getType());
+			var current = md.getMetadata(SERIALIZER);
+			if(current.isPresent())
+			{
+				return current.get();
+			}
+
+			md.setRuntimeMetadata(SERIALIZER, new DeferredValueSerializer(md));
 		}
-		else if(def instanceof ListDef.Output)
+
+		ValueSerializer<?> serializer;
+		if(def instanceof NonNullDef.Output nonNullDef)
 		{
-			ListDef.Output listDef = (ListDef.Output) def;
-			return new ListValueSerializer<>(
+			serializer = resolve(nonNullDef.getType());
+		}
+		else if(def instanceof ListDef.Output listDef)
+		{
+			serializer = new ListValueSerializer<>(
 				listDef,
 				resolve(listDef.getItemType())
 			);
 		}
 		else if(def instanceof StructuredDef)
 		{
-			return resolvePolymorphic(
+			serializer = resolvePolymorphic(
 				def,
 				Lists.immutable.of(def),
 				true
 			);
 		}
-		else if(def instanceof UnionDef)
+		else if(def instanceof UnionDef unionDef)
 		{
-			return resolvePolymorphic(
+			serializer = resolvePolymorphic(
 				def,
-				((UnionDef) def).getTypes(),
+				unionDef.getTypes(),
 				true
 			);
 		}
 		else if(def instanceof EnumDef enumDef)
 		{
-			return new EnumValueSerializer(enumDef);
+			serializer = new EnumValueSerializer(enumDef);
 		}
 		else if(def instanceof ScalarDef)
 		{
-			ValueSerializer<?> serializer = scalars.get(def);
-			if(serializer != null)
-			{
-				return serializer;
-			}
+			serializer = scalars.get(def);
+		}
+		else
+		{
+			throw new StorageException("Unable to create a serializer for " + def);
 		}
 
-		throw new StorageException("Unable to create a serializer for " + def);
+		if(def instanceof HasMetadata md)
+		{
+			md.setRuntimeMetadata(SERIALIZER, serializer);
+		}
+
+		return serializer;
 	}
 
 	/**
@@ -152,13 +174,13 @@ public class ValueSerializers
 					new StoredObjectRefSerializer(structuredDef)
 				);
 			}
-			else if(subDef instanceof ObjectDef)
+			else if(subDef instanceof ObjectDef objectDef)
 			{
-				defs.put(subDef.getName(), resolveDirect((ObjectDef) subDef));
+				defs.put(subDef.getName(), resolveDirect(objectDef));
 			}
-			else if(subDef instanceof InterfaceDef i)
+			else if(subDef instanceof InterfaceDef interfaceDef)
 			{
-				i.getImplementors().each(queue::add);
+				interfaceDef.getImplementors().each(queue::add);
 			}
 		}
 

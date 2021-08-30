@@ -2,17 +2,15 @@ package com.circumgraph.storage.internal.mappers;
 
 import com.circumgraph.model.EnumDef;
 import com.circumgraph.model.EnumValueDef;
+import com.circumgraph.model.ObjectLocation;
 import com.circumgraph.model.OutputTypeDef;
-import com.circumgraph.model.validation.ValidationMessage;
 import com.circumgraph.model.validation.ValidationMessageType;
 import com.circumgraph.storage.SimpleValue;
 import com.circumgraph.storage.mutation.SetEnumValueMutation;
-import com.circumgraph.storage.types.ValueProvider;
-import com.circumgraph.storage.types.ValueValidator;
+import com.circumgraph.storage.types.ValueMapper;
 
 import org.eclipse.collections.api.set.ImmutableSet;
 
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
@@ -29,20 +27,13 @@ public class EnumValueMapper
 		.build();
 
 	private final EnumDef def;
-	private final ValueProvider<SimpleValue> defaultValue;
-	private final ValueValidator<SimpleValue> validator;
-
 	private final ImmutableSet<String> values;
 
 	public EnumValueMapper(
-		EnumDef def,
-		ValueProvider<SimpleValue> defaultValue,
-		ValueValidator<SimpleValue> validator
+		EnumDef def
 	)
 	{
 		this.def = def;
-		this.defaultValue = defaultValue;
-		this.validator = validator;
 
 		this.values = def.getValues()
 			.collect(EnumValueDef::getName)
@@ -57,14 +48,6 @@ public class EnumValueMapper
 	}
 
 	@Override
-	public Mono<SimpleValue> getInitialValue()
-	{
-		return defaultValue == null
-			? Mono.empty()
-			: defaultValue.create();
-	}
-
-	@Override
 	public Mono<SimpleValue> applyMutation(
 		MappingEncounter encounter,
 		ObjectLocation location,
@@ -74,32 +57,17 @@ public class EnumValueMapper
 	{
 		return Mono.defer(() -> {
 			var value = SimpleValue.create(def, mutation.getValue());
-
-			return validate(location, value)
-				.doOnNext(encounter::reportError)
-				.then(Mono.just(value));
-		});
-	}
-
-	@Override
-	public Flux<ValidationMessage> validate(
-		ObjectLocation location,
-		SimpleValue value
-	)
-	{
-		if(value != null && ! values.contains(value.get()))
-		{
-			return Flux.concat(
-				Flux.just(ERROR.toMessage()
+			if(value != null && ! values.contains(value.get()))
+			{
+				// Invalid valid, report error
+				encounter.reportError(ERROR.toMessage()
 					.withLocation(location)
 					.withArgument("value", value.get())
 					.withArgument("enum", def.getName())
-					.build()
-				),
-				validator.validate(location, value)
-			);
-		}
+					.build());
+			}
 
-		return validator.validate(location, value);
+			return Mono.just(value);
+		});
 	}
 }

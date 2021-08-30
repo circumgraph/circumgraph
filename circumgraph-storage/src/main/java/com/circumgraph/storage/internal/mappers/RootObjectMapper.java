@@ -1,13 +1,13 @@
 package com.circumgraph.storage.internal.mappers;
 
+import com.circumgraph.model.ObjectLocation;
 import com.circumgraph.model.OutputTypeDef;
-import com.circumgraph.model.validation.ValidationMessage;
 import com.circumgraph.storage.StoredObjectValue;
 import com.circumgraph.storage.StructuredValue;
 import com.circumgraph.storage.internal.StoredObjectValueImpl;
 import com.circumgraph.storage.mutation.StructuredMutation;
+import com.circumgraph.storage.types.ValueMapper;
 
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
@@ -32,12 +32,6 @@ public class RootObjectMapper
 	}
 
 	@Override
-	public Mono<StoredObjectValue> getInitialValue()
-	{
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
 	public Mono<StoredObjectValue> applyMutation(
 		MappingEncounter encounter,
 		ObjectLocation location,
@@ -51,14 +45,5 @@ public class RootObjectMapper
 			previousValue,
 			mutation
 		).map(StoredObjectValueImpl::new);
-	}
-
-	@Override
-	public Flux<ValidationMessage> validate(
-		ObjectLocation location,
-		StoredObjectValue value
-	)
-	{
-		return mapper.validate(location,value);
 	}
 }
