@@ -1,3 +1,10 @@
+# [0.4.0](https://github.com/circumgraph/circumgraph/compare/v0.3.0...v0.4.0) (2021-08-31)
+
+
+### Features
+
+* **storage:** Support for types that reference themselves ([aa1d0a8](https://github.com/circumgraph/circumgraph/commit/aa1d0a86a333085c1f824f8be06ccf931d5cd39e))
+
 # [0.3.0](https://github.com/circumgraph/circumgraph/compare/v0.2.0...v0.3.0) (2021-08-29)
 
 

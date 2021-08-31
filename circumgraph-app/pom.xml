@@ -8,7 +8,7 @@
 	<parent>
 		<artifactId>circumgraph-base</artifactId>
 		<groupId>com.circumgraph</groupId>
-		<version>0.3.0</version>
+		<version>0.4.0</version>
 		<relativePath>..</relativePath>
 	</parent>
 
