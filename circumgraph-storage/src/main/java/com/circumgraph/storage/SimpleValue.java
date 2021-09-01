@@ -49,6 +49,15 @@ public interface SimpleValue
 	 */
 	long asID();
 
+	/**
+	 * Get the value as the given type.
+	 *
+	 * @param <T>
+	 * @param type
+	 * @return
+	 */
+	<T> T as(Class<T> type);
+
 	@Override
 	SimpleValueDef getDefinition();
 
