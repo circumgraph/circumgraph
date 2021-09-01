@@ -320,7 +320,8 @@ public class ModelBuilderImpl
 			ScalarDef.FLOAT,
 			ScalarDef.INT,
 			ScalarDef.STRING,
-			ScalarDef.ID
+			ScalarDef.ID,
+			ScalarDef.LOCAL_DATE
 		), Lists.immutable.empty(), Lists.immutable.empty());
 	}
 

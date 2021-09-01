@@ -32,4 +32,9 @@ public interface ScalarDef
 	 * ID scalar.
 	 */
 	static final ScalarDef ID = new ScalarDefImpl("ID", null);
+
+	/**
+	 * LocalDate scalar.
+	 */
+	static final ScalarDef LOCAL_DATE = new ScalarDefImpl("LocalDate", null);
 }

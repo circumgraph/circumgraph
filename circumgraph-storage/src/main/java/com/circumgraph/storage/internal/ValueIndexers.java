@@ -10,6 +10,7 @@ import com.circumgraph.storage.internal.indexing.FloatValueIndexer;
 import com.circumgraph.storage.internal.indexing.FullTextStringValueIndexer;
 import com.circumgraph.storage.internal.indexing.IdValueIndexer;
 import com.circumgraph.storage.internal.indexing.IntValueIndexer;
+import com.circumgraph.storage.internal.indexing.LocalDateValueIndexer;
 import com.circumgraph.storage.internal.indexing.TokenStringValueIndexer;
 import com.circumgraph.storage.internal.indexing.TypeAheadStringValueIndexer;
 import com.circumgraph.storage.types.ValueIndexer;
@@ -40,7 +41,8 @@ public class ValueIndexers
 			new FloatValueIndexer(),
 			new IntValueIndexer(),
 			new IdValueIndexer(),
-			new BooleanValueIndexer()
+			new BooleanValueIndexer(),
+			new LocalDateValueIndexer()
 		);
 
 		MutableMap<String, ValueIndexer> indexersByName = Maps.mutable.empty();
