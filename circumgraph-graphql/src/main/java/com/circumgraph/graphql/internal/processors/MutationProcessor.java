@@ -17,6 +17,7 @@ import com.circumgraph.graphql.scalars.BooleanScalar;
 import com.circumgraph.graphql.scalars.FloatScalar;
 import com.circumgraph.graphql.scalars.IDScalar;
 import com.circumgraph.graphql.scalars.IntScalar;
+import com.circumgraph.graphql.scalars.LocalDateScalar;
 import com.circumgraph.graphql.scalars.StringScalar;
 import com.circumgraph.model.ArgumentDef;
 import com.circumgraph.model.EnumDef;
@@ -69,7 +70,8 @@ public class MutationProcessor
 			.newWithKeyValue(ScalarDef.FLOAT, new FloatScalar())
 			.newWithKeyValue(ScalarDef.ID, new IDScalar())
 			.newWithKeyValue(ScalarDef.INT, new IntScalar())
-			.newWithKeyValue(ScalarDef.STRING, new StringScalar());
+			.newWithKeyValue(ScalarDef.STRING, new StringScalar())
+			.newWithKeyValue(ScalarDef.LOCAL_DATE, new LocalDateScalar());
 	}
 
 	@Override
