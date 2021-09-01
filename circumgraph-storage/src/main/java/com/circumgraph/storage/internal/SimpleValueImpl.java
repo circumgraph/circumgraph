@@ -66,6 +66,12 @@ public class SimpleValueImpl
 	}
 
 	@Override
+	public <T> T as(Class<T> type)
+	{
+		return type.cast(object);
+	}
+
+	@Override
 	public int hashCode()
 	{
 		return Objects.hash(object);
