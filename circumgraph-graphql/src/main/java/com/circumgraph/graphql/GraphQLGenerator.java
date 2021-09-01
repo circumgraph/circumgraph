@@ -11,6 +11,7 @@ import com.circumgraph.graphql.scalars.FloatScalar;
 import com.circumgraph.graphql.scalars.IDScalar;
 import com.circumgraph.graphql.scalars.IntScalar;
 import com.circumgraph.graphql.scalars.LocalDateScalar;
+import com.circumgraph.graphql.scalars.LocalTimeScalar;
 import com.circumgraph.graphql.scalars.StringScalar;
 import com.circumgraph.model.EnumDef;
 import com.circumgraph.model.FieldDef;
@@ -69,7 +70,8 @@ public class GraphQLGenerator
 			.newWithKeyValue(ScalarDef.ID, new IDScalar())
 			.newWithKeyValue(ScalarDef.INT, new IntScalar())
 			.newWithKeyValue(ScalarDef.STRING, new StringScalar())
-			.newWithKeyValue(ScalarDef.LOCAL_DATE, new LocalDateScalar());
+			.newWithKeyValue(ScalarDef.LOCAL_DATE, new LocalDateScalar())
+			.newWithKeyValue(ScalarDef.LOCAL_TIME, new LocalTimeScalar());
 
 		encounter = new GraphQLCreationEncounter()
 		{

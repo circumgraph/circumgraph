@@ -321,7 +321,8 @@ public class ModelBuilderImpl
 			ScalarDef.INT,
 			ScalarDef.STRING,
 			ScalarDef.ID,
-			ScalarDef.LOCAL_DATE
+			ScalarDef.LOCAL_DATE,
+			ScalarDef.LOCAL_TIME
 		), Lists.immutable.empty(), Lists.immutable.empty());
 	}
 
