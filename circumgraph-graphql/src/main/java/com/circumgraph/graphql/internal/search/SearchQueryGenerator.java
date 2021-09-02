@@ -104,6 +104,7 @@ public class SearchQueryGenerator
 		indexerToCriteria.put("LOCAL_DATE", new LocalDateCriteria());
 		indexerToCriteria.put("LOCAL_TIME", new LocalTimeCriteria());
 		indexerToCriteria.put("LOCAL_DATE_TIME", new LocalDateTimeCriteria());
+		indexerToCriteria.put("ZONED_DATE_TIME", new ZonedDateTimeCriteria());
 
 		this.pageInfoType = generatePageInfo();
 		this.pageCursorsType = generatePageCursors();
