@@ -21,6 +21,7 @@ import com.circumgraph.graphql.scalars.LocalDateScalar;
 import com.circumgraph.graphql.scalars.LocalDateTimeScalar;
 import com.circumgraph.graphql.scalars.LocalTimeScalar;
 import com.circumgraph.graphql.scalars.StringScalar;
+import com.circumgraph.graphql.scalars.ZonedDateTimeScalar;
 import com.circumgraph.model.ArgumentDef;
 import com.circumgraph.model.EnumDef;
 import com.circumgraph.model.FieldDef;
@@ -75,7 +76,8 @@ public class MutationProcessor
 			.newWithKeyValue(ScalarDef.STRING, new StringScalar())
 			.newWithKeyValue(ScalarDef.LOCAL_DATE, new LocalDateScalar())
 			.newWithKeyValue(ScalarDef.LOCAL_TIME, new LocalTimeScalar())
-			.newWithKeyValue(ScalarDef.LOCAL_DATE_TIME, new LocalDateTimeScalar());
+			.newWithKeyValue(ScalarDef.LOCAL_DATE_TIME, new LocalDateTimeScalar())
+			.newWithKeyValue(ScalarDef.ZONED_DATE_TIME, new ZonedDateTimeScalar());
 	}
 
 	@Override

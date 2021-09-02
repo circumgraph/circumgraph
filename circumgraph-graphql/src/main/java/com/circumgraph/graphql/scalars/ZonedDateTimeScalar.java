@@ -1,0 +1,164 @@
+package com.circumgraph.graphql.scalars;
+
+import java.time.DateTimeException;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
+import java.util.Map;
+
+import com.circumgraph.graphql.ScalarMapper;
+import com.circumgraph.model.ScalarDef;
+
+import org.eclipse.collections.api.factory.Maps;
+import org.eclipse.collections.api.map.MutableMap;
+
+import graphql.language.ObjectValue;
+import graphql.language.StringValue;
+import graphql.schema.Coercing;
+import graphql.schema.CoercingParseLiteralException;
+import graphql.schema.CoercingParseValueException;
+import graphql.schema.CoercingSerializeException;
+import graphql.schema.GraphQLScalarType;
+
+/**
+ * Scalar for {@link ZonedDateTime}.
+ *
+ * The representation of this in the GraphQL API is an object with two fields:
+ *
+ * <ul>
+ *   <li>{@code dateTime} - the ISO8601 formatted date, without offset
+ *   <li>{@code zone} - the timezone ID
+ * </ul>
+ *
+ *
+ */
+public class ZonedDateTimeScalar
+	implements ScalarMapper<ZonedDateTime>
+{
+	private final GraphQLScalarType type;
+
+	public ZonedDateTimeScalar()
+	{
+		this.type = GraphQLScalarType.newScalar()
+			.name("ZonedDateTime")
+			.description("Representation of a date, time and time zone")
+			.coercing(new Coercing<ZonedDateTime, Object>()
+			{
+				@Override
+				public Object serialize(Object dataFetcherResult)
+					throws CoercingSerializeException
+				{
+					if(dataFetcherResult instanceof ZonedDateTime zonedDateTime)
+					{
+						var result = new HashMap<>();
+						result.put("dateTime", zonedDateTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+						result.put("zone", zonedDateTime.getZone().getId());
+						return result;
+					}
+
+					throw new CoercingSerializeException("Expected type 'ZonedDateTime' but was: " + dataFetcherResult);
+				}
+
+				@Override
+				public ZonedDateTime parseValue(Object input)
+					throws CoercingParseValueException
+				{
+					try
+					{
+						return parse(input);
+					}
+					catch(DateTimeException e)
+					{
+						throw new CoercingParseValueException("Invalid ZonedDateTime format, format is expected to be ISO8601 compatible");
+					}
+				}
+
+				@Override
+				public ZonedDateTime parseLiteral(Object input)
+					throws CoercingParseLiteralException
+				{
+					try
+					{
+						if(input instanceof ObjectValue objectValue)
+						{
+							MutableMap<String, Object> parsedValues = Maps.mutable.empty();
+							objectValue.getObjectFields().forEach(field -> {
+								if(field.getValue() instanceof StringValue stringValue)
+								{
+									parsedValues.put(field.getName(), stringValue.getValue());
+								}
+							});
+							return parse(parsedValues);
+						}
+						else if(input instanceof StringValue stringValue)
+						{
+							return parse(stringValue.getValue());
+						}
+
+						throw new CoercingParseLiteralException("Expected AST type 'ObjectValue' or 'StringValue' but was '" + input.getClass().getSimpleName() + "'");
+					}
+					catch(DateTimeException e)
+					{
+						throw new CoercingParseLiteralException("Invalid ZonedDateTime format");
+					}
+
+				}
+
+				private ZonedDateTime parse(Object input)
+				{
+					if(input instanceof Map map)
+					{
+						var dateTime = map.get("dateTime");
+						var zone = map.get("zone");
+
+						if(dateTime instanceof String dateTimeString)
+						{
+							LocalDateTime localDateTime = LocalDateTime.parse(dateTimeString, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+
+							if(zone instanceof String zoneId)
+							{
+								return localDateTime.atZone(ZoneId.of(zoneId));
+							}
+
+							// If no zone has been specified fallback to UTC
+							return localDateTime.atZone(ZoneOffset.UTC);
+						}
+					}
+					else if(input instanceof String string)
+					{
+						// TODO: Should this go through a few different cases?
+						return ZonedDateTime.parse(string);
+					}
+
+					throw new DateTimeException("Unable to convert value: " + input);
+				}
+			})
+			.build();
+	}
+
+	@Override
+	public ScalarDef getModelDef()
+	{
+		return ScalarDef.ZONED_DATE_TIME;
+	}
+
+	@Override
+	public GraphQLScalarType getGraphQLType()
+	{
+		return type;
+	}
+
+	@Override
+	public ZonedDateTime fromInput(Object inputValue)
+	{
+		if(inputValue instanceof ZonedDateTime zonedDateTime)
+		{
+			return zonedDateTime;
+		}
+
+		return ZonedDateTime.parse(inputValue.toString(), DateTimeFormatter.ISO_ZONED_DATE_TIME);
+	}
+}

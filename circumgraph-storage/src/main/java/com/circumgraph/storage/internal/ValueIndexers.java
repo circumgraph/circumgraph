@@ -15,6 +15,7 @@ import com.circumgraph.storage.internal.indexing.LocalDateValueIndexer;
 import com.circumgraph.storage.internal.indexing.LocalTimeValueIndexer;
 import com.circumgraph.storage.internal.indexing.TokenStringValueIndexer;
 import com.circumgraph.storage.internal.indexing.TypeAheadStringValueIndexer;
+import com.circumgraph.storage.internal.indexing.ZonedDateTimeValueIndexer;
 import com.circumgraph.storage.types.ValueIndexer;
 
 import org.eclipse.collections.api.RichIterable;
@@ -46,7 +47,8 @@ public class ValueIndexers
 			new BooleanValueIndexer(),
 			new LocalDateValueIndexer(),
 			new LocalTimeValueIndexer(),
-			new LocalDateTimeValueIndexer()
+			new LocalDateTimeValueIndexer(),
+			new ZonedDateTimeValueIndexer()
 		);
 
 		MutableMap<String, ValueIndexer> indexersByName = Maps.mutable.empty();

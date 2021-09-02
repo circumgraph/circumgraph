@@ -33,6 +33,7 @@ import com.circumgraph.storage.internal.serializers.PolymorphicValueSerializer;
 import com.circumgraph.storage.internal.serializers.StoredObjectRefSerializer;
 import com.circumgraph.storage.internal.serializers.StringValueSerializer;
 import com.circumgraph.storage.internal.serializers.StructuredValueSerializer;
+import com.circumgraph.storage.internal.serializers.ZonedDateTimeValueSerializer;
 import com.circumgraph.storage.types.ValueSerializer;
 
 import org.eclipse.collections.api.RichIterable;
@@ -68,7 +69,8 @@ public class ValueSerializers
 			.newWithKeyValue(ScalarDef.ID, new IdValueSerializer())
 			.newWithKeyValue(ScalarDef.LOCAL_DATE, new LocalDateValueSerializer())
 			.newWithKeyValue(ScalarDef.LOCAL_TIME, new LocalTimeValueSerializer())
-			.newWithKeyValue(ScalarDef.LOCAL_DATE_TIME, new LocalDateTimeValueSerializer());
+			.newWithKeyValue(ScalarDef.LOCAL_DATE_TIME, new LocalDateTimeValueSerializer())
+			.newWithKeyValue(ScalarDef.ZONED_DATE_TIME, new ZonedDateTimeValueSerializer());
 	}
 
 	private ValueSerializer<?> resolve(OutputTypeDef def)
