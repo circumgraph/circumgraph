@@ -1,9 +1,6 @@
 package com.circumgraph.storage.internal.indexing;
 
-import java.time.Instant;
-import java.time.LocalDate;
 import java.time.LocalTime;
-import java.time.ZoneOffset;
 
 import com.circumgraph.model.ScalarDef;
 import com.circumgraph.model.SimpleValueDef;
@@ -31,14 +28,8 @@ public class LocalTimeValueIndexer
 	{
 		return SearchFieldType.forLong()
 			.map(
-				now -> LocalTime.ofInstant(Instant.ofEpochMilli(now), ZoneOffset.UTC),
-				object -> {
-					var instantAtEpoch = Instant.ofEpochSecond(
-						object.toEpochSecond(LocalDate.EPOCH, ZoneOffset.UTC),
-						object.getNano()
-					);
-					return instantAtEpoch.toEpochMilli();
-				}
+				nanoOfDay -> LocalTime.ofNanoOfDay(nanoOfDay),
+				object -> object.toNanoOfDay()
 			)
 			.build();
 	}
