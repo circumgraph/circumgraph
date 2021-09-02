@@ -10,6 +10,7 @@ import com.circumgraph.storage.internal.indexing.FloatValueIndexer;
 import com.circumgraph.storage.internal.indexing.FullTextStringValueIndexer;
 import com.circumgraph.storage.internal.indexing.IdValueIndexer;
 import com.circumgraph.storage.internal.indexing.IntValueIndexer;
+import com.circumgraph.storage.internal.indexing.LocalDateTimeValueIndexer;
 import com.circumgraph.storage.internal.indexing.LocalDateValueIndexer;
 import com.circumgraph.storage.internal.indexing.LocalTimeValueIndexer;
 import com.circumgraph.storage.internal.indexing.TokenStringValueIndexer;
@@ -44,7 +45,8 @@ public class ValueIndexers
 			new IdValueIndexer(),
 			new BooleanValueIndexer(),
 			new LocalDateValueIndexer(),
-			new LocalTimeValueIndexer()
+			new LocalTimeValueIndexer(),
+			new LocalDateTimeValueIndexer()
 		);
 
 		MutableMap<String, ValueIndexer> indexersByName = Maps.mutable.empty();

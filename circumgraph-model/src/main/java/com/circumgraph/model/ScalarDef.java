@@ -43,6 +43,9 @@ public interface ScalarDef
 	 */
 	static final ScalarDef LOCAL_TIME = new ScalarDefImpl("LocalTime", "Representation of a time without a date");
 
+	/**
+	 * LocalDateTime scalar.
+	 */
 	static final ScalarDef LOCAL_DATE_TIME = new ScalarDefImpl("LocalDateTime", null);
 
 	static final ScalarDef ZONED_DATE_TIME = new ScalarDefImpl("ZonedDateTime", null);

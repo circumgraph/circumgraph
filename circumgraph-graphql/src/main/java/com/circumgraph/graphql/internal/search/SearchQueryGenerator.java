@@ -103,6 +103,7 @@ public class SearchQueryGenerator
 
 		indexerToCriteria.put("LOCAL_DATE", new LocalDateCriteria());
 		indexerToCriteria.put("LOCAL_TIME", new LocalTimeCriteria());
+		indexerToCriteria.put("LOCAL_DATE_TIME", new LocalDateTimeCriteria());
 
 		this.pageInfoType = generatePageInfo();
 		this.pageCursorsType = generatePageCursors();

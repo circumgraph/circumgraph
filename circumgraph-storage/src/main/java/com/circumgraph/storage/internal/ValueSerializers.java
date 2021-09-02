@@ -26,6 +26,7 @@ import com.circumgraph.storage.internal.serializers.FloatValueSerializer;
 import com.circumgraph.storage.internal.serializers.IdValueSerializer;
 import com.circumgraph.storage.internal.serializers.IntValueSerializer;
 import com.circumgraph.storage.internal.serializers.ListValueSerializer;
+import com.circumgraph.storage.internal.serializers.LocalDateTimeValueSerializer;
 import com.circumgraph.storage.internal.serializers.LocalDateValueSerializer;
 import com.circumgraph.storage.internal.serializers.LocalTimeValueSerializer;
 import com.circumgraph.storage.internal.serializers.PolymorphicValueSerializer;
@@ -66,7 +67,8 @@ public class ValueSerializers
 			.newWithKeyValue(ScalarDef.STRING, new StringValueSerializer())
 			.newWithKeyValue(ScalarDef.ID, new IdValueSerializer())
 			.newWithKeyValue(ScalarDef.LOCAL_DATE, new LocalDateValueSerializer())
-			.newWithKeyValue(ScalarDef.LOCAL_TIME, new LocalTimeValueSerializer());
+			.newWithKeyValue(ScalarDef.LOCAL_TIME, new LocalTimeValueSerializer())
+			.newWithKeyValue(ScalarDef.LOCAL_DATE_TIME, new LocalDateTimeValueSerializer());
 	}
 
 	private ValueSerializer<?> resolve(OutputTypeDef def)
