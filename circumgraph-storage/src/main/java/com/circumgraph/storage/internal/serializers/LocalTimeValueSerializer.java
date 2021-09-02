@@ -1,10 +1,7 @@
 package com.circumgraph.storage.internal.serializers;
 
 import java.io.IOException;
-import java.time.Instant;
-import java.time.LocalDate;
 import java.time.LocalTime;
-import java.time.ZoneOffset;
 
 import com.circumgraph.model.ScalarDef;
 import com.circumgraph.model.TypeDef;
@@ -16,7 +13,8 @@ import se.l4.exobytes.streaming.StreamingOutput;
 import se.l4.exobytes.streaming.Token;
 
 /**
- * Serializer for {@link ScalarDef#LOCAL_TIME}.
+ * Serializer for {@link ScalarDef#LOCAL_TIME}. Stores {@link LocalTime}
+ * as the nano-seconds of the day.
  */
 public class LocalTimeValueSerializer
 	implements ValueSerializer<SimpleValue>
@@ -34,7 +32,7 @@ public class LocalTimeValueSerializer
 		var timestamp = in.readLong();
 		return SimpleValue.create(
 			ScalarDef.LOCAL_TIME,
-			LocalTime.ofInstant(Instant.ofEpochMilli(timestamp), ZoneOffset.UTC)
+			LocalTime.ofNanoOfDay(timestamp)
 		);
 	}
 
@@ -43,10 +41,6 @@ public class LocalTimeValueSerializer
 		throws IOException
 	{
 		var time = object.as(LocalTime.class);
-		var instantAtEpoch = Instant.ofEpochSecond(
-			time.toEpochSecond(LocalDate.EPOCH, ZoneOffset.UTC),
-			time.getNano()
-		);
-		out.writeLong(instantAtEpoch.toEpochMilli());
+		out.writeLong(time.toNanoOfDay());
 	}
 }
