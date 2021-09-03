@@ -2,20 +2,14 @@ package com.circumgraph.graphql.scalars;
 
 import java.time.DateTimeException;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.HashMap;
-import java.util.Map;
+import java.time.format.DateTimeFormatterBuilder;
 
 import com.circumgraph.graphql.ScalarMapper;
 import com.circumgraph.model.ScalarDef;
 
-import org.eclipse.collections.api.factory.Maps;
-import org.eclipse.collections.api.map.MutableMap;
-
-import graphql.language.ObjectValue;
 import graphql.language.StringValue;
 import graphql.schema.Coercing;
 import graphql.schema.CoercingParseLiteralException;
@@ -40,6 +34,22 @@ public class ZonedDateTimeScalar
 {
 	private final GraphQLScalarType type;
 
+	/**
+	 * {@link DateTimeFormatter} used for more lenient parsing of timezones.
+	 */
+	private static final DateTimeFormatter PARSER = new DateTimeFormatterBuilder()
+		.append(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+		.optionalStart()
+		.appendOffsetId()
+		.optionalEnd()
+		.optionalStart()
+		.appendLiteral('[')
+		.parseCaseSensitive()
+		.appendZoneRegionId()
+		.appendLiteral(']')
+		.optionalEnd()
+		.toFormatter();
+
 	public ZonedDateTimeScalar()
 	{
 		this.type = GraphQLScalarType.newScalar()
@@ -53,10 +63,7 @@ public class ZonedDateTimeScalar
 				{
 					if(dataFetcherResult instanceof ZonedDateTime zonedDateTime)
 					{
-						var result = new HashMap<>();
-						result.put("dateTime", zonedDateTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
-						result.put("zone", zonedDateTime.getZone().getId());
-						return result;
+						return zonedDateTime.format(DateTimeFormatter.ISO_ZONED_DATE_TIME);
 					}
 
 					throw new CoercingSerializeException("Expected type 'ZonedDateTime' but was: " + dataFetcherResult);
@@ -72,7 +79,7 @@ public class ZonedDateTimeScalar
 					}
 					catch(DateTimeException e)
 					{
-						throw new CoercingParseValueException("Invalid ZonedDateTime format, format is expected to be ISO8601 compatible");
+						throw new CoercingParseValueException("Invalid ZonedDateTime format, format is expected to be ISO8601 compatible; " + e.getMessage());
 					}
 				}
 
@@ -82,23 +89,12 @@ public class ZonedDateTimeScalar
 				{
 					try
 					{
-						if(input instanceof ObjectValue objectValue)
-						{
-							MutableMap<String, Object> parsedValues = Maps.mutable.empty();
-							objectValue.getObjectFields().forEach(field -> {
-								if(field.getValue() instanceof StringValue stringValue)
-								{
-									parsedValues.put(field.getName(), stringValue.getValue());
-								}
-							});
-							return parse(parsedValues);
-						}
-						else if(input instanceof StringValue stringValue)
+						 if(input instanceof StringValue stringValue)
 						{
 							return parse(stringValue.getValue());
 						}
 
-						throw new CoercingParseLiteralException("Expected AST type 'ObjectValue' or 'StringValue' but was '" + input.getClass().getSimpleName() + "'");
+						throw new CoercingParseLiteralException("Expected AST type 'StringValue' but was '" + input.getClass().getSimpleName() + "'");
 					}
 					catch(DateTimeException e)
 					{
@@ -109,31 +105,25 @@ public class ZonedDateTimeScalar
 
 				private ZonedDateTime parse(Object input)
 				{
-					if(input instanceof Map map)
+					if(! (input instanceof String string))
 					{
-						var dateTime = map.get("dateTime");
-						var zone = map.get("zone");
-
-						if(dateTime instanceof String dateTimeString)
-						{
-							LocalDateTime localDateTime = LocalDateTime.parse(dateTimeString, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
-
-							if(zone instanceof String zoneId)
-							{
-								return localDateTime.atZone(ZoneId.of(zoneId));
-							}
-
-							// If no zone has been specified fallback to UTC
-							return localDateTime.atZone(ZoneOffset.UTC);
-						}
-					}
-					else if(input instanceof String string)
-					{
-						// TODO: Should this go through a few different cases?
-						return ZonedDateTime.parse(string);
+						throw new DateTimeException("Unable to convert value: " + input);
 					}
 
-					throw new DateTimeException("Unable to convert value: " + input);
+					var dt = PARSER.parseBest(
+						string,
+						ZonedDateTime::from,
+						LocalDateTime::from
+					);
+
+					if(dt instanceof ZonedDateTime zdt)
+					{
+						return zdt;
+					}
+					else
+					{
+						return ((LocalDateTime) dt).atZone(ZoneOffset.UTC);
+					}
 				}
 			})
 			.build();
