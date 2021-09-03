@@ -6,8 +6,6 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 
-import java.util.Map;
-
 import com.circumgraph.graphql.SingleSchemaGraphQLTest;
 
 import org.eclipse.collections.api.factory.Maps;
@@ -49,10 +47,7 @@ public class ZonedDateTimeTest
 
 		result.assertNoErrors();
 
-		Map<String, Object> map = result.pick("storeTest", "created");
-		assertThat(map, notNullValue());
-		assertThat(map.get("dateTime"), is("2021-01-01T06:07:30.999"));
-		assertThat(map.get("zone"), is("Z"));
+		assertThat(result.pick("storeTest", "created"), is("2021-01-01T06:07:30.999Z"));
 	}
 
 	@Test
@@ -116,10 +111,7 @@ public class ZonedDateTimeTest
 
 		result.assertNoErrors();
 
-		Map<String, Object> map = result.pick("storeTest", "created");
-		assertThat(map, notNullValue());
-		assertThat(map.get("dateTime"), is("2021-01-01T06:07:30.999"));
-		assertThat(map.get("zone"), is("Z"));
+		assertThat(result.pick("storeTest", "created"), is("2021-01-01T06:07:30.999Z"));
 	}
 
 	@Test
@@ -192,16 +184,13 @@ public class ZonedDateTimeTest
 			Maps.mutable.of(
 				"id", id,
 				"m", Maps.mutable.of(
-					"created", "2021-01-01T06:00:30.999Z"
+					"created", "2021-01-01T06:00:30.999[Europe/Stockholm]"
 				)
 			)
 		);
 
 		result.assertNoErrors();
 
-		Map<String, Object> map = result.pick("storeTest", "created");
-		assertThat(map, notNullValue());
-		assertThat(map.get("dateTime"), is("2021-01-01T06:00:30.999"));
-		assertThat(map.get("zone"), is("Z"));
+		assertThat(result.pick("storeTest", "created"), is("2021-01-01T06:00:30.999+01:00[Europe/Stockholm]"));
 	}
 }
