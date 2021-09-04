@@ -5,6 +5,7 @@ import java.util.Optional;
 import com.circumgraph.model.EnumDef;
 import com.circumgraph.model.SimpleValueDef;
 import com.circumgraph.storage.internal.indexing.BooleanValueIndexer;
+import com.circumgraph.storage.internal.indexing.DurationValueIndexer;
 import com.circumgraph.storage.internal.indexing.EnumValueIndexer;
 import com.circumgraph.storage.internal.indexing.FloatValueIndexer;
 import com.circumgraph.storage.internal.indexing.FullTextStringValueIndexer;
@@ -48,7 +49,8 @@ public class ValueIndexers
 			new LocalDateValueIndexer(),
 			new LocalTimeValueIndexer(),
 			new LocalDateTimeValueIndexer(),
-			new ZonedDateTimeValueIndexer()
+			new ZonedDateTimeValueIndexer(),
+			new DurationValueIndexer()
 		);
 
 		MutableMap<String, ValueIndexer> indexersByName = Maps.mutable.empty();

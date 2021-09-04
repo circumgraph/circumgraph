@@ -106,6 +106,8 @@ public class SearchQueryGenerator
 		indexerToCriteria.put("LOCAL_DATE_TIME", new LocalDateTimeCriteria());
 		indexerToCriteria.put("ZONED_DATE_TIME", new ZonedDateTimeCriteria());
 
+		indexerToCriteria.put("DURATION", new DurationCriteria());
+
 		this.pageInfoType = generatePageInfo();
 		this.pageCursorsType = generatePageCursors();
 	}
