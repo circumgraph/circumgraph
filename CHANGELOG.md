@@ -1,3 +1,16 @@
+# [0.5.0](https://github.com/circumgraph/circumgraph/compare/v0.4.0...v0.5.0) (2021-09-04)
+
+
+### Features
+
+* **graphql:** Add support for Duration scalar ([12e186e](https://github.com/circumgraph/circumgraph/commit/12e186ec5e442e3387555d1e67994f74f53b6427)), closes [#4](https://github.com/circumgraph/circumgraph/issues/4)
+* **graphql:** Add support for LocalDate scalar ([bc989e1](https://github.com/circumgraph/circumgraph/commit/bc989e1762e7cb8b01a86d899db3061bd273e605)), closes [#4](https://github.com/circumgraph/circumgraph/issues/4)
+* **graphql:** Add support for LocalDateTime scalar ([3432c82](https://github.com/circumgraph/circumgraph/commit/3432c823e1384f0f92cec300a2af7c446f695c91)), closes [#4](https://github.com/circumgraph/circumgraph/issues/4)
+* **graphql:** Add support for LocalTime scalar ([90c9795](https://github.com/circumgraph/circumgraph/commit/90c9795e67fd4d32f5773fd10bbcea35775c4315)), closes [#4](https://github.com/circumgraph/circumgraph/issues/4)
+* **graphql:** Add support for OffsetDateTime scalar ([da1d537](https://github.com/circumgraph/circumgraph/commit/da1d537adb7c235649f3a5beaceff4b9b9fb9986)), closes [#4](https://github.com/circumgraph/circumgraph/issues/4)
+* **graphql:** Add support for OffsetTime scalar ([3234f82](https://github.com/circumgraph/circumgraph/commit/3234f82ff3195824b57d435c00f34b29d2aadd44)), closes [#4](https://github.com/circumgraph/circumgraph/issues/4)
+* **graphql:** Add support for ZonedDateTime scalar ([59bcd8d](https://github.com/circumgraph/circumgraph/commit/59bcd8d213366f5c010321bd05116b38f002b7dc)), closes [#4](https://github.com/circumgraph/circumgraph/issues/4)
+
 # [0.4.0](https://github.com/circumgraph/circumgraph/compare/v0.3.0...v0.4.0) (2021-08-31)
 
 
