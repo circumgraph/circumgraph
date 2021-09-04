@@ -21,6 +21,7 @@ import com.circumgraph.storage.StorageSchema;
 import com.circumgraph.storage.StructuredValue;
 import com.circumgraph.storage.internal.serializers.BooleanValueSerializer;
 import com.circumgraph.storage.internal.serializers.DeferredValueSerializer;
+import com.circumgraph.storage.internal.serializers.DurationValueSerializer;
 import com.circumgraph.storage.internal.serializers.EnumValueSerializer;
 import com.circumgraph.storage.internal.serializers.FloatValueSerializer;
 import com.circumgraph.storage.internal.serializers.IdValueSerializer;
@@ -70,7 +71,8 @@ public class ValueSerializers
 			.newWithKeyValue(ScalarDef.LOCAL_DATE, new LocalDateValueSerializer())
 			.newWithKeyValue(ScalarDef.LOCAL_TIME, new LocalTimeValueSerializer())
 			.newWithKeyValue(ScalarDef.LOCAL_DATE_TIME, new LocalDateTimeValueSerializer())
-			.newWithKeyValue(ScalarDef.ZONED_DATE_TIME, new ZonedDateTimeValueSerializer());
+			.newWithKeyValue(ScalarDef.ZONED_DATE_TIME, new ZonedDateTimeValueSerializer())
+			.newWithKeyValue(ScalarDef.DURATION, new DurationValueSerializer());
 	}
 
 	private ValueSerializer<?> resolve(OutputTypeDef def)

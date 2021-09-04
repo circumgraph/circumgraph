@@ -324,7 +324,8 @@ public class ModelBuilderImpl
 			ScalarDef.LOCAL_DATE,
 			ScalarDef.LOCAL_TIME,
 			ScalarDef.LOCAL_DATE_TIME,
-			ScalarDef.ZONED_DATE_TIME
+			ScalarDef.ZONED_DATE_TIME,
+			ScalarDef.DURATION
 		), Lists.immutable.empty(), Lists.immutable.empty());
 	}
 
