@@ -20,11 +20,5 @@ public class BooleanScalar
 	{
 		return Scalars.GraphQLBoolean;
 	}
-
-	@Override
-	public Boolean fromInput(Object inputValue)
-	{
-		return (Boolean) inputValue;
-	}
 }
 

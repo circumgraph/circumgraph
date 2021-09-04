@@ -85,15 +85,4 @@ public class DurationScalar
 	{
 		return type;
 	}
-
-	@Override
-	public PeriodDuration fromInput(Object inputValue)
-	{
-		if(inputValue instanceof PeriodDuration pd)
-		{
-			return pd;
-		}
-
-		return PeriodDuration.parse(inputValue.toString());
-	}
 }

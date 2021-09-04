@@ -2,7 +2,6 @@ package com.circumgraph.graphql.internal.processors;
 
 import com.circumgraph.graphql.GraphQLModel;
 import com.circumgraph.graphql.MutationInputMapper;
-import com.circumgraph.graphql.ScalarMapper;
 import com.circumgraph.graphql.internal.SchemaNames;
 import com.circumgraph.graphql.internal.mutation.DeferredMutationMapper;
 import com.circumgraph.graphql.internal.mutation.EnumMutationMapper;
@@ -13,16 +12,6 @@ import com.circumgraph.graphql.internal.mutation.StoredObjectRefMutationMapper;
 import com.circumgraph.graphql.internal.mutation.StructuredValueMutationMapper;
 import com.circumgraph.graphql.internal.resolvers.CollectionDeleteMutation;
 import com.circumgraph.graphql.internal.resolvers.CollectionStoreMutation;
-import com.circumgraph.graphql.scalars.BooleanScalar;
-import com.circumgraph.graphql.scalars.DurationScalar;
-import com.circumgraph.graphql.scalars.FloatScalar;
-import com.circumgraph.graphql.scalars.IDScalar;
-import com.circumgraph.graphql.scalars.IntScalar;
-import com.circumgraph.graphql.scalars.LocalDateScalar;
-import com.circumgraph.graphql.scalars.LocalDateTimeScalar;
-import com.circumgraph.graphql.scalars.LocalTimeScalar;
-import com.circumgraph.graphql.scalars.StringScalar;
-import com.circumgraph.graphql.scalars.ZonedDateTimeScalar;
 import com.circumgraph.model.ArgumentDef;
 import com.circumgraph.model.EnumDef;
 import com.circumgraph.model.FieldDef;
@@ -42,9 +31,6 @@ import com.circumgraph.model.processing.ProcessingEncounter;
 import com.circumgraph.model.processing.TypeDefProcessor;
 import com.circumgraph.storage.StorageSchema;
 
-import org.eclipse.collections.api.factory.Maps;
-import org.eclipse.collections.api.map.ImmutableMap;
-
 /**
  * {@link TypeDefProcessor} that generates GraphQL mutations for every entity.
  */
@@ -55,8 +41,6 @@ public class MutationProcessor
 	public static final MetadataKey<MutationInputMapper> MAPPER =
 		MetadataKey.create("graphql:mutation-mapper", MutationInputMapper.class);
 
-	private final ImmutableMap<ScalarDef, ScalarMapper<?>> scalars;
-
 	private static final ObjectDef DELETE_RESULT = ObjectDef.create("DeleteResult")
 		.withDescription("Object used to signal if something was deleted")
 		.addField(FieldDef.create("success")
@@ -66,21 +50,6 @@ public class MutationProcessor
 			.build()
 		)
 		.build();
-
-	public MutationProcessor()
-	{
-		scalars = Maps.immutable.<ScalarDef, ScalarMapper<?>>empty()
-			.newWithKeyValue(ScalarDef.BOOLEAN, new BooleanScalar())
-			.newWithKeyValue(ScalarDef.FLOAT, new FloatScalar())
-			.newWithKeyValue(ScalarDef.ID, new IDScalar())
-			.newWithKeyValue(ScalarDef.INT, new IntScalar())
-			.newWithKeyValue(ScalarDef.STRING, new StringScalar())
-			.newWithKeyValue(ScalarDef.LOCAL_DATE, new LocalDateScalar())
-			.newWithKeyValue(ScalarDef.LOCAL_TIME, new LocalTimeScalar())
-			.newWithKeyValue(ScalarDef.LOCAL_DATE_TIME, new LocalDateTimeScalar())
-			.newWithKeyValue(ScalarDef.ZONED_DATE_TIME, new ZonedDateTimeScalar())
-			.newWithKeyValue(ScalarDef.DURATION, new DurationScalar());
-	}
 
 	@Override
 	public Location getLocation()
@@ -154,9 +123,9 @@ public class MutationProcessor
 		}
 
 		MutationInputMapper<?> mapper;
-		if(def instanceof ScalarDef)
+		if(def instanceof ScalarDef scalarDef)
 		{
-			mapper = new ScalarMutationMapper((ScalarMapper) scalars.get(def));
+			mapper = new ScalarMutationMapper(scalarDef);
 		}
 		else if(def instanceof StructuredDef)
 		{

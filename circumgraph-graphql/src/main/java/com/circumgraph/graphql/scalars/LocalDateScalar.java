@@ -85,15 +85,4 @@ public class LocalDateScalar
 	{
 		return type;
 	}
-
-	@Override
-	public LocalDate fromInput(Object inputValue)
-	{
-		if(inputValue instanceof LocalDate localDate)
-		{
-			return localDate;
-		}
-
-		return LocalDate.parse(inputValue.toString(), DateTimeFormatter.ISO_LOCAL_DATE);
-	}
 }

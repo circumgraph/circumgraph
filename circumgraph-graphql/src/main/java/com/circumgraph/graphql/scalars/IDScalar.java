@@ -21,10 +21,4 @@ public class IDScalar
 	{
 		return Scalars.GraphQLID;
 	}
-
-	@Override
-	public Long fromInput(Object inputValue)
-	{
-		return StorageIds.decode(inputValue.toString());
-	}
 }
