@@ -6,6 +6,8 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
+import static org.hamcrest.Matchers.oneOf;
+import static org.hamcrest.Matchers.startsWith;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.Optional;
@@ -423,7 +425,7 @@ public class ObjectDefTest
 		assertThat(msg.getLevel(), is(ValidationMessageLevel.ERROR));
 		assertThat(msg.getCode(), is("model:incompatible-type"));
 		assertThat(msg.getArguments().get("type"), is("Test"));
-		assertThat(msg.getArguments().get("originalLocation"), is("LOC1"));
-		assertThat(msg.getMessage(), is("Could not merge: `Test` has a different type than previously defined at LOC1"));
+		assertThat(msg.getArguments().get("originalLocation"), is(oneOf("LOC1", "LOC2")));
+		assertThat(msg.getMessage(), startsWith("Could not merge: `Test` has a different type than previously defined at"));
 	}
 }

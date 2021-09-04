@@ -52,5 +52,7 @@ public interface ScalarDef
 
 	static final ScalarDef DURATION = new ScalarDefImpl("Duration", null);
 
+	static final ScalarDef OFFSET_TIME = new ScalarDefImpl("OffsetTime", null);
+
 	static final ScalarDef OFFSET_DATE_TIME = new ScalarDefImpl("OffsetDateTime", null);
 }
