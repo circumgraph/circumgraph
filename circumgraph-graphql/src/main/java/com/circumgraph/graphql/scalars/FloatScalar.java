@@ -20,11 +20,5 @@ public class FloatScalar
 	{
 		return Scalars.GraphQLFloat;
 	}
-
-	@Override
-	public Double fromInput(Object inputValue)
-	{
-		return ((Number) inputValue).doubleValue();
-	}
 }
 

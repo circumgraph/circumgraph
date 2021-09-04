@@ -20,10 +20,4 @@ public class StringScalar
 	{
 		return Scalars.GraphQLString;
 	}
-
-	@Override
-	public String fromInput(Object inputValue)
-	{
-		return inputValue.toString();
-	}
 }

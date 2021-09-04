@@ -140,15 +140,4 @@ public class ZonedDateTimeScalar
 	{
 		return type;
 	}
-
-	@Override
-	public ZonedDateTime fromInput(Object inputValue)
-	{
-		if(inputValue instanceof ZonedDateTime zonedDateTime)
-		{
-			return zonedDateTime;
-		}
-
-		return ZonedDateTime.parse(inputValue.toString(), DateTimeFormatter.ISO_ZONED_DATE_TIME);
-	}
 }

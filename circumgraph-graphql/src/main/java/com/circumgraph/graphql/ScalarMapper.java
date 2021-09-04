@@ -23,15 +23,4 @@ public interface ScalarMapper<V>
 	 * @return
 	 */
 	GraphQLScalarType getGraphQLType();
-
-	/**
-	 * Convert from an input value into a value that will be used with
-	 * {@link ScalarValueMutation a scalar value mutation}.
-	 *
-	 * @param inputValue
-	 *   value to convert
-	 * @return
-	 *   converted value
-	 */
-	V fromInput(Object inputValue);
 }

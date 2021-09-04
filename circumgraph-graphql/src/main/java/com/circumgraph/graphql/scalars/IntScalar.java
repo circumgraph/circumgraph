@@ -20,10 +20,4 @@ public class IntScalar
 	{
 		return Scalars.GraphQLInt;
 	}
-
-	@Override
-	public Integer fromInput(Object inputValue)
-	{
-		return ((Number) inputValue).intValue();
-	}
 }
