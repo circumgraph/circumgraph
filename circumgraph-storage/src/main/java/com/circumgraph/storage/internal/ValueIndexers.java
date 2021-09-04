@@ -14,6 +14,7 @@ import com.circumgraph.storage.internal.indexing.IntValueIndexer;
 import com.circumgraph.storage.internal.indexing.LocalDateTimeValueIndexer;
 import com.circumgraph.storage.internal.indexing.LocalDateValueIndexer;
 import com.circumgraph.storage.internal.indexing.LocalTimeValueIndexer;
+import com.circumgraph.storage.internal.indexing.OffsetDateTimeValueIndexer;
 import com.circumgraph.storage.internal.indexing.TokenStringValueIndexer;
 import com.circumgraph.storage.internal.indexing.TypeAheadStringValueIndexer;
 import com.circumgraph.storage.internal.indexing.ZonedDateTimeValueIndexer;
@@ -49,6 +50,7 @@ public class ValueIndexers
 			new LocalDateValueIndexer(),
 			new LocalTimeValueIndexer(),
 			new LocalDateTimeValueIndexer(),
+			new OffsetDateTimeValueIndexer(),
 			new ZonedDateTimeValueIndexer(),
 			new DurationValueIndexer()
 		);

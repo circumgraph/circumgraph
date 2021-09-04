@@ -30,6 +30,7 @@ import com.circumgraph.storage.internal.serializers.ListValueSerializer;
 import com.circumgraph.storage.internal.serializers.LocalDateTimeValueSerializer;
 import com.circumgraph.storage.internal.serializers.LocalDateValueSerializer;
 import com.circumgraph.storage.internal.serializers.LocalTimeValueSerializer;
+import com.circumgraph.storage.internal.serializers.OffsetDateTimeValueSerializer;
 import com.circumgraph.storage.internal.serializers.PolymorphicValueSerializer;
 import com.circumgraph.storage.internal.serializers.StoredObjectRefSerializer;
 import com.circumgraph.storage.internal.serializers.StringValueSerializer;
@@ -71,6 +72,7 @@ public class ValueSerializers
 			.newWithKeyValue(ScalarDef.LOCAL_DATE, new LocalDateValueSerializer())
 			.newWithKeyValue(ScalarDef.LOCAL_TIME, new LocalTimeValueSerializer())
 			.newWithKeyValue(ScalarDef.LOCAL_DATE_TIME, new LocalDateTimeValueSerializer())
+			.newWithKeyValue(ScalarDef.OFFSET_DATE_TIME, new OffsetDateTimeValueSerializer())
 			.newWithKeyValue(ScalarDef.ZONED_DATE_TIME, new ZonedDateTimeValueSerializer())
 			.newWithKeyValue(ScalarDef.DURATION, new DurationValueSerializer());
 	}

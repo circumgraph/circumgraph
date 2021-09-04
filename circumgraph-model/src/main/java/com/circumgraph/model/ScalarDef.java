@@ -51,4 +51,6 @@ public interface ScalarDef
 	static final ScalarDef ZONED_DATE_TIME = new ScalarDefImpl("ZonedDateTime", null);
 
 	static final ScalarDef DURATION = new ScalarDefImpl("Duration", null);
+
+	static final ScalarDef OFFSET_DATE_TIME = new ScalarDefImpl("OffsetDateTime", null);
 }
