@@ -75,8 +75,9 @@ public class TransactionInstrumentation
 		var tx = ((State) parameters.getInstrumentationState()).tx;
 		return executionContext.transform(builder -> {
 			// TODO: Pull auth from the context
-
-			builder.context(new StorageContext(tx));
+			builder.graphQLContext(executionContext.getGraphQLContext()
+				.put("transaction", tx)
+			);
 		});
 	}
 
