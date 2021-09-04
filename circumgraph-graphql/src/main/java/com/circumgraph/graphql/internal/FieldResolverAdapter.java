@@ -46,8 +46,8 @@ public class FieldResolverAdapter
 	public Object get(DataFetchingEnvironment environment)
 		throws Exception
 	{
-		StorageContext ctx = environment.getContext();
-		Transaction tx = ctx.getTx();
+		Transaction tx = environment.getGraphQlContext()
+			.get("transaction");
 		return map(tx, resolver.resolve(environment));
 	}
 

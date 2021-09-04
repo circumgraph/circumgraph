@@ -2,7 +2,6 @@ package com.circumgraph.graphql.internal.resolvers;
 
 import com.circumgraph.graphql.FieldResolver;
 import com.circumgraph.graphql.FieldResolverFactory;
-import com.circumgraph.graphql.internal.StorageContext;
 import com.circumgraph.model.StructuredDef;
 import com.circumgraph.storage.Collection;
 import com.circumgraph.storage.StorageSchema;
@@ -37,8 +36,7 @@ public class ReferenceByIdResolver
 		}
 
 		// Fetch the object in the current transaction
-		StorageContext ctx = env.getContext();
-		return ctx.getTx().wrap(collection.get(value.get().getId()));
+		return collection.get(value.get().getId());
 	}
 
 	/**
