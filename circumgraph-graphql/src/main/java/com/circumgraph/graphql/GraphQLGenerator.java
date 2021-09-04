@@ -14,6 +14,7 @@ import com.circumgraph.graphql.scalars.IntScalar;
 import com.circumgraph.graphql.scalars.LocalDateScalar;
 import com.circumgraph.graphql.scalars.LocalDateTimeScalar;
 import com.circumgraph.graphql.scalars.LocalTimeScalar;
+import com.circumgraph.graphql.scalars.OffsetDateTimeScalar;
 import com.circumgraph.graphql.scalars.StringScalar;
 import com.circumgraph.graphql.scalars.ZonedDateTimeScalar;
 import com.circumgraph.model.EnumDef;
@@ -76,6 +77,7 @@ public class GraphQLGenerator
 			.newWithKeyValue(ScalarDef.LOCAL_DATE, new LocalDateScalar())
 			.newWithKeyValue(ScalarDef.LOCAL_TIME, new LocalTimeScalar())
 			.newWithKeyValue(ScalarDef.LOCAL_DATE_TIME, new LocalDateTimeScalar())
+			.newWithKeyValue(ScalarDef.OFFSET_DATE_TIME, new OffsetDateTimeScalar())
 			.newWithKeyValue(ScalarDef.ZONED_DATE_TIME, new ZonedDateTimeScalar())
 			.newWithKeyValue(ScalarDef.DURATION, new DurationScalar());
 
