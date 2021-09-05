@@ -1,3 +1,10 @@
+# [0.6.0](https://github.com/circumgraph/circumgraph/compare/v0.5.1...v0.6.0) (2021-09-05)
+
+
+### Features
+
+* update dependency com.graphql-java:graphql-java to v17.2 ([66f4dc8](https://github.com/circumgraph/circumgraph/commit/66f4dc8c168e7149b0884012aa5fad5d88edad0f))
+
 ## [0.5.1](https://github.com/circumgraph/circumgraph/compare/v0.5.0...v0.5.1) (2021-09-05)
 
 
