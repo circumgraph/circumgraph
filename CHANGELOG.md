@@ -1,3 +1,10 @@
+## [0.5.1](https://github.com/circumgraph/circumgraph/compare/v0.5.0...v0.5.1) (2021-09-05)
+
+
+### Bug Fixes
+
+* update dependency io.vertx:vertx-web-graphql to v4.1.3 ([34b67a6](https://github.com/circumgraph/circumgraph/commit/34b67a6aff2fc3610108a836efa6aca61fa71222))
+
 # [0.5.0](https://github.com/circumgraph/circumgraph/compare/v0.4.0...v0.5.0) (2021-09-04)
 
 
