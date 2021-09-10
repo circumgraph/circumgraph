@@ -54,9 +54,7 @@ public class FloatIndexTest
 			.build();
 
 		var stored = collection.store(mutation).block();
-
-		var idValue = (SimpleValue) stored.getFields().get("id");
-		long id = (long) idValue.get();
+		var id = stored.getId();
 
 		var fetched = collection.get(id).block();
 		assertThat(fetched, is(stored));

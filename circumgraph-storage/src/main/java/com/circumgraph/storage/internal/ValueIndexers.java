@@ -9,7 +9,6 @@ import com.circumgraph.storage.internal.indexing.DurationValueIndexer;
 import com.circumgraph.storage.internal.indexing.EnumValueIndexer;
 import com.circumgraph.storage.internal.indexing.FloatValueIndexer;
 import com.circumgraph.storage.internal.indexing.FullTextStringValueIndexer;
-import com.circumgraph.storage.internal.indexing.IdValueIndexer;
 import com.circumgraph.storage.internal.indexing.IntValueIndexer;
 import com.circumgraph.storage.internal.indexing.LocalDateTimeValueIndexer;
 import com.circumgraph.storage.internal.indexing.LocalDateValueIndexer;
@@ -46,7 +45,6 @@ public class ValueIndexers
 			new TypeAheadStringValueIndexer(),
 			new FloatValueIndexer(),
 			new IntValueIndexer(),
-			new IdValueIndexer(),
 			new BooleanValueIndexer(),
 			new LocalDateValueIndexer(),
 			new LocalTimeValueIndexer(),

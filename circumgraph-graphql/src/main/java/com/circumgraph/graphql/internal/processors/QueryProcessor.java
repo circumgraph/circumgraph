@@ -3,7 +3,6 @@ package com.circumgraph.graphql.internal.processors;
 import com.circumgraph.graphql.FieldResolver;
 import com.circumgraph.graphql.GraphQLModel;
 import com.circumgraph.graphql.internal.SchemaNames;
-import com.circumgraph.graphql.internal.StorageIds;
 import com.circumgraph.graphql.internal.resolvers.RootQueryResolverFactory;
 import com.circumgraph.graphql.internal.search.SearchQueryGenerator;
 import com.circumgraph.model.ArgumentDef;
@@ -27,8 +26,7 @@ public class QueryProcessor
 {
 	private static final FieldResolver GET_BY_ID = env -> {
 		Collection collection = env.getSource();
-		String id = env.getArgument("id");
-		return collection.get(StorageIds.decode(id));
+		return collection.get(env.getArgument("id"));
 	};
 
 	private final SearchQueryGenerator generator;

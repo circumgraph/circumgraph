@@ -6,7 +6,6 @@ import java.util.Objects;
 import com.circumgraph.graphql.MutationInputMapper;
 import com.circumgraph.graphql.internal.InputUnions;
 import com.circumgraph.graphql.internal.SchemaNames;
-import com.circumgraph.graphql.internal.StorageIds;
 import com.circumgraph.model.InputFieldDef;
 import com.circumgraph.model.InputObjectDef;
 import com.circumgraph.model.NonNullDef;
@@ -56,7 +55,7 @@ public class StoredObjectRefMutationMapper
 		InputUnions.validate(graphQLType, value);
 
 		var id = (String) value.get("id");
-		return StoredObjectRefMutation.create(modelDef, StorageIds.decode(id));
+		return StoredObjectRefMutation.create(modelDef, id);
 	}
 
 	@Override

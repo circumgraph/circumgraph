@@ -6,7 +6,6 @@ import com.circumgraph.graphql.FieldResolver;
 import com.circumgraph.graphql.FieldResolverFactory;
 import com.circumgraph.graphql.GraphQLCreationEncounter;
 import com.circumgraph.graphql.MutationInputMapper;
-import com.circumgraph.graphql.internal.StorageIds;
 import com.circumgraph.storage.mutation.StructuredMutation;
 
 public class CollectionStoreMutation
@@ -26,10 +25,10 @@ public class CollectionStoreMutation
 	{
 		var collection = encounter.getStorage().get(mutationMapper.getModelDef().getName());
 		return env -> {
-			var id = env.getArgument("id") != null ? StorageIds.decode(env.getArgument("id")) : 0;
+			var id = (String) env.getArgument("id");
 			var mutation =  (StructuredMutation) mutationMapper.toMutation(env.getArgument("mutation"));
 
-			if(id > 0)
+			if(id != null)
 			{
 				return collection.store(id, mutation);
 			}

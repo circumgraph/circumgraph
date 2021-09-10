@@ -8,7 +8,6 @@ import com.circumgraph.model.FieldDef;
 import com.circumgraph.model.ObjectDef;
 import com.circumgraph.model.ScalarDef;
 import com.circumgraph.model.Schema;
-import com.circumgraph.storage.SimpleValue;
 import com.circumgraph.storage.SingleSchemaTest;
 import com.circumgraph.storage.StorageSchema;
 import com.circumgraph.storage.mutation.ScalarValueMutation;
@@ -51,9 +50,7 @@ public class StringSearchTokenTest
 			.build();
 
 		var stored = collection.store(mutation).block();
-
-		var idValue = (SimpleValue) stored.getFields().get("id");
-		long id = (long) idValue.get();
+		var id = stored.getId();
 
 		var fetched = collection.get(id).block();
 		assertThat(fetched, is(stored));

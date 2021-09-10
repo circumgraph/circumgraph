@@ -10,9 +10,6 @@ import com.circumgraph.storage.mutation.ScalarValueMutation;
 import org.eclipse.collections.api.factory.Maps;
 import org.junit.jupiter.api.Test;
 
-import se.l4.ylem.ids.Base62LongIdCodec;
-import se.l4.ylem.ids.LongIdCodec;
-
 public class BasicGetAndStoreTest
 	extends SingleSchemaGraphQLTest
 {
@@ -29,8 +26,6 @@ public class BasicGetAndStoreTest
 	@Test
 	public void testGetPreviouslyStored()
 	{
-		LongIdCodec<String> idCodec = new Base62LongIdCodec();
-
 		// Store test data
 		Collection entity = storage.get("Test");
 
@@ -40,13 +35,13 @@ public class BasicGetAndStoreTest
 		).block();
 
 		// Extract the id of the test data
-		var encodedId = idCodec.encode(stored.getId());
+		var id = stored.getId();
 
 		// Execute a query
 		var result = execute(
 			"query($id: ID!) { test { get(id: $id) { id, title } } }",
 			Maps.mutable.of(
-				"id", encodedId
+				"id", id
 			)
 		);
 
@@ -57,7 +52,7 @@ public class BasicGetAndStoreTest
 		assertThat(result.pick("test", "get", "title"), is("Hello World"));
 
 		// Verify that the id is correct
-		assertThat(result.pick("test", "get", "id"), is(encodedId));
+		assertThat(result.pick("test", "get", "id"), is(id));
 	}
 
 	@Test
@@ -193,8 +188,6 @@ public class BasicGetAndStoreTest
 	@Test
 	public void testMutationDelete()
 	{
-		LongIdCodec<String> idCodec = new Base62LongIdCodec();
-
 		// Store test data
 		Collection entity = storage.get("Test");
 
@@ -204,13 +197,13 @@ public class BasicGetAndStoreTest
 		).block();
 
 		// Extract the id of the test data
-		var encodedId = idCodec.encode(stored.getId());
+		var id = stored.getId();
 
 		// Execute a query
 		var result = execute(
 			"mutation($id: ID!) { deleteTest(id: $id) { success } }",
 			Maps.mutable.of(
-				"id", encodedId
+				"id", id
 			)
 		);
 

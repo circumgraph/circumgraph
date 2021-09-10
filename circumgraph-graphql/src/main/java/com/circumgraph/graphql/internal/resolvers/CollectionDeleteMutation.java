@@ -5,7 +5,6 @@ import java.util.Objects;
 import com.circumgraph.graphql.FieldResolver;
 import com.circumgraph.graphql.FieldResolverFactory;
 import com.circumgraph.graphql.GraphQLCreationEncounter;
-import com.circumgraph.graphql.internal.StorageIds;
 import com.circumgraph.model.StructuredDef;
 
 public class CollectionDeleteMutation
@@ -25,8 +24,7 @@ public class CollectionDeleteMutation
 	{
 		var collection = encounter.getStorage().get(def.getName());
 		return env -> {
-			var id = StorageIds.decode(env.getArgument("id"));
-			return collection.delete(id);
+			return collection.delete(env.getArgument("id"));
 		};
 	}
 

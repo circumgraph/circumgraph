@@ -73,7 +73,7 @@ public class ZonedDateTimeTest
 
 		var error = result.errors().getFirst();
 		assertThat(error, notNullValue());
-		assertThat(error.getMessage(), containsString("Invalid ZonedDateTime format"));
+		assertThat(error.getMessage(), containsString("Invalid ZonedDateTime"));
 	}
 
 	@Test

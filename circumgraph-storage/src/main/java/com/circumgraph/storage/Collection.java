@@ -40,7 +40,7 @@ public interface Collection
 	 * @param id
 	 * @return
 	 */
-	Mono<Boolean> contains(long id);
+	Mono<Boolean> contains(String id);
 
 	/**
 	 * Get a value based on its identifier.
@@ -48,7 +48,7 @@ public interface Collection
 	 * @param id
 	 * @return
 	 */
-	Mono<StoredObjectValue> get(long id);
+	Mono<StoredObjectValue> get(String id);
 
 	/**
 	 * Create and store an object.
@@ -67,7 +67,7 @@ public interface Collection
 	 * @return
 	 *   the object with mutations applied
 	 */
-	Mono<StoredObjectValue> store(long id, StructuredMutation mutation);
+	Mono<StoredObjectValue> store(String id, StructuredMutation mutation);
 
 	/**
 	 * Delete a stored object.
@@ -75,7 +75,7 @@ public interface Collection
 	 * @param id
 	 * @return
 	 */
-	Mono<Void> delete(long id);
+	Mono<Void> delete(String id);
 
 	/**
 	 * Execute a specific query.

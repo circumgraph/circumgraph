@@ -41,6 +41,6 @@ public class StoredObjectRefSerializer
 	public void write(StoredObjectRef object, StreamingOutput out)
 		throws IOException
 	{
-		out.writeLong(object.getId());
+		out.writeLong(object.getDecodedId());
 	}
 }

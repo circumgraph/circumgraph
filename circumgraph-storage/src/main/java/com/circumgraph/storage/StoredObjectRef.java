@@ -11,5 +11,12 @@ public interface StoredObjectRef
 	 *
 	 * @return
 	 */
-	long getId();
+	String getId();
+
+	/**
+	 * Get the decoded identifier.
+	 *
+	 * @return
+	 */
+	long getDecodedId();
 }

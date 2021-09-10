@@ -2,7 +2,6 @@ package com.circumgraph.graphql.internal.search;
 
 import java.util.Map;
 
-import com.circumgraph.graphql.internal.StorageIds;
 import com.circumgraph.model.InputFieldDef;
 import com.circumgraph.model.InputObjectDef;
 import com.circumgraph.model.OutputTypeDef;
@@ -72,7 +71,7 @@ public class IDCriteria
 
 			try
 			{
-				return EqualsMatcher.create(StorageIds.decode(value));
+				return EqualsMatcher.create(value);
 			}
 			catch(RuntimeException e)
 			{

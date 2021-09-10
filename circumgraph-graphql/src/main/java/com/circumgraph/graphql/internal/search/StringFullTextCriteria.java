@@ -66,6 +66,7 @@ public class StringFullTextCriteria
 	}
 
 	@Override
+	@SuppressWarnings("unchecked")
 	public Matcher<?> createMatcher(Map<String, Object> data)
 	{
 		if(data.get("match") != null)

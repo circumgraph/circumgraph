@@ -100,7 +100,7 @@ public class PolymorphicEntityIndexTest
 			.build();
 
 		var stored = collection.store(mutation).block();
-		long id = stored.getId();
+		var id = stored.getId();
 
 		var fetched = collection.get(id).block();
 		assertThat(fetched, is(stored));
@@ -118,7 +118,7 @@ public class PolymorphicEntityIndexTest
 			.build();
 
 		var stored = collection.store(mutation).block();
-		long id = stored.getId();
+		var id = stored.getId();
 
 		var rootPath = QueryPath.root(collection.getDefinition());
 		var results = collection.search(
@@ -142,7 +142,7 @@ public class PolymorphicEntityIndexTest
 			.build();
 
 		var stored = collection.store(mutation).block();
-		long id = stored.getId();
+		var id = stored.getId();
 
 		var rootPath = QueryPath.root(collection.getDefinition());
 		var results = collection.search(
@@ -166,7 +166,7 @@ public class PolymorphicEntityIndexTest
 			.build();
 
 		var stored = collection.store(mutation).block();
-		long id = stored.getId();
+		var id = stored.getId();
 
 		var rootPath = QueryPath.root(collection.getDefinition());
 		var results = collection.search(

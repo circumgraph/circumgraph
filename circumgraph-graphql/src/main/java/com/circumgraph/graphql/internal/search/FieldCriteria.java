@@ -70,6 +70,7 @@ public class FieldCriteria
 	}
 
 	@Override
+	@SuppressWarnings("unchecked")
 	public QueryClause toClause(Map<String, Object> data, QueryPath path)
 	{
 		InputUnions.validate(graphQLType, data);
