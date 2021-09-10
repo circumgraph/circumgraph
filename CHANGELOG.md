@@ -1,3 +1,10 @@
+## [0.6.1](https://github.com/circumgraph/circumgraph/compare/v0.6.0...v0.6.1) (2021-09-10)
+
+
+### Bug Fixes
+
+* update dependency ch.qos.logback:logback-classic to v1.2.6 ([1d80348](https://github.com/circumgraph/circumgraph/commit/1d8034884fa6a5dc8c9be21d0189e552810a500f))
+
 # [0.6.0](https://github.com/circumgraph/circumgraph/compare/v0.5.1...v0.6.0) (2021-09-05)
 
 
