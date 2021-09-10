@@ -5,19 +5,8 @@ import java.util.List;
 import com.circumgraph.graphql.internal.DataFetcherExceptionHandlerImpl;
 import com.circumgraph.graphql.internal.FieldResolverAdapter;
 import com.circumgraph.graphql.internal.InterfaceResolver;
+import com.circumgraph.graphql.internal.ScalarCoercing;
 import com.circumgraph.graphql.internal.TransactionInstrumentation;
-import com.circumgraph.graphql.scalars.BooleanScalar;
-import com.circumgraph.graphql.scalars.DurationScalar;
-import com.circumgraph.graphql.scalars.FloatScalar;
-import com.circumgraph.graphql.scalars.IDScalar;
-import com.circumgraph.graphql.scalars.IntScalar;
-import com.circumgraph.graphql.scalars.LocalDateScalar;
-import com.circumgraph.graphql.scalars.LocalDateTimeScalar;
-import com.circumgraph.graphql.scalars.LocalTimeScalar;
-import com.circumgraph.graphql.scalars.OffsetDateTimeScalar;
-import com.circumgraph.graphql.scalars.OffsetTimeScalar;
-import com.circumgraph.graphql.scalars.StringScalar;
-import com.circumgraph.graphql.scalars.ZonedDateTimeScalar;
 import com.circumgraph.model.EnumDef;
 import com.circumgraph.model.FieldDef;
 import com.circumgraph.model.InputObjectDef;
@@ -34,9 +23,10 @@ import com.circumgraph.model.StructuredDef;
 import com.circumgraph.model.TypeDef;
 import com.circumgraph.model.UnionDef;
 import com.circumgraph.storage.Storage;
+import com.circumgraph.storage.scalars.Scalar;
+import com.circumgraph.storage.scalars.Scalars;
 
 import org.eclipse.collections.api.factory.Lists;
-import org.eclipse.collections.api.factory.Maps;
 import org.eclipse.collections.api.map.ImmutableMap;
 
 import graphql.GraphQL;
@@ -54,6 +44,7 @@ import graphql.schema.GraphQLList;
 import graphql.schema.GraphQLNonNull;
 import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLOutputType;
+import graphql.schema.GraphQLScalarType;
 import graphql.schema.GraphQLSchema;
 import graphql.schema.GraphQLType;
 import graphql.schema.GraphQLTypeReference;
@@ -63,25 +54,17 @@ public class GraphQLGenerator
 {
 	private final Storage storage;
 	private final GraphQLCreationEncounter encounter;
-	private final ImmutableMap<ScalarDef, ScalarMapper<?>> scalars;
+	private final ImmutableMap<ScalarDef, GraphQLScalarType> scalars;
 
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public GraphQLGenerator(Storage storage)
 	{
 		this.storage = storage;
 
-		scalars = Maps.immutable.<ScalarDef, ScalarMapper<?>>empty()
-			.newWithKeyValue(ScalarDef.BOOLEAN, new BooleanScalar())
-			.newWithKeyValue(ScalarDef.FLOAT, new FloatScalar())
-			.newWithKeyValue(ScalarDef.ID, new IDScalar())
-			.newWithKeyValue(ScalarDef.INT, new IntScalar())
-			.newWithKeyValue(ScalarDef.STRING, new StringScalar())
-			.newWithKeyValue(ScalarDef.LOCAL_DATE, new LocalDateScalar())
-			.newWithKeyValue(ScalarDef.LOCAL_TIME, new LocalTimeScalar())
-			.newWithKeyValue(ScalarDef.LOCAL_DATE_TIME, new LocalDateTimeScalar())
-			.newWithKeyValue(ScalarDef.OFFSET_TIME, new OffsetTimeScalar())
-			.newWithKeyValue(ScalarDef.OFFSET_DATE_TIME, new OffsetDateTimeScalar())
-			.newWithKeyValue(ScalarDef.ZONED_DATE_TIME, new ZonedDateTimeScalar())
-			.newWithKeyValue(ScalarDef.DURATION, new DurationScalar());
+		this.scalars = Scalars.instance()
+			.list()
+			.toMap(Scalar::getModelType, scalar -> generateScalar((Scalar) scalar))
+			.toImmutable();
 
 		encounter = new GraphQLCreationEncounter()
 		{
@@ -157,7 +140,7 @@ public class GraphQLGenerator
 				throw new ModelException("Unsupported scalar: " + def.getName());
 			}
 
-			return scalar.getGraphQLType();
+			return scalar;
 		}
 		else if(def instanceof ObjectDef objectDef)
 		{
@@ -249,6 +232,29 @@ public class GraphQLGenerator
 		{
 			throw new ModelException("Unsupported type encountered: " + def);
 		}
+	}
+
+	private <I, O> GraphQLScalarType generateScalar(Scalar<I, O> scalar)
+	{
+		switch(scalar.getModelType().getName())
+		{
+			case "Boolean":
+				return graphql.Scalars.GraphQLBoolean;
+			case "Float":
+				return graphql.Scalars.GraphQLFloat;
+			case "Int":
+				return graphql.Scalars.GraphQLInt;
+			case "ID":
+				return graphql.Scalars.GraphQLID;
+			case "String":
+				return graphql.Scalars.GraphQLString;
+		}
+
+		return GraphQLScalarType.newScalar()
+			.name(scalar.getModelType().getName())
+			.description(scalar.getModelType().getDescription().orElse(""))
+			.coercing(new ScalarCoercing<>(scalar))
+			.build();
 	}
 
 	/**

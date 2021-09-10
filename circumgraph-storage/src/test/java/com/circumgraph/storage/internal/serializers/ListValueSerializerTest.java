@@ -9,6 +9,7 @@ import com.circumgraph.model.ListDef;
 import com.circumgraph.model.ScalarDef;
 import com.circumgraph.storage.ListValue;
 import com.circumgraph.storage.SimpleValue;
+import com.circumgraph.storage.scalars.StringScalar;
 
 import org.eclipse.collections.api.factory.Lists;
 import org.junit.jupiter.api.Test;
@@ -26,7 +27,7 @@ public class ListValueSerializerTest
 
 		var instance = new ListValueSerializer<>(
 			def,
-			new StringValueSerializer()
+			new ScalarValueSerializer(new StringScalar())
 		);
 
 		var in = write(out -> {
@@ -53,7 +54,7 @@ public class ListValueSerializerTest
 
 		var instance = new ListValueSerializer<>(
 			def,
-			new StringValueSerializer()
+			new ScalarValueSerializer(new StringScalar())
 		);
 
 		var in = write(out -> {

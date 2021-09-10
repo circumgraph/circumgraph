@@ -81,7 +81,7 @@ public class FieldResolverAdapter
 			if(sv.getDefinition() == ScalarDef.ID && sv.get() instanceof Long l)
 			{
 				// Identifiers of type long are from the storage layer - encode these
-				return StorageIds.encode(l);
+				return sv.asString();
 			}
 
 			return sv.get();

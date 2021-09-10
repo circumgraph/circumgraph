@@ -73,7 +73,7 @@ public class OffsetDateTimeTest
 
 		var error = result.errors().getFirst();
 		assertThat(error, notNullValue());
-		assertThat(error.getMessage(), containsString("Invalid OffsetDateTime format"));
+		assertThat(error.getMessage(), containsString("Invalid OffsetDateTime"));
 	}
 
 	@Test

@@ -63,7 +63,7 @@ public class ListStringIndexTest
 			.build();
 
 		var stored = collection.store(mutation).block();
-		long id = stored.getId();
+		var id = stored.getId();
 
 		var fetched = collection.get(id).block();
 		assertThat(fetched, is(stored));

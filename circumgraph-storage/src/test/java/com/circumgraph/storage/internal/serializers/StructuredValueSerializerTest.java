@@ -10,6 +10,7 @@ import com.circumgraph.model.ObjectDef;
 import com.circumgraph.model.ScalarDef;
 import com.circumgraph.storage.SimpleValue;
 import com.circumgraph.storage.StructuredValue;
+import com.circumgraph.storage.scalars.StringScalar;
 
 import org.eclipse.collections.api.factory.Maps;
 import org.junit.jupiter.api.Test;
@@ -33,7 +34,7 @@ public class StructuredValueSerializerTest
 		var instance = new StructuredValueSerializer(
 			def,
 			Maps.immutable.of(
-				"name", new StringValueSerializer()
+				"name", new ScalarValueSerializer(new StringScalar())
 			)
 		);
 
@@ -66,7 +67,7 @@ public class StructuredValueSerializerTest
 		var instance = new StructuredValueSerializer(
 			def,
 			Maps.immutable.of(
-				"name", new StringValueSerializer()
+				"name", new ScalarValueSerializer(new StringScalar())
 			)
 		);
 
@@ -101,7 +102,7 @@ public class StructuredValueSerializerTest
 		var instance = new StructuredValueSerializer(
 			def,
 			Maps.immutable.of(
-				"name", new StringValueSerializer()
+				"name", new ScalarValueSerializer(new StringScalar())
 			)
 		);
 
@@ -139,7 +140,7 @@ public class StructuredValueSerializerTest
 		var instance = new StructuredValueSerializer(
 			def,
 			Maps.immutable.of(
-				"name", new StringValueSerializer()
+				"name", new ScalarValueSerializer(new StringScalar())
 			)
 		);
 

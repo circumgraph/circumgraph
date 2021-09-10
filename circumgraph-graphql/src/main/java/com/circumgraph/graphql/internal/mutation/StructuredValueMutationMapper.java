@@ -64,6 +64,7 @@ public class StructuredValueMutationMapper
 	}
 
 	@Override
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public Mutation toMutation(Map<String, Object> value)
 	{
 		StructuredMutation.Builder builder = StructuredMutation.create(this.modelDef);

@@ -12,5 +12,5 @@ public interface StoredObjectValue
 	 *
 	 * @return
 	 */
-	long getId();
+	String getId();
 }
