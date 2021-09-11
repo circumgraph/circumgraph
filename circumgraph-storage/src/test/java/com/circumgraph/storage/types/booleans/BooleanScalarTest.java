@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.IOException;
 
+import com.circumgraph.model.ScalarDef;
 import com.circumgraph.storage.ScalarTest;
 import com.circumgraph.storage.scalars.BooleanScalar;
 import com.circumgraph.storage.scalars.ScalarConversionException;
@@ -17,6 +18,16 @@ import se.l4.exobytes.streaming.Token;
 public class BooleanScalarTest
 	extends ScalarTest
 {
+	@Test
+	public void testTypes()
+		throws IOException
+	{
+		var instance = new BooleanScalar();
+		assertThat(instance.getModelType(), is(ScalarDef.BOOLEAN));
+		assertThat(instance.getGraphQLType(), is(Boolean.class));
+		assertThat(instance.getJavaType(), is(Boolean.class));
+	}
+
 	@Test
 	public void testToGraphQL()
 		throws IOException
@@ -44,6 +55,7 @@ public class BooleanScalarTest
 		assertThat(converted, is(false));
 	}
 
+	@Test
 	public void testToJavaStringTrue()
 		throws IOException
 	{

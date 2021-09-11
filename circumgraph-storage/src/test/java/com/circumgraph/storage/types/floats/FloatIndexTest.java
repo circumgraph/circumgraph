@@ -12,6 +12,7 @@ import com.circumgraph.storage.SimpleValue;
 import com.circumgraph.storage.SingleSchemaTest;
 import com.circumgraph.storage.StorageSchema;
 import com.circumgraph.storage.mutation.ScalarValueMutation;
+import com.circumgraph.storage.scalars.FloatScalar;
 import com.circumgraph.storage.search.Query;
 import com.circumgraph.storage.search.QueryPath;
 
@@ -23,6 +24,15 @@ import se.l4.silo.index.RangeMatcher;
 public class FloatIndexTest
 	extends SingleSchemaTest
 {
+	@Test
+	public void testTypes()
+	{
+		var instance = new FloatScalar();
+		assertThat(instance.getModelType(), is(ScalarDef.FLOAT));
+		assertThat(instance.getGraphQLType(), is(Double.class));
+		assertThat(instance.getJavaType(), is(Double.class));
+	}
+
 	@Override
 	protected Schema createSchema()
 	{

@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.time.Duration;
 import java.time.Period;
 
+import com.circumgraph.model.ScalarDef;
 import com.circumgraph.storage.ScalarTest;
 import com.circumgraph.storage.scalars.DurationScalar;
 import com.circumgraph.storage.scalars.ScalarConversionException;
@@ -20,6 +21,15 @@ import se.l4.exobytes.streaming.Token;
 public class DurationScalarTest
 	extends ScalarTest
 {
+	@Test
+	public void testTypes()
+	{
+		var instance = new DurationScalar();
+		assertThat(instance.getModelType(), is(ScalarDef.DURATION));
+		assertThat(instance.getGraphQLType(), is(String.class));
+		assertThat(instance.getJavaType(), is(PeriodDuration.class));
+	}
+
 	@Test
 	public void testToGraphQL()
 	{

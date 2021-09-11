@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.io.IOException;
 import java.time.LocalDate;
 
+import com.circumgraph.model.ScalarDef;
 import com.circumgraph.storage.ScalarTest;
 import com.circumgraph.storage.scalars.LocalDateScalar;
 import com.circumgraph.storage.scalars.ScalarConversionException;
@@ -18,6 +19,15 @@ import se.l4.exobytes.streaming.Token;
 public class LocalDateScalarTest
 	extends ScalarTest
 {
+	@Test
+	public void testTypes()
+	{
+		var instance = new LocalDateScalar();
+		assertThat(instance.getModelType(), is(ScalarDef.LOCAL_DATE));
+		assertThat(instance.getGraphQLType(), is(String.class));
+		assertThat(instance.getJavaType(), is(LocalDate.class));
+	}
+
 	@Test
 	public void testToGraphQL()
 	{

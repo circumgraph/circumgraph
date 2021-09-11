@@ -8,6 +8,7 @@ import java.time.LocalTime;
 import java.time.OffsetTime;
 import java.time.ZoneOffset;
 
+import com.circumgraph.model.ScalarDef;
 import com.circumgraph.storage.ScalarTest;
 import com.circumgraph.storage.scalars.OffsetTimeScalar;
 
@@ -18,6 +19,15 @@ import se.l4.exobytes.streaming.Token;
 public class OffsetTimeScalarTest
 	extends ScalarTest
 {
+	@Test
+	public void testTypes()
+	{
+		var instance = new OffsetTimeScalar();
+		assertThat(instance.getModelType(), is(ScalarDef.OFFSET_TIME));
+		assertThat(instance.getGraphQLType(), is(String.class));
+		assertThat(instance.getJavaType(), is(OffsetTime.class));
+	}
+
 	@Test
 	public void testToGraphQLWithUTC()
 	{
