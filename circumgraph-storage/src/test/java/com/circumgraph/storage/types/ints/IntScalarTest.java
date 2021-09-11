@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.IOException;
 
+import com.circumgraph.model.ScalarDef;
 import com.circumgraph.storage.ScalarTest;
 import com.circumgraph.storage.scalars.IntScalar;
 import com.circumgraph.storage.scalars.ScalarConversionException;
@@ -17,6 +18,15 @@ import se.l4.exobytes.streaming.Token;
 public class IntScalarTest
 	extends ScalarTest
 {
+	@Test
+	public void testTypes()
+	{
+		var instance = new IntScalar();
+		assertThat(instance.getModelType(), is(ScalarDef.INT));
+		assertThat(instance.getGraphQLType(), is(Integer.class));
+		assertThat(instance.getJavaType(), is(Integer.class));
+	}
+
 	@Test
 	public void testToGraphQL()
 		throws IOException

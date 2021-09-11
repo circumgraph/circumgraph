@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 
+import com.circumgraph.model.ScalarDef;
 import com.circumgraph.storage.internal.serializers.ValueSerializerTest;
 import com.circumgraph.storage.scalars.OffsetDateTimeScalar;
 import com.circumgraph.storage.scalars.ScalarConversionException;
@@ -19,6 +20,15 @@ import se.l4.exobytes.streaming.Token;
 public class OffsetDateTimeScalarTest
 	extends ValueSerializerTest
 {
+	@Test
+	public void testTypes()
+	{
+		var instance = new OffsetDateTimeScalar();
+		assertThat(instance.getModelType(), is(ScalarDef.OFFSET_DATE_TIME));
+		assertThat(instance.getGraphQLType(), is(String.class));
+		assertThat(instance.getJavaType(), is(OffsetDateTime.class));
+	}
+
 	@Test
 	public void testToGraphQLWithUTC()
 	{

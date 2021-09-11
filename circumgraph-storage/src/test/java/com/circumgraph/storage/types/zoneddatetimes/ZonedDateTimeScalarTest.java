@@ -10,6 +10,7 @@ import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 
+import com.circumgraph.model.ScalarDef;
 import com.circumgraph.storage.ScalarTest;
 import com.circumgraph.storage.scalars.ScalarConversionException;
 import com.circumgraph.storage.scalars.ZonedDateTimeScalar;
@@ -21,6 +22,15 @@ import se.l4.exobytes.streaming.Token;
 public class ZonedDateTimeScalarTest
 	extends ScalarTest
 {
+	@Test
+	public void testTypes()
+	{
+		var instance = new ZonedDateTimeScalar();
+		assertThat(instance.getModelType(), is(ScalarDef.ZONED_DATE_TIME));
+		assertThat(instance.getGraphQLType(), is(String.class));
+		assertThat(instance.getJavaType(), is(ZonedDateTime.class));
+	}
+
 	@Test
 	public void testToGraphQLWithNamedZone()
 	{
