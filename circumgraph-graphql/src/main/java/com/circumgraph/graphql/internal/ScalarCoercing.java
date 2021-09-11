@@ -57,19 +57,14 @@ public class ScalarCoercing<I, O>
 	public I parseValue(Object input)
 		throws CoercingParseValueException
 	{
-		if(scalar.getGraphQLType().isAssignableFrom(input.getClass()))
+		try
 		{
-			try
-			{
-				return scalar.toJava(scalar.getGraphQLType().cast(input));
-			}
-			catch(ScalarConversionException e)
-			{
-				throw new CoercingParseValueException(e.getMessage(), e);
-			}
+			return scalar.toJava(input);
 		}
-
-		throw new CoercingParseValueException();
+		catch(ScalarConversionException e)
+		{
+			throw new CoercingParseValueException(e.getMessage(), e);
+		}
 	}
 
 	@Override
@@ -79,16 +74,13 @@ public class ScalarCoercing<I, O>
 		if(input instanceof Value<?> v)
 		{
 			var javaValue = toJavaValue(v);
-			if(scalar.getGraphQLType().isAssignableFrom(javaValue.getClass()))
+			try
 			{
-				try
-				{
-					return scalar.toJava(scalar.getGraphQLType().cast(javaValue));
-				}
-				catch(ScalarConversionException e)
-				{
-					throw new CoercingParseLiteralException(e.getMessage(), e);
-				}
+				return scalar.toJava(javaValue);
+			}
+			catch(ScalarConversionException e)
+			{
+				throw new CoercingParseLiteralException(e.getMessage(), e);
 			}
 		}
 
@@ -101,7 +93,7 @@ public class ScalarCoercing<I, O>
 	 * @param input
 	 * @return
 	 */
-	private static Object toJavaValue(Value<?> input)
+	static Object toJavaValue(Value<?> input)
 	{
 		if(input instanceof NullValue)
 		{
