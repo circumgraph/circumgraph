@@ -29,6 +29,7 @@ import com.circumgraph.model.StructuredDef;
 import com.circumgraph.model.UnionDef;
 import com.circumgraph.model.processing.ProcessingEncounter;
 import com.circumgraph.model.processing.TypeDefProcessor;
+import com.circumgraph.storage.StorageModel;
 import com.circumgraph.storage.StorageSchema;
 
 /**
@@ -193,6 +194,7 @@ public class MutationProcessor
 		{
 			var objectDef = (ObjectDef) def;
 			var fields = objectDef.getFields()
+				.select(field -> StorageModel.getFieldMutation(field) != StorageModel.MutationType.NEVER)
 				.toMap(k -> k, k -> generateMutationInput(k.getType()));
 
 			return new StructuredValueMutationMapper(objectDef, fields);

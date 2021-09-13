@@ -86,13 +86,23 @@ public class ValueMappers
 		return new RootObjectMapper((ValueMapper) polymorphic);
 	}
 
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	private ValueMutationHandler<?, ?> createHandler(FieldDef field)
 	{
 		var mapper = resolveMapper(field.getType());
 
-		if(field.getDirective("readonly").isPresent())
+		var mutationType = StorageModel.getFieldMutation(field);
+		switch(mutationType)
 		{
-			mapper = new ReadOnlyMapper(mapper);
+			case CREATABLE:
+				mapper = new ReadOnlyMapper(mapper, false);
+				break;
+			case NEVER:
+				mapper = new ReadOnlyMapper(mapper, true);
+				break;
+			case UPDATEABLE:
+				// Nothing needed
+				break;
 		}
 
 		return new ValueMutationHandlerImpl(
@@ -102,6 +112,7 @@ public class ValueMappers
 		);
 	}
 
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	private ValueMutationHandler<?, ?> createItemHandler(OutputTypeDef type)
 	{
 		var mapper = resolveMapper(type);
@@ -113,6 +124,7 @@ public class ValueMappers
 		);
 	}
 
+	@SuppressWarnings({ "rawtypes" })
 	private ValueMapper<?, ?> resolveMapper(OutputTypeDef def)
 	{
 		if(def instanceof HasMetadata md)

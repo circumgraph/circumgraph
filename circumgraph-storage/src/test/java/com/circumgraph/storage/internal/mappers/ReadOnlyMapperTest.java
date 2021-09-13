@@ -15,9 +15,10 @@ public class ReadOnlyMapperTest
 	@Test
 	public void testApplyMutationInitial()
 	{
-		var mapper =  new ReadOnlyMapper<>(new ScalarValueMapper(
-			ScalarDef.STRING
-		));
+		var mapper =  new ReadOnlyMapper<>(
+			new ScalarValueMapper(ScalarDef.STRING),
+			false
+		);
 
 		var encounter = new TestMappingEncounter();
 		var value = mapper.applyMutation(
@@ -34,9 +35,10 @@ public class ReadOnlyMapperTest
 	@Test
 	public void testApplyMutationUpdate()
 	{
-		var mapper = new ReadOnlyMapper<>(new ScalarValueMapper(
-			ScalarDef.STRING
-		));
+		var mapper =  new ReadOnlyMapper<>(
+			new ScalarValueMapper(ScalarDef.STRING),
+			false
+		);
 
 		var encounter = new TestMappingEncounter();
 		mapper.applyMutation(
@@ -44,6 +46,25 @@ public class ReadOnlyMapperTest
 			ObjectLocation.root(),
 			SimpleValue.createString("V1"),
 			ScalarValueMutation.createString("V2")
+		).block();
+
+		assertThat(encounter.getErrors().isEmpty(), is(false));
+	}
+
+	@Test
+	public void testApplyMutationDisallowInitial()
+	{
+		var mapper =  new ReadOnlyMapper<>(
+			new ScalarValueMapper(ScalarDef.STRING),
+			true
+		);
+
+		var encounter = new TestMappingEncounter();
+		mapper.applyMutation(
+			encounter,
+			ObjectLocation.root(),
+			null,
+			ScalarValueMutation.createString("V1")
 		).block();
 
 		assertThat(encounter.getErrors().isEmpty(), is(false));
