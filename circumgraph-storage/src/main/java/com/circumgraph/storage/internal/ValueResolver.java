@@ -48,7 +48,7 @@ public class ValueResolver
 
 	private static final ValidationMessageType INVALID_SCALAR_VALUE = ValidationMessageType.error()
 		.withCode("value:invalid-scalar-value")
-		.withMessage("Could not convert into `{{type}}`, conversion failed: {{message}")
+		.withMessage("Could not convert into `{{type}}`, conversion failed: {{message}}")
 		.withArgument("type")
 		.withArgument("message")
 		.build();

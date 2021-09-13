@@ -56,8 +56,7 @@ public class StorageImpl
 		this.model = model;
 		this.silo = silo;
 
-		var providers = new ValueProviders();
-		var mappers = new ValueMappers(model, this, providers);
+		var mappers = new ValueMappers(model, this);
 		this.collections = model.get(StorageSchema.ENTITY_NAME, InterfaceDef.class)
 			.get()
 			.getImplementors()

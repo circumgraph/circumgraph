@@ -9,13 +9,13 @@ import reactor.core.publisher.Mono;
 /**
  * Implementation of {@link ValueProvider} that returns a static value.
  */
-public class StaticValueProvider<V extends Value>
-	implements ValueProvider<V>
+public class StaticValueProvider
+	implements ValueProvider
 {
-	private final V value;
+	private final Value value;
 
 	public StaticValueProvider(
-		V value
+		Value value
 	)
 	{
 		this.value = value;
@@ -28,7 +28,7 @@ public class StaticValueProvider<V extends Value>
 	}
 
 	@Override
-	public Mono<V> create()
+	public Mono<Value> create()
 	{
 		return Mono.just(value);
 	}

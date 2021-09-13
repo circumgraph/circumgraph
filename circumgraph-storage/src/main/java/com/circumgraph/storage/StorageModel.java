@@ -45,6 +45,11 @@ public class StorageModel
 	private static final MetadataKey<Boolean> FIELD_SORTABLE = MetadataKey.create("storage:field-sortable", Boolean.class);
 	private static final MetadataKey<Boolean> FIELD_HIGHLIGHTABLE = MetadataKey.create("storage:field-highlightable", Boolean.class);
 
+	/**
+	 * Key controlling a {@link ValueProvider} used for {@link FieldDef}.
+	 */
+	public static final MetadataKey<ValueProvider> FIELD_DEFAULT_VALUE_PROVIDER = MetadataKey.create("storage:field-default-value", ValueProvider.class);
+
 	private StorageModel()
 	{
 	}
@@ -190,5 +195,27 @@ public class StorageModel
 	public static void setHighlightable(FieldDef field, boolean sortable)
 	{
 		field.setRuntimeMetadata(FIELD_HIGHLIGHTABLE, sortable);
+	}
+
+	/**
+	 * Get the default provider for the given field.
+	 *
+	 * @param field
+	 * @return
+	 */
+	public static Optional<ValueProvider> getDefaultProvider(FieldDef field)
+	{
+		return field.getMetadata(FIELD_DEFAULT_VALUE_PROVIDER);
+	}
+
+	/**
+	 * Set the default provider for the given field.
+	 *
+	 * @param field
+	 * @param provider
+	 */
+	public static void setDefaultProvider(FieldDef field, ValueProvider provider)
+	{
+		field.setRuntimeMetadata(FIELD_DEFAULT_VALUE_PROVIDER, provider);
 	}
 }

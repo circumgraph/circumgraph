@@ -15,7 +15,7 @@ import se.l4.ylem.ids.SimpleLongIdGenerator;
  */
 public class ValueProviders
 {
-	private final ImmutableMap<String, ValueProvider<?>> instances;
+	private final ImmutableMap<String, ValueProvider> instances;
 
 	public ValueProviders()
 	{
@@ -24,7 +24,7 @@ public class ValueProviders
 		);
 	}
 
-	public Optional<ValueProvider<?>> get(String id)
+	public Optional<ValueProvider> get(String id)
 	{
 		return Optional.ofNullable(instances.get(id));
 	}

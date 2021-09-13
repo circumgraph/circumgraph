@@ -22,7 +22,7 @@ public interface ValueMutationHandler<V extends Value, M extends Mutation>
 	/**
 	 * Get provider used for default values.
 	 */
-	ValueProvider<V> getDefault();
+	ValueProvider getDefault();
 
 	/**
 	 * Get the mapper for this value.

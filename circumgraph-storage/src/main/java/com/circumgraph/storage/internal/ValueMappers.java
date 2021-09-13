@@ -2,7 +2,6 @@ package com.circumgraph.storage.internal;
 
 import java.util.LinkedList;
 
-import com.circumgraph.model.ArgumentUse;
 import com.circumgraph.model.EnumDef;
 import com.circumgraph.model.FieldDef;
 import com.circumgraph.model.HasMetadata;
@@ -58,17 +57,13 @@ public class ValueMappers
 	private final Model model;
 	private final Storage storage;
 
-	private final ValueProviders providers;
-
 	public ValueMappers(
 		Model model,
-		Storage storage,
-		ValueProviders providers
+		Storage storage
 	)
 	{
 		this.model = model;
 		this.storage = storage;
-		this.providers = providers;
 	}
 
 	/**
@@ -285,40 +280,30 @@ public class ValueMappers
 		}
 	}
 
-	@SuppressWarnings("unchecked")
-	private <V extends Value> ValueProvider<V> resolveProvider(
+	private <V extends Value> ValueProvider resolveProvider(
 		FieldDef field
 	)
 	{
-		// TODO: This should be set via StorageModel instead
-		var defaultDirective = field.getDirective("default");
-		if(defaultDirective.isEmpty()) return new EmptyValueProvider<>(field.getType());
-
-		var directive = defaultDirective.get();
-
-		var providerArg = directive.getArgument("provider")
-			.flatMap(ArgumentUse::getValueAsString);
-
-		if(providerArg.isPresent())
+		var provider = StorageModel.getDefaultProvider(field);
+		if(provider.isPresent())
 		{
-			// If there's a provider - return it
-			return (ValueProvider<V>) providers.get(providerArg.get()).get();
+			return provider.get();
 		}
 
-		return new EmptyValueProvider<>(field.getType());
+		return new EmptyValueProvider(field.getType());
 	}
 
 	private static class ValueMutationHandlerImpl<V extends Value, M extends Mutation>
 		implements ValueMutationHandler<V, M>
 	{
 		private final OutputTypeDef def;
-		private final ValueProvider<V> defaultProvider;
+		private final ValueProvider defaultProvider;
 		private final ValueMapper<V, M> mapper;
 		private final ValueValidator<V> validator;
 
 		public ValueMutationHandlerImpl(
 			ValueMapper<V, M> mapper,
-			ValueProvider<V> defaultProvider,
+			ValueProvider defaultProvider,
 			ValueValidator<V> validator
 		)
 		{
@@ -335,7 +320,7 @@ public class ValueMappers
 		}
 
 		@Override
-		public ValueProvider<V> getDefault()
+		public ValueProvider getDefault()
 		{
 			return defaultProvider;
 		}

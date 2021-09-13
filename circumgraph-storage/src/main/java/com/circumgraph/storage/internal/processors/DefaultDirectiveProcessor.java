@@ -8,7 +8,10 @@ import com.circumgraph.model.processing.DirectiveUseProcessor;
 import com.circumgraph.model.processing.ProcessingEncounter;
 import com.circumgraph.model.validation.ValidationMessageType;
 import com.circumgraph.storage.StorageModel;
+import com.circumgraph.storage.StorageValidationException;
+import com.circumgraph.storage.Value;
 import com.circumgraph.storage.internal.ValueProviders;
+import com.circumgraph.storage.types.ValueProvider;
 
 /**
  * Validator for the {@code default} directive which is used to provide
@@ -38,6 +41,12 @@ public class DefaultDirectiveProcessor
 		.withMessage("Default-value provider `{{provider}}` does not support the type `{{fieldType}}`")
 		.withArgument("provider")
 		.withArgument("fieldType")
+		.build();
+
+	private static final ValidationMessageType INVALID_VALUE = ValidationMessageType.error()
+		.withCode("storage:@default:invalid-value")
+		.withMessage("Invalid value: {{message}}")
+		.withArgument("message")
 		.build();
 
 	private final ValueProviders valueProviders;
@@ -87,8 +96,7 @@ public class DefaultDirectiveProcessor
 		var provider = directive.getArgument("provider")
 			.flatMap(ArgumentUse::getValueAsString);
 
-		var value = directive.getArgument("value")
-			.flatMap(ArgumentUse::getValueAsString);
+		var value = directive.getArgument("value");
 
 		if(provider.isPresent())
 		{
@@ -114,11 +122,25 @@ public class DefaultDirectiveProcessor
 						.build()
 					);
 				}
+
+				StorageModel.setDefaultProvider(location, instance);
 			}
 		}
 		else if(value.isPresent())
 		{
-			// TODO: Validation for `value`
+			try
+			{
+				var defaultValue = Value.resolve(location.getType(), value.get().getValue());
+				StorageModel.setDefaultProvider(location, ValueProvider.createStatic(defaultValue));
+			}
+			catch(StorageValidationException e)
+			{
+				encounter.report(INVALID_VALUE.toMessage()
+					.withLocation(location)
+					.withArgument("message", e.getIssues().getFirst().format())
+					.build()
+				);
+			}
 		}
 		else
 		{
