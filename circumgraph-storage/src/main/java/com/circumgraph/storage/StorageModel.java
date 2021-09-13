@@ -8,6 +8,7 @@ import com.circumgraph.model.MetadataKey;
 import com.circumgraph.model.Model;
 import com.circumgraph.model.StructuredDef;
 import com.circumgraph.storage.types.ValueIndexer;
+import com.circumgraph.storage.types.ValueProvider;
 
 /**
  * Utilities for accessing storage specific enhancements to a {@link Model}
