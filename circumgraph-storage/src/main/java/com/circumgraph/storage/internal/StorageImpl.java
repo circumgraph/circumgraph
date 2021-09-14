@@ -132,7 +132,7 @@ public class StorageImpl
 			throw new StorageException("No identifier present");
 		}
 
-		return (Long) id.get();
+		return id.asID();
 	}
 
 	public static Builder open(Model model, Path path)

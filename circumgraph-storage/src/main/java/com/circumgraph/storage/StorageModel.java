@@ -76,6 +76,12 @@ public class StorageModel
 	 */
 	public static final MetadataKey<ValueProvider> FIELD_DEFAULT_VALUE_PROVIDER = MetadataKey.create("storage:field-default-value", ValueProvider.class);
 
+	/**
+	 * Key that is used to flag if the associated {@link #FIELD_DEFAULT_VALUE_PROVIDER}
+	 * should be rerun on every mutation.
+	 */
+	public static final MetadataKey<Boolean> FIELD_REGENERATE_VALUES = MetadataKey.create("storage:regenerate-values", Boolean.class);
+
 	private StorageModel()
 	{
 	}
@@ -266,5 +272,27 @@ public class StorageModel
 	public static void setDefaultProvider(FieldDef field, ValueProvider provider)
 	{
 		field.setRuntimeMetadata(FIELD_DEFAULT_VALUE_PROVIDER, provider);
+	}
+
+	/**
+	 * Get if the field should be regenerated on mutations.
+	 *
+	 * @param field
+	 * @return
+	 */
+	public static boolean isRegenerateOnMutate(FieldDef field)
+	{
+		return field.getMetadata(FIELD_REGENERATE_VALUES).orElse(false);
+	}
+
+	/**
+	 * Set if the field should be regenerated on mutation.
+	 *
+	 * @param field
+	 * @param regenerate
+	 */
+	public static void setRegenerateOnMutate(FieldDef field, boolean regenerate)
+	{
+		field.setRuntimeMetadata(FIELD_REGENERATE_VALUES, regenerate);
 	}
 }

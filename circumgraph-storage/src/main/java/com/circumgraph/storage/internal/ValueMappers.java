@@ -108,7 +108,8 @@ public class ValueMappers
 		return new ValueMutationHandlerImpl(
 			mapper,
 			resolveProvider(field),
-			resolveValidator(field)
+			resolveValidator(field),
+			StorageModel.isRegenerateOnMutate(field)
 		);
 	}
 
@@ -120,7 +121,8 @@ public class ValueMappers
 		return new ValueMutationHandlerImpl(
 			mapper,
 			new EmptyValueProvider(type),
-			type instanceof NonNullDef ? NonNullValueValidator.instance() : ValueValidator.empty()
+			type instanceof NonNullDef ? NonNullValueValidator.instance() : ValueValidator.empty(),
+			false
 		);
 	}
 
@@ -312,17 +314,20 @@ public class ValueMappers
 		private final ValueProvider defaultProvider;
 		private final ValueMapper<V, M> mapper;
 		private final ValueValidator<V> validator;
+		private final boolean regenerate;
 
 		public ValueMutationHandlerImpl(
 			ValueMapper<V, M> mapper,
 			ValueProvider defaultProvider,
-			ValueValidator<V> validator
+			ValueValidator<V> validator,
+			boolean regenerate
 		)
 		{
 			this.def = mapper.getDef();
 			this.mapper = mapper;
 			this.defaultProvider = defaultProvider;
 			this.validator = validator;
+			this.regenerate = regenerate;
 		}
 
 		@Override
@@ -335,6 +340,12 @@ public class ValueMappers
 		public ValueProvider getDefault()
 		{
 			return defaultProvider;
+		}
+
+		@Override
+		public boolean isRegenerate()
+		{
+			return regenerate;
 		}
 
 		@Override

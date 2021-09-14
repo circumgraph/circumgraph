@@ -25,6 +25,13 @@ public interface ValueMutationHandler<V extends Value, M extends Mutation>
 	ValueProvider getDefault();
 
 	/**
+	 * If the value should be regenerated on mutate.
+	 *
+	 * @return
+	 */
+	boolean isRegenerate();
+
+	/**
 	 * Get the mapper for this value.
 	 *
 	 * @return

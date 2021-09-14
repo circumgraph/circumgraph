@@ -3,6 +3,7 @@ package com.circumgraph.storage.internal.mappers;
 import com.circumgraph.model.ObjectLocation;
 import com.circumgraph.model.OutputTypeDef;
 import com.circumgraph.model.StructuredDef;
+import com.circumgraph.model.UnionDef;
 import com.circumgraph.storage.StructuredValue;
 import com.circumgraph.storage.Value;
 import com.circumgraph.storage.internal.ValueMutationHandler;
@@ -64,75 +65,99 @@ public class StructuredValueMapper
 			var fieldMutations = mutation.getFields();
 
 			return Flux.fromIterable(fields.keyValuesView())
-				.flatMap(pair -> {
-					var key = pair.getOne();
-					var mapper = (ValueMutationHandler<Value, Mutation>) pair.getTwo();
-
-					var fieldMutation = fieldMutations.get(key);
-					if(fieldMutation == null)
-					{
-						/*
-						 * Not mutating the value means two cases:
-						 *
-						 * 1) A value exists, return it
-						 * 2) No value exists, create a default value
-						 */
-						if(previousFieldValues.containsKey(key))
-						{
-							/*
-							 * This value has previously been set, return it if
-							 * the definition is compatible.
-							 */
-							var previousFieldValue = previousFieldValues.get(key);
-							if(mapper.getDef().isAssignableFrom(previousFieldValue.getDefinition()))
-							{
-								// TODO: This should check if type are compatible - not equal, type widening and narrowing should be supportd
-								return Mono.just(Tuples.pair(key, previousFieldValue));
-							}
-						}
-
-						// No value, create and validate initial value
-						return mapper.getDefault().create()
-							.flatMap(initialValue -> {
-								return mapper.getValidator().validate(
-									location.forField(key),
-									initialValue
-								)
-									.doOnNext(encounter::reportError)
-									.then(Mono.just(Tuples.pair(key, initialValue)));
-							})
-							// If there is no value - validate it as null
-							.switchIfEmpty(mapper.getValidator().validate(location.forField(key), null)
-								.doOnNext(encounter::reportError)
-								.then(Mono.empty())
-							);
-					}
-
-					if(fieldMutation instanceof NullMutation)
-					{
-						/*
-						 * NullMutation should set the value to null - validate
-						 * that is possible before attempting to do so.
-						 */
-						return mapper.getValidator()
-							.validate(location.forField(key), null)
-							.doOnNext(encounter::reportError)
-							.then(Mono.empty());
-					}
-
-					/*
-					 * Field is being mutated so defer to the mapper for
-					 * the field.
-					 */
-					return mapper.getMapper().applyMutation(
-						encounter,
-						location.forField(key),
-						previousFieldValues.get(key),
-						fieldMutation
-					).map(updatedValue -> Tuples.pair(key, updatedValue));
-				})
+				.flatMap(pair -> map(
+					encounter,
+					location,
+					pair.getOne(),
+					(ValueMutationHandler<Value, Mutation>) pair.getTwo(),
+					fieldMutations.get(pair.getOne()),
+					previousFieldValues.get(pair.getOne())
+				).map(updatedValue -> Tuples.pair(pair.getOne(), updatedValue)))
 				.collect(Collectors2.toMap(Pair::getOne, Pair::getTwo))
 				.map(newValues -> StructuredValue.create(type, newValues));
 		});
+	}
+
+	private Mono<Value> map(
+		MappingEncounter encounter,
+		ObjectLocation location,
+
+		String key,
+		ValueMutationHandler<Value, Mutation> mutationHandler,
+		Mutation fieldMutation,
+		Value previousFieldValue
+	)
+	{
+		if(fieldMutation == null)
+		{
+			/*
+			 * Not mutating the value can result in a few cases:
+			 *
+			 * 1) A value exists, regeneration off, return it
+			 * 2) A value exists, regeneration on, regenerate
+			 * 3) No value exists, create a default value
+			 */
+			if(previousFieldValue != null && mutationHandler.getDef().isAssignableFrom(previousFieldValue.getDefinition()))
+			{
+				if(! mutationHandler.isRegenerate())
+				{
+					// No regeneration, simply return the previous value
+					return Mono.just(previousFieldValue);
+				}
+
+				// Regeneration, let's check if we need to do something special
+				if(mutationHandler.getDef() instanceof StructuredDef || mutationHandler.getDef() instanceof UnionDef)
+				{
+					return mutationHandler.getMapper()
+						.applyMutation(
+							encounter,
+							location.forField(key),
+							previousFieldValue,
+							StructuredMutation.create((StructuredDef) previousFieldValue.getDefinition())
+								.build()
+						);
+				}
+			}
+
+			// No value, create and validate initial value
+			return mutationHandler.getDefault().create()
+				.flatMap(initialValue -> {
+					return mutationHandler.getValidator().validate(
+						location.forField(key),
+						initialValue
+					)
+						.doOnNext(encounter::reportError)
+						.then(Mono.just(initialValue));
+				})
+				// If there is no value - validate it as null
+				.switchIfEmpty(mutationHandler.getValidator().validate(location.forField(key), null)
+					.doOnNext(encounter::reportError)
+					.then(Mono.empty())
+				);
+		}
+
+		if(fieldMutation instanceof NullMutation)
+		{
+			/*
+			 * NullMutation should set the value to null - validate
+			 * that is possible before attempting to do so.
+			 */
+			return mutationHandler.getValidator()
+				.validate(location.forField(key), null)
+				.doOnNext(encounter::reportError)
+				.then(Mono.empty());
+		}
+
+		/*
+		 * Field is being mutated so defer to the mapper for
+		 * the field.
+		 */
+		return mutationHandler.getMapper()
+			.applyMutation(
+				encounter,
+				location.forField(key),
+				previousFieldValue,
+				fieldMutation
+			);
 	}
 }
