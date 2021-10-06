@@ -123,7 +123,7 @@
 			<plugin>
 				<groupId>net.bytebuddy</groupId>
 				<artifactId>byte-buddy-maven-plugin</artifactId>
-				<version>1.11.15</version>
+				<version>1.11.19</version>
 
 				<dependencies>
 					<dependency>
@@ -131,7 +131,7 @@
 						<artifactId>reactor-tools</artifactId>
 						<classifier>original</classifier>
 						<scope>runtime</scope>
-						<version>3.4.9</version>
+						<version>3.4.10</version>
 					</dependency>
 				</dependencies>
 
@@ -147,7 +147,7 @@
 			<plugin>
 				<groupId>com.github.spotbugs</groupId>
 				<artifactId>spotbugs-maven-plugin</artifactId>
-				<version>4.3.0</version>
+				<version>4.4.1</version>
 
 				<dependencies>
 					<dependency>
