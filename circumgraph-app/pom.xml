@@ -49,7 +49,7 @@
 		<dependency>
 			<groupId>io.vertx</groupId>
 			<artifactId>vertx-web-graphql</artifactId>
-			<version>4.1.3</version>
+			<version>4.2.1</version>
 		</dependency>
 	</dependencies>
 
