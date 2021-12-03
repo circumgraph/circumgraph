@@ -1,3 +1,16 @@
+# [0.7.0](https://github.com/circumgraph/circumgraph/compare/v0.6.1...v0.7.0) (2021-12-03)
+
+
+### Bug Fixes
+
+* update dependency io.projectreactor:reactor-bom to v2020.0.13 ([309edc6](https://github.com/circumgraph/circumgraph/commit/309edc646b4af858818c5ba69a48b03ea40b8eae))
+
+
+### Features
+
+* update dependency io.vertx:vertx-web-graphql to v4.2.1 ([b81bb32](https://github.com/circumgraph/circumgraph/commit/b81bb32fda2fb7fc12ece17e8d4a51c61bac992a))
+* update dependency org.eclipse.collections:eclipse-collections to v11 ([e32e522](https://github.com/circumgraph/circumgraph/commit/e32e522e14d36150aba7dd456f399bd10d6e0a95))
+
 ## [0.6.1](https://github.com/circumgraph/circumgraph/compare/v0.6.0...v0.6.1) (2021-09-10)
 
 
