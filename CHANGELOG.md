@@ -1,3 +1,15 @@
+# [0.8.0](https://github.com/circumgraph/circumgraph/compare/v0.7.0...v0.8.0) (2021-12-03)
+
+
+### Bug Fixes
+
+* update dependency ch.qos.logback:logback-classic to v1.2.7 ([2496bfa](https://github.com/circumgraph/circumgraph/commit/2496bfa4ea670aa4eca8ac718bd69d8abd9f5530))
+
+
+### Features
+
+* update dependency com.graphql-java:graphql-java to v17.3 ([ad9f2d5](https://github.com/circumgraph/circumgraph/commit/ad9f2d55e0af835fb9834d0f140047bf73e8d086))
+
 # [0.7.0](https://github.com/circumgraph/circumgraph/compare/v0.6.1...v0.7.0) (2021-12-03)
 
 
