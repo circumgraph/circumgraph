@@ -8,6 +8,7 @@ import com.circumgraph.model.MetadataKey;
 import com.circumgraph.model.Model;
 import com.circumgraph.model.StructuredDef;
 import com.circumgraph.storage.types.ValueIndexer;
+import com.circumgraph.storage.types.ValueProvider;
 
 /**
  * Utilities for accessing storage specific enhancements to a {@link Model}
@@ -30,6 +31,27 @@ public class StorageModel
 	}
 
 	/**
+	 * Enum indicating how a field can be mutated.
+	 */
+	public enum MutationType
+	{
+		/**
+		 * Field can never be mutated, value will be provided.
+		 */
+		NEVER,
+
+		/**
+		 * Value can be set on creation, but can not be updated.
+		 */
+		CREATABLE,
+
+		/**
+		 * Value can be updated whenever.
+		 */
+		UPDATEABLE
+	}
+
+	/**
 	 * Location used by the enhancements added by the Storage model.
 	 */
 	public static final Location LOCATION = Location.create("Storage");
@@ -39,11 +61,26 @@ public class StorageModel
 	 * being stored.
 	 */
 	public static final MetadataKey<FieldType> FIELD_TYPE = MetadataKey.create("storage:field-type", FieldType.class);
+	/**
+	 * Key for how a {@link FieldDef} can be mutated.
+	 */
+	public static final MetadataKey<MutationType> FIELD_MUTATION = MetadataKey.create("storage:field-mutation", MutationType.class);
 
 	public static final MetadataKey<ValueIndexer> FIELD_INDEXER = MetadataKey.create("storage:field-indexer", ValueIndexer.class);
 	public static final MetadataKey<Boolean> FIELD_INDEXED = MetadataKey.create("storage:field-indexed", Boolean.class);
 	private static final MetadataKey<Boolean> FIELD_SORTABLE = MetadataKey.create("storage:field-sortable", Boolean.class);
 	private static final MetadataKey<Boolean> FIELD_HIGHLIGHTABLE = MetadataKey.create("storage:field-highlightable", Boolean.class);
+
+	/**
+	 * Key controlling a {@link ValueProvider} used for {@link FieldDef}.
+	 */
+	public static final MetadataKey<ValueProvider> FIELD_DEFAULT_VALUE_PROVIDER = MetadataKey.create("storage:field-default-value", ValueProvider.class);
+
+	/**
+	 * Key that is used to flag if the associated {@link #FIELD_DEFAULT_VALUE_PROVIDER}
+	 * should be rerun on every mutation.
+	 */
+	public static final MetadataKey<Boolean> FIELD_REGENERATE_VALUES = MetadataKey.create("storage:regenerate-values", Boolean.class);
 
 	private StorageModel()
 	{
@@ -94,6 +131,29 @@ public class StorageModel
 	public static void setType(FieldDef field, FieldType type)
 	{
 		field.setRuntimeMetadata(FIELD_TYPE, type);
+	}
+
+	/**
+	 * Get the type of mutation support the field hAnyone really as.
+	 *
+	 * @param field
+	 * @return
+	 */
+	public static MutationType getFieldMutation(FieldDef field)
+	{
+		return field.getMetadata(FIELD_MUTATION)
+			.orElse(MutationType.UPDATEABLE);
+	}
+
+	/**
+	 * Set how mutation is handled for this field.
+	 *
+	 * @param field
+	 * @param type
+	 */
+	public static void setFieldMutation(FieldDef field, MutationType type)
+	{
+		field.setRuntimeMetadata(FIELD_MUTATION, type);
 	}
 
 	/**
@@ -190,5 +250,49 @@ public class StorageModel
 	public static void setHighlightable(FieldDef field, boolean sortable)
 	{
 		field.setRuntimeMetadata(FIELD_HIGHLIGHTABLE, sortable);
+	}
+
+	/**
+	 * Get the default provider for the given field.
+	 *
+	 * @param field
+	 * @return
+	 */
+	public static Optional<ValueProvider> getDefaultProvider(FieldDef field)
+	{
+		return field.getMetadata(FIELD_DEFAULT_VALUE_PROVIDER);
+	}
+
+	/**
+	 * Set the default provider for the given field.
+	 *
+	 * @param field
+	 * @param provider
+	 */
+	public static void setDefaultProvider(FieldDef field, ValueProvider provider)
+	{
+		field.setRuntimeMetadata(FIELD_DEFAULT_VALUE_PROVIDER, provider);
+	}
+
+	/**
+	 * Get if the field should be regenerated on mutations.
+	 *
+	 * @param field
+	 * @return
+	 */
+	public static boolean isRegenerateOnMutate(FieldDef field)
+	{
+		return field.getMetadata(FIELD_REGENERATE_VALUES).orElse(false);
+	}
+
+	/**
+	 * Set if the field should be regenerated on mutation.
+	 *
+	 * @param field
+	 * @param regenerate
+	 */
+	public static void setRegenerateOnMutate(FieldDef field, boolean regenerate)
+	{
+		field.setRuntimeMetadata(FIELD_REGENERATE_VALUES, regenerate);
 	}
 }

@@ -2,7 +2,6 @@ package com.circumgraph.storage.internal;
 
 import java.util.LinkedList;
 
-import com.circumgraph.model.ArgumentUse;
 import com.circumgraph.model.EnumDef;
 import com.circumgraph.model.FieldDef;
 import com.circumgraph.model.HasMetadata;
@@ -58,17 +57,13 @@ public class ValueMappers
 	private final Model model;
 	private final Storage storage;
 
-	private final ValueProviders providers;
-
 	public ValueMappers(
 		Model model,
-		Storage storage,
-		ValueProviders providers
+		Storage storage
 	)
 	{
 		this.model = model;
 		this.storage = storage;
-		this.providers = providers;
 	}
 
 	/**
@@ -91,22 +86,34 @@ public class ValueMappers
 		return new RootObjectMapper((ValueMapper) polymorphic);
 	}
 
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	private ValueMutationHandler<?, ?> createHandler(FieldDef field)
 	{
 		var mapper = resolveMapper(field.getType());
 
-		if(field.getDirective("readonly").isPresent())
+		var mutationType = StorageModel.getFieldMutation(field);
+		switch(mutationType)
 		{
-			mapper = new ReadOnlyMapper(mapper);
+			case CREATABLE:
+				mapper = new ReadOnlyMapper(mapper, false);
+				break;
+			case NEVER:
+				mapper = new ReadOnlyMapper(mapper, true);
+				break;
+			case UPDATEABLE:
+				// Nothing needed
+				break;
 		}
 
 		return new ValueMutationHandlerImpl(
 			mapper,
 			resolveProvider(field),
-			resolveValidator(field)
+			resolveValidator(field),
+			StorageModel.isRegenerateOnMutate(field)
 		);
 	}
 
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	private ValueMutationHandler<?, ?> createItemHandler(OutputTypeDef type)
 	{
 		var mapper = resolveMapper(type);
@@ -114,10 +121,12 @@ public class ValueMappers
 		return new ValueMutationHandlerImpl(
 			mapper,
 			new EmptyValueProvider(type),
-			type instanceof NonNullDef ? NonNullValueValidator.instance() : ValueValidator.empty()
+			type instanceof NonNullDef ? NonNullValueValidator.instance() : ValueValidator.empty(),
+			false
 		);
 	}
 
+	@SuppressWarnings({ "rawtypes" })
 	private ValueMapper<?, ?> resolveMapper(OutputTypeDef def)
 	{
 		if(def instanceof HasMetadata md)
@@ -285,47 +294,40 @@ public class ValueMappers
 		}
 	}
 
-	@SuppressWarnings("unchecked")
-	private <V extends Value> ValueProvider<V> resolveProvider(
+	private <V extends Value> ValueProvider resolveProvider(
 		FieldDef field
 	)
 	{
-		// TODO: This should be set via StorageModel instead
-		var defaultDirective = field.getDirective("default");
-		if(defaultDirective.isEmpty()) return new EmptyValueProvider<>(field.getType());
-
-		var directive = defaultDirective.get();
-
-		var providerArg = directive.getArgument("provider")
-			.flatMap(ArgumentUse::getValueAsString);
-
-		if(providerArg.isPresent())
+		var provider = StorageModel.getDefaultProvider(field);
+		if(provider.isPresent())
 		{
-			// If there's a provider - return it
-			return (ValueProvider<V>) providers.get(providerArg.get()).get();
+			return provider.get();
 		}
 
-		return new EmptyValueProvider<>(field.getType());
+		return new EmptyValueProvider(field.getType());
 	}
 
 	private static class ValueMutationHandlerImpl<V extends Value, M extends Mutation>
 		implements ValueMutationHandler<V, M>
 	{
 		private final OutputTypeDef def;
-		private final ValueProvider<V> defaultProvider;
+		private final ValueProvider defaultProvider;
 		private final ValueMapper<V, M> mapper;
 		private final ValueValidator<V> validator;
+		private final boolean regenerate;
 
 		public ValueMutationHandlerImpl(
 			ValueMapper<V, M> mapper,
-			ValueProvider<V> defaultProvider,
-			ValueValidator<V> validator
+			ValueProvider defaultProvider,
+			ValueValidator<V> validator,
+			boolean regenerate
 		)
 		{
 			this.def = mapper.getDef();
 			this.mapper = mapper;
 			this.defaultProvider = defaultProvider;
 			this.validator = validator;
+			this.regenerate = regenerate;
 		}
 
 		@Override
@@ -335,9 +337,15 @@ public class ValueMappers
 		}
 
 		@Override
-		public ValueProvider<V> getDefault()
+		public ValueProvider getDefault()
 		{
 			return defaultProvider;
+		}
+
+		@Override
+		public boolean isRegenerate()
+		{
+			return regenerate;
 		}
 
 		@Override

@@ -22,10 +22,12 @@ public class ReadOnlyMapper<V extends Value, M extends Mutation>
 		.build();
 
 	private final ValueMapper<V, M> mapper;
+	private final boolean disallowInitial;
 
-	public ReadOnlyMapper(ValueMapper<V, M> mapper)
+	public ReadOnlyMapper(ValueMapper<V, M> mapper, boolean disallowInitial)
 	{
 		this.mapper = mapper;
+		this.disallowInitial = disallowInitial;
 	}
 
 	@Override
@@ -43,14 +45,14 @@ public class ReadOnlyMapper<V extends Value, M extends Mutation>
 	)
 	{
 		return Mono.defer(() -> {
-			if(previousValue != null)
+			if(disallowInitial || previousValue != null)
 			{
 				encounter.reportError(WRITE_ERROR.toMessage()
 					.withLocation(location)
 					.build()
 				);
 
-				return Mono.just(previousValue);
+				return Mono.justOrEmpty(previousValue);
 			}
 
 			return mapper.applyMutation(encounter, location, previousValue, mutation);

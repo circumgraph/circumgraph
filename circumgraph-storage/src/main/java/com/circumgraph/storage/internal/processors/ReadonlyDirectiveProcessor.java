@@ -45,11 +45,16 @@ public class ReadonlyDirectiveProcessor
 		DirectiveUse directive
 	)
 	{
-		if(directive.getArguments().isEmpty()) return;
-
-		encounter.report(INVALID_ARGUMENTS.toMessage()
-			.withLocation(directive.getDefinedAt())
-			.build()
-		);
+		if(directive.getArguments().isEmpty())
+		{
+			StorageModel.setFieldMutation(location, StorageModel.MutationType.CREATABLE);
+		}
+		else
+		{
+			encounter.report(INVALID_ARGUMENTS.toMessage()
+				.withLocation(directive.getDefinedAt())
+				.build()
+			);
+		}
 	}
 }

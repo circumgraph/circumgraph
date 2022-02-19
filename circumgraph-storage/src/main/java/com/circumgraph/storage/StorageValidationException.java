@@ -3,6 +3,7 @@ package com.circumgraph.storage;
 import com.circumgraph.model.validation.ValidationMessage;
 import com.circumgraph.model.validation.ValidationMessageLevel;
 
+import org.eclipse.collections.api.factory.Lists;
 import org.eclipse.collections.api.list.ListIterable;
 
 /**
@@ -16,7 +17,7 @@ public class StorageValidationException
 
 	public StorageValidationException(ListIterable<ValidationMessage> issues)
 	{
-		super("Unable to store, validation failed:\n" +
+		super("Validation failed:\n" +
 			issues
 				.select(m -> m.getLevel() == ValidationMessageLevel.ERROR)
 				.collect(msg -> "  * " + msg.format())
@@ -24,6 +25,11 @@ public class StorageValidationException
 		);
 
 		this.issues = issues;
+	}
+
+	public StorageValidationException(ValidationMessage message)
+	{
+		this(Lists.immutable.of(message));
 	}
 
 	/**

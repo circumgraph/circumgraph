@@ -6,8 +6,8 @@ import com.circumgraph.storage.types.ValueProvider;
 
 import reactor.core.publisher.Mono;
 
-public class EmptyValueProvider<V extends Value>
-	implements ValueProvider<V>
+public class EmptyValueProvider
+	implements ValueProvider
 {
 	private final OutputTypeDef def;
 
@@ -23,7 +23,7 @@ public class EmptyValueProvider<V extends Value>
 	}
 
 	@Override
-	public Mono<V> create()
+	public Mono<Value> create()
 	{
 		return Mono.empty();
 	}

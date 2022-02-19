@@ -9,7 +9,7 @@ import reactor.core.publisher.Mono;
 /**
  * Provider of a {@link Value} used to implement things such as default values.
  */
-public interface ValueProvider<V extends Value>
+public interface ValueProvider
 {
 	/**
 	 * Get the definition this provider generates values for.
@@ -23,17 +23,16 @@ public interface ValueProvider<V extends Value>
 	 *
 	 * @return
 	 */
-	Mono<V> create();
+	Mono<Value> create();
 
 	/**
 	 * Create a provider for a static value.
 	 *
-	 * @param <V>
 	 * @param value
 	 * @return
 	 */
-	static <V extends Value> ValueProvider<V> createStatic(V value)
+	static ValueProvider createStatic(Value value)
 	{
-		return new StaticValueProvider<>(value);
+		return new StaticValueProvider(value);
 	}
 }

@@ -56,8 +56,7 @@ public class StorageImpl
 		this.model = model;
 		this.silo = silo;
 
-		var providers = new ValueProviders();
-		var mappers = new ValueMappers(model, this, providers);
+		var mappers = new ValueMappers(model, this);
 		this.collections = model.get(StorageSchema.ENTITY_NAME, InterfaceDef.class)
 			.get()
 			.getImplementors()
@@ -133,7 +132,7 @@ public class StorageImpl
 			throw new StorageException("No identifier present");
 		}
 
-		return (Long) id.get();
+		return id.asID();
 	}
 
 	public static Builder open(Model model, Path path)
